@@ -1,0 +1,1666 @@
+LICENSE
+README.md
+pyproject.toml
+AlgoTuneTasks/__init__.py
+AlgoTuneTasks/base.py
+AlgoTuneTasks/factory.py
+AlgoTuneTasks/registry.py
+AlgoTuneTasks/aes_gcm_encryption/aes_gcm_encryption.py
+AlgoTuneTasks/affine_transform_2d/affine_transform_2d.py
+AlgoTuneTasks/aircraft_wing_design/aircraft_wing_design.py
+AlgoTuneTasks/articulation_points/articulation_points.py
+AlgoTuneTasks/base64_encoding/base64_encoding.py
+AlgoTuneTasks/battery_scheduling/battery_scheduling.py
+AlgoTuneTasks/btsp/btsp.py
+AlgoTuneTasks/capacitated_facility_location/capacitated_facility_location.py
+AlgoTuneTasks/chacha_encryption/chacha_encryption.py
+AlgoTuneTasks/channel_capacity/channel_capacity.py
+AlgoTuneTasks/chebyshev_center/chebyshev_center.py
+AlgoTuneTasks/cholesky_factorization/cholesky_factorization.py
+AlgoTuneTasks/clustering_outliers/clustering_outliers.py
+AlgoTuneTasks/communicability/communicability.py
+AlgoTuneTasks/convex_hull/convex_hull.py
+AlgoTuneTasks/convolve2d_full_fill/convolve2d_full_fill.py
+AlgoTuneTasks/convolve_1d/convolve_1d.py
+AlgoTuneTasks/correlate2d_full_fill/correlate2d_full_fill.py
+AlgoTuneTasks/correlate_1d/correlate_1d.py
+AlgoTuneTasks/count_connected_components/count_connected_components.py
+AlgoTuneTasks/count_riemann_zeta_zeros/count_riemann_zeta_zeros.py
+AlgoTuneTasks/cumulative_simpson_1d/cumulative_simpson_1d.py
+AlgoTuneTasks/cumulative_simpson_multid/cumulative_simpson_multid.py
+AlgoTuneTasks/cvar_projection/cvar_projection.py
+AlgoTuneTasks/cyclic_independent_set/cyclic_independent_set.py
+AlgoTuneTasks/dct_type_I_scipy_fftpack/dct_type_I_scipy_fftpack.py
+AlgoTuneTasks/delaunay/delaunay.py
+AlgoTuneTasks/dijkstra_from_indices/dijkstra_from_indices.py
+AlgoTuneTasks/discrete_log/discrete_log.py
+AlgoTuneTasks/dst_type_II_scipy_fftpack/dst_type_II_scipy_fftpack.py
+AlgoTuneTasks/dynamic_assortment_planning/dynamic_assortment_planning.py
+AlgoTuneTasks/earth_movers_distance/earth_movers_distance.py
+AlgoTuneTasks/edge_expansion/edge_expansion.py
+AlgoTuneTasks/eigenvalues_complex/eigenvalues_complex.py
+AlgoTuneTasks/eigenvalues_real/eigenvalues_real.py
+AlgoTuneTasks/eigenvectors_complex/eigenvectors_complex.py
+AlgoTuneTasks/eigenvectors_real/eigenvectors_real.py
+AlgoTuneTasks/elementwise_integration/elementwise_integration.py
+AlgoTuneTasks/feedback_controller_design/feedback_controller_design.py
+AlgoTuneTasks/fft_cmplx_scipy_fftpack/fft_cmplx_scipy_fftpack.py
+AlgoTuneTasks/fft_convolution/fft_convolution.py
+AlgoTuneTasks/fft_real_scipy_fftpack/fft_real_scipy_fftpack.py
+AlgoTuneTasks/firls/firls.py
+AlgoTuneTasks/generalized_eigenvalues_complex/generalized_eigenvalues_complex.py
+AlgoTuneTasks/generalized_eigenvalues_real/generalized_eigenvalues_real.py
+AlgoTuneTasks/generalized_eigenvectors_complex/generalized_eigenvectors_complex.py
+AlgoTuneTasks/generalized_eigenvectors_real/generalized_eigenvectors_real.py
+AlgoTuneTasks/graph_coloring_assign/graph_coloring_assign.py
+AlgoTuneTasks/graph_global_efficiency/graph_global_efficiency.py
+AlgoTuneTasks/graph_isomorphism/graph_isomorphism.py
+AlgoTuneTasks/graph_laplacian/graph_laplacian.py
+AlgoTuneTasks/group_lasso/group_lasso.py
+AlgoTuneTasks/gzip_compression/gzip_compression.py
+AlgoTuneTasks/integer_factorization/integer_factorization.py
+AlgoTuneTasks/job_shop_scheduling/job_shop_scheduling.py
+AlgoTuneTasks/kalman_filter/kalman_filter.py
+AlgoTuneTasks/kcenters/kcenters.py
+AlgoTuneTasks/kd_tree/kd_tree.py
+AlgoTuneTasks/kernel_density_estimation/kernel_density_estimation.py
+AlgoTuneTasks/kmeans/kmeans.py
+AlgoTuneTasks/ks_test_2samp/ks_test_2samp.py
+AlgoTuneTasks/l0_pruning/l0_pruning.py
+AlgoTuneTasks/l1_pruning/l1_pruning.py
+AlgoTuneTasks/lasso/lasso.py
+AlgoTuneTasks/least_squares/least_squares.py
+AlgoTuneTasks/linear_system_solver/linear_system_solver.py
+AlgoTuneTasks/lp_box/lp_box.py
+AlgoTuneTasks/lp_centering/lp_centering.py
+AlgoTuneTasks/lp_mdp/lp_mdp.py
+AlgoTuneTasks/lqr/lqr.py
+AlgoTuneTasks/lti_simulation/lti_simulation.py
+AlgoTuneTasks/lu_factorization/lu_factorization.py
+AlgoTuneTasks/lyapunov_stability/lyapunov_stability.py
+AlgoTuneTasks/markowitz/markowitz.py
+AlgoTuneTasks/matrix_completion/matrix_completion.py
+AlgoTuneTasks/matrix_exponential/matrix_exponential.py
+AlgoTuneTasks/matrix_exponential_sparse/matrix_exponential_sparse.py
+AlgoTuneTasks/matrix_multiplication/matrix_multiplication.py
+AlgoTuneTasks/matrix_sqrt/matrix_sqrt.py
+AlgoTuneTasks/max_clique_cpsat/max_clique_cpsat.py
+AlgoTuneTasks/max_common_subgraph/max_common_subgraph.py
+AlgoTuneTasks/max_flow_min_cost/max_flow_min_cost.py
+AlgoTuneTasks/max_independent_set_cpsat/max_independent_set_cpsat.py
+AlgoTuneTasks/max_weighted_independent_set/max_weighted_independent_set.py
+AlgoTuneTasks/min_dominating_set/min_dominating_set.py
+AlgoTuneTasks/min_weight_assignment/min_weight_assignment.py
+AlgoTuneTasks/minimum_spanning_tree/minimum_spanning_tree.py
+AlgoTuneTasks/minimum_volume_ellipsoid/minimum_volume_ellipsoid.py
+AlgoTuneTasks/multi_dim_knapsack/multi_dim_knapsack.py
+AlgoTuneTasks/nmf/nmf.py
+AlgoTuneTasks/ode_brusselator/ode_brusselator.py
+AlgoTuneTasks/ode_fitzhughnagumo/ode_fitzhughnagumo.py
+AlgoTuneTasks/ode_hires/ode_hires.py
+AlgoTuneTasks/ode_hodgkinhuxley/ode_hodgkinhuxley.py
+AlgoTuneTasks/ode_lorenz96_nonchaotic/ode_lorenz96_nonchaotic.py
+AlgoTuneTasks/ode_lotkavolterra/ode_lotkavolterra.py
+AlgoTuneTasks/ode_nbodyproblem/ode_nbodyproblem.py
+AlgoTuneTasks/ode_seirs/ode_seirs.py
+AlgoTuneTasks/ode_stiff_robertson/ode_stiff_robertson.py
+AlgoTuneTasks/ode_stiff_vanderpol/ode_stiff_vanderpol.py
+AlgoTuneTasks/odr/odr.py
+AlgoTuneTasks/optimal_advertising/optimal_advertising.py
+AlgoTuneTasks/outer_product/outer_product.py
+AlgoTuneTasks/pagerank/pagerank.py
+AlgoTuneTasks/pca/pca.py
+AlgoTuneTasks/pde_burgers1d/pde_burgers1d.py
+AlgoTuneTasks/pde_heat1d/pde_heat1d.py
+AlgoTuneTasks/polynomial_mixed/polynomial_mixed.py
+AlgoTuneTasks/polynomial_real/polynomial_real.py
+AlgoTuneTasks/power_control/power_control.py
+AlgoTuneTasks/procrustes/procrustes.py
+AlgoTuneTasks/psd_cone_projection/psd_cone_projection.py
+AlgoTuneTasks/qp/qp.py
+AlgoTuneTasks/qr_factorization/qr_factorization.py
+AlgoTuneTasks/quantile_regression/quantile_regression.py
+AlgoTuneTasks/queens_with_obstacles/queens_with_obstacles.py
+AlgoTuneTasks/queuing/queuing.py
+AlgoTuneTasks/qz_factorization/qz_factorization.py
+AlgoTuneTasks/randomized_svd/randomized_svd.py
+AlgoTuneTasks/rbf_interpolation/rbf_interpolation.py
+AlgoTuneTasks/rectanglepacking/rectanglepacking.py
+AlgoTuneTasks/robust_kalman_filter/robust_kalman_filter.py
+AlgoTuneTasks/robust_linear_program/robust_linear_program.py
+AlgoTuneTasks/rocket_landing_optimization/rocket_landing_optimization.py
+AlgoTuneTasks/rotate_2d/rotate_2d.py
+AlgoTuneTasks/set_cover/set_cover.py
+AlgoTuneTasks/set_cover_conflicts/set_cover_conflicts.py
+AlgoTuneTasks/sha256_hashing/sha256_hashing.py
+AlgoTuneTasks/shift_2d/shift_2d.py
+AlgoTuneTasks/shortest_path_dijkstra/shortest_path_dijkstra.py
+AlgoTuneTasks/sinkhorn/sinkhorn.py
+AlgoTuneTasks/sparse_eigenvectors_complex/sparse_eigenvectors_complex.py
+AlgoTuneTasks/sparse_lowest_eigenvalues_posdef/sparse_lowest_eigenvalues_posdef.py
+AlgoTuneTasks/sparse_lowest_eigenvectors_posdef/sparse_lowest_eigenvectors_posdef.py
+AlgoTuneTasks/sparse_pca/sparse_pca.py
+AlgoTuneTasks/spectral_clustering/spectral_clustering.py
+AlgoTuneTasks/stable_matching/stable_matching.py
+AlgoTuneTasks/svd/svd.py
+AlgoTuneTasks/svm/svm.py
+AlgoTuneTasks/sylvester_solver/sylvester_solver.py
+AlgoTuneTasks/tensor_completion_3d/tensor_completion_3d.py
+AlgoTuneTasks/toeplitz_solver/toeplitz_solver.py
+AlgoTuneTasks/tsp/tsp.py
+AlgoTuneTasks/two_eigenvalues_around_0/two_eigenvalues_around_0.py
+AlgoTuneTasks/unit_simplex_projection/unit_simplex_projection.py
+AlgoTuneTasks/upfirdn1d/upfirdn1d.py
+AlgoTuneTasks/vector_quantization/vector_quantization.py
+AlgoTuneTasks/vectorized_newton/vectorized_newton.py
+AlgoTuneTasks/vehicle_routing/vehicle_routing.py
+AlgoTuneTasks/vertex_cover/vertex_cover.py
+AlgoTuneTasks/voronoi_diagram/voronoi_diagram.py
+AlgoTuneTasks/wasserstein_dist/wasserstein_dist.py
+AlgoTuneTasks/water_filling/water_filling.py
+AlgoTuneTasks/zoom_2d/zoom_2d.py
+AlgoTuner/__init__.py
+AlgoTuner/main.py
+AlgoTuner/task_lists.py
+AlgoTuner/timing_core.py
+AlgoTuner/config/__init__.py
+AlgoTuner/config/loader.py
+AlgoTuner/config/model_config.py
+AlgoTuner/editor/__init__.py
+AlgoTuner/editor/editor_functions.py
+AlgoTuner/interfaces/__init__.py
+AlgoTuner/interfaces/error_message.py
+AlgoTuner/interfaces/llm_interface.py
+AlgoTuner/interfaces/message_summarizer.py
+AlgoTuner/interfaces/commands/__init__.py
+AlgoTuner/interfaces/commands/handlers.py
+AlgoTuner/interfaces/commands/parser.py
+AlgoTuner/interfaces/commands/types.py
+AlgoTuner/interfaces/core/__init__.py
+AlgoTuner/interfaces/core/base_interface.py
+AlgoTuner/interfaces/core/message_handler.py
+AlgoTuner/interfaces/core/spend_tracker.py
+AlgoTuner/models/__init__.py
+AlgoTuner/models/dummy_llm.py
+AlgoTuner/models/lite_llm_model.py
+AlgoTuner/models/together_model.py
+AlgoTuner/scripts/aggregate_task_statuses.py
+AlgoTuner/scripts/benchmark_two_phases.py
+AlgoTuner/scripts/evaluate_annotated.py
+AlgoTuner/scripts/generate_and_annotate.py
+AlgoTuner/security/__init__.py
+AlgoTuner/security/code_validator.py
+AlgoTuner/tests/__init__.py
+AlgoTuner/tests/conftest.py
+AlgoTuner/tests/run_tests.py
+AlgoTuner/tests/simple_test_runner.py
+AlgoTuner/tests/simulate_inputs.py
+AlgoTuner/tests/test_dataset_generation.py
+AlgoTuner/tests/test_runner.py
+AlgoTuner/utils/__init__.py
+AlgoTuner/utils/baseline_timing.py
+AlgoTuner/utils/benchmark.py
+AlgoTuner/utils/benchmark_pool.py
+AlgoTuner/utils/blas_utils.py
+AlgoTuner/utils/casting.py
+AlgoTuner/utils/code_diff.py
+AlgoTuner/utils/code_helpers.py
+AlgoTuner/utils/command_helpers.py
+AlgoTuner/utils/dace_config.py
+AlgoTuner/utils/dace_init.py
+AlgoTuner/utils/dataset_manager.py
+AlgoTuner/utils/dataset_utils.py
+AlgoTuner/utils/discover_and_list_tasks.py
+AlgoTuner/utils/error_helpers.py
+AlgoTuner/utils/error_utils.py
+AlgoTuner/utils/evaluation_stats.py
+AlgoTuner/utils/evaluator.py
+AlgoTuner/utils/file_helpers.py
+AlgoTuner/utils/initialize_solver.py
+AlgoTuner/utils/isolated_benchmark.py
+AlgoTuner/utils/k_search.py
+AlgoTuner/utils/log_utils.py
+AlgoTuner/utils/logger.py
+AlgoTuner/utils/memory_leak_patch.py
+AlgoTuner/utils/message_writer.py
+AlgoTuner/utils/multiprocessing_utils.py
+AlgoTuner/utils/precise_timing.py
+AlgoTuner/utils/problem_utils.py
+AlgoTuner/utils/process_monitor.py
+AlgoTuner/utils/process_runner.py
+AlgoTuner/utils/profiler.py
+AlgoTuner/utils/pysat_fix.py
+AlgoTuner/utils/resource_manager.py
+AlgoTuner/utils/resource_utils.py
+AlgoTuner/utils/result_utils.py
+AlgoTuner/utils/robust_tempdir.py
+AlgoTuner/utils/serialization.py
+AlgoTuner/utils/smart_result_handler.py
+AlgoTuner/utils/snippet_utils.py
+AlgoTuner/utils/solver_loader.py
+AlgoTuner/utils/streaming_json.py
+AlgoTuner/utils/thread_manager.py
+AlgoTuner/utils/time_management.py
+AlgoTuner/utils/timing_config.py
+AlgoTuner/utils/timing_manager.py
+AlgoTuner/utils/trace_cleaner.py
+AlgoTuner/utils/type_inspection.py
+AlgoTuner/utils/utils.py
+AlgoTuner/utils/validation.py
+AlgoTuner/utils/worker_diagnostics.py
+AlgoTuner/utils/worker_health.py
+AlgoTuner/utils/caching/__init__.py
+AlgoTuner/utils/caching/array_cache.py
+AlgoTuner/utils/caching/cached_loader.py
+AlgoTuner/utils/evaluator/__init__.py
+AlgoTuner/utils/evaluator/baseline_manager.py
+AlgoTuner/utils/evaluator/benchmark_runner.py
+AlgoTuner/utils/evaluator/cached_baseline_evaluator.py
+AlgoTuner/utils/evaluator/dataset.py
+AlgoTuner/utils/evaluator/evaluation_orchestrator.py
+AlgoTuner/utils/evaluator/evaluation_types.py
+AlgoTuner/utils/evaluator/failure_analyzer.py
+AlgoTuner/utils/evaluator/helpers.py
+AlgoTuner/utils/evaluator/legacy_adapter.py
+AlgoTuner/utils/evaluator/loader.py
+AlgoTuner/utils/evaluator/main.py
+AlgoTuner/utils/evaluator/memory_optimizer.py
+AlgoTuner/utils/evaluator/process_pool.py
+AlgoTuner/utils/evaluator/result_aggregator.py
+AlgoTuner/utils/evaluator/runner.py
+AlgoTuner/utils/evaluator/scoring.py
+AlgoTuner/utils/evaluator/solver_executor.py
+AlgoTuner/utils/evaluator/streaming_iterator.py
+AlgoTuner/utils/evaluator/validation_context.py
+AlgoTuner/utils/evaluator/validation_pipeline.py
+algotune.egg-info/PKG-INFO
+algotune.egg-info/SOURCES.txt
+algotune.egg-info/dependency_links.txt
+algotune.egg-info/requires.txt
+algotune.egg-info/top_level.txt
+results/Claude Opus 4/aes_gcm_encryption/solver.py
+results/Claude Opus 4/affine_transform_2d/solver.py
+results/Claude Opus 4/aircraft_wing_design/solver.py
+results/Claude Opus 4/articulation_points/solver.py
+results/Claude Opus 4/base64_encoding/solver.py
+results/Claude Opus 4/battery_scheduling/solver.py
+results/Claude Opus 4/btsp/solver.py
+results/Claude Opus 4/capacitated_facility_location/solver.py
+results/Claude Opus 4/chacha_encryption/solver.py
+results/Claude Opus 4/channel_capacity/solver.py
+results/Claude Opus 4/chebyshev_center/solver.py
+results/Claude Opus 4/cholesky_factorization/solver.py
+results/Claude Opus 4/clustering_outliers/solver.py
+results/Claude Opus 4/communicability/solver.py
+results/Claude Opus 4/convex_hull/solver.py
+results/Claude Opus 4/convolve2d_full_fill/solver.py
+results/Claude Opus 4/convolve_1d/solver.py
+results/Claude Opus 4/correlate2d_full_fill/solver.py
+results/Claude Opus 4/correlate_1d/solver.py
+results/Claude Opus 4/count_connected_components/solver.py
+results/Claude Opus 4/count_riemann_zeta_zeros/solver.py
+results/Claude Opus 4/cumulative_simpson_1d/solver.py
+results/Claude Opus 4/cumulative_simpson_multid/solver.py
+results/Claude Opus 4/cvar_projection/solver.py
+results/Claude Opus 4/cyclic_independent_set/solver.py
+results/Claude Opus 4/dct_type_I_scipy_fftpack/solver.py
+results/Claude Opus 4/delaunay/solver.py
+results/Claude Opus 4/dijkstra_from_indices/solver.py
+results/Claude Opus 4/discrete_log/solver.py
+results/Claude Opus 4/dst_type_II_scipy_fftpack/solver.py
+results/Claude Opus 4/dynamic_assortment_planning/solver.py
+results/Claude Opus 4/earth_movers_distance/solver.py
+results/Claude Opus 4/edge_expansion/solver.py
+results/Claude Opus 4/eigenvalues_complex/solver.py
+results/Claude Opus 4/eigenvalues_real/solver.py
+results/Claude Opus 4/eigenvectors_complex/solver.py
+results/Claude Opus 4/eigenvectors_real/solver.py
+results/Claude Opus 4/elementwise_integration/solver.py
+results/Claude Opus 4/feedback_controller_design/solver.py
+results/Claude Opus 4/fft_cmplx_scipy_fftpack/solver.py
+results/Claude Opus 4/fft_convolution/solver.py
+results/Claude Opus 4/fft_real_scipy_fftpack/solver.py
+results/Claude Opus 4/firls/solver.py
+results/Claude Opus 4/generalized_eigenvalues_complex/solver.py
+results/Claude Opus 4/generalized_eigenvalues_real/solver.py
+results/Claude Opus 4/generalized_eigenvectors_complex/solver.py
+results/Claude Opus 4/generalized_eigenvectors_real/solver.py
+results/Claude Opus 4/graph_coloring_assign/solver.py
+results/Claude Opus 4/graph_global_efficiency/solver.py
+results/Claude Opus 4/graph_isomorphism/solver.py
+results/Claude Opus 4/graph_laplacian/solver.py
+results/Claude Opus 4/group_lasso/solver.py
+results/Claude Opus 4/gzip_compression/setup.py
+results/Claude Opus 4/gzip_compression/solver.py
+results/Claude Opus 4/integer_factorization/solver.py
+results/Claude Opus 4/job_shop_scheduling/solver.py
+results/Claude Opus 4/kalman_filter/solver.py
+results/Claude Opus 4/kcenters/solver.py
+results/Claude Opus 4/kd_tree/solver.py
+results/Claude Opus 4/kernel_density_estimation/solver.py
+results/Claude Opus 4/kmeans/solver.py
+results/Claude Opus 4/ks_test_2samp/solver.py
+results/Claude Opus 4/l0_pruning/solver.py
+results/Claude Opus 4/l1_pruning/solver.py
+results/Claude Opus 4/lasso/solver.py
+results/Claude Opus 4/least_squares/solver.py
+results/Claude Opus 4/linear_system_solver/solver.py
+results/Claude Opus 4/lp_box/solver.py
+results/Claude Opus 4/lp_centering/solver.py
+results/Claude Opus 4/lp_mdp/solver.py
+results/Claude Opus 4/lqr/solver.py
+results/Claude Opus 4/lti_simulation/solver.py
+results/Claude Opus 4/lu_factorization/solver.py
+results/Claude Opus 4/lyapunov_stability/solver.py
+results/Claude Opus 4/markowitz/solver.py
+results/Claude Opus 4/matrix_completion/solver.py
+results/Claude Opus 4/matrix_exponential/solver.py
+results/Claude Opus 4/matrix_exponential_sparse/solver.py
+results/Claude Opus 4/matrix_multiplication/solver.py
+results/Claude Opus 4/matrix_sqrt/solver.py
+results/Claude Opus 4/max_clique_cpsat/solver.py
+results/Claude Opus 4/max_common_subgraph/solver.py
+results/Claude Opus 4/max_flow_min_cost/solver.py
+results/Claude Opus 4/max_independent_set_cpsat/solver.py
+results/Claude Opus 4/max_weighted_independent_set/solver.py
+results/Claude Opus 4/min_dominating_set/solver.py
+results/Claude Opus 4/min_weight_assignment/solver.py
+results/Claude Opus 4/minimum_spanning_tree/solver.py
+results/Claude Opus 4/minimum_volume_ellipsoid/solver.py
+results/Claude Opus 4/multi_dim_knapsack/solver.py
+results/Claude Opus 4/nmf/solver.py
+results/Claude Opus 4/ode_brusselator/solver.py
+results/Claude Opus 4/ode_fitzhughnagumo/solver.py
+results/Claude Opus 4/ode_hires/solver.py
+results/Claude Opus 4/ode_hodgkinhuxley/solver.py
+results/Claude Opus 4/ode_lorenz96_nonchaotic/solver.py
+results/Claude Opus 4/ode_lotkavolterra/solver.py
+results/Claude Opus 4/ode_nbodyproblem/solver.py
+results/Claude Opus 4/ode_seirs/solver.py
+results/Claude Opus 4/ode_stiff_robertson/solver.py
+results/Claude Opus 4/ode_stiff_vanderpol/solver.py
+results/Claude Opus 4/odr/solver.py
+results/Claude Opus 4/optimal_advertising/solver.py
+results/Claude Opus 4/outer_product/solver.py
+results/Claude Opus 4/pagerank/solver.py
+results/Claude Opus 4/pca/solver.py
+results/Claude Opus 4/pde_burgers1d/solver.py
+results/Claude Opus 4/pde_heat1d/solver.py
+results/Claude Opus 4/polynomial_mixed/solver.py
+results/Claude Opus 4/polynomial_real/solver.py
+results/Claude Opus 4/power_control/solver.py
+results/Claude Opus 4/procrustes/solver.py
+results/Claude Opus 4/psd_cone_projection/solver.py
+results/Claude Opus 4/qp/solver.py
+results/Claude Opus 4/qr_factorization/solver.py
+results/Claude Opus 4/quantile_regression/solver.py
+results/Claude Opus 4/queens_with_obstacles/solver.py
+results/Claude Opus 4/queuing/solver.py
+results/Claude Opus 4/qz_factorization/solver.py
+results/Claude Opus 4/randomized_svd/solver.py
+results/Claude Opus 4/rbf_interpolation/solver.py
+results/Claude Opus 4/rectanglepacking/solver.py
+results/Claude Opus 4/robust_kalman_filter/solver.py
+results/Claude Opus 4/robust_linear_program/solver.py
+results/Claude Opus 4/rocket_landing_optimization/solver.py
+results/Claude Opus 4/rotate_2d/solver.py
+results/Claude Opus 4/set_cover/solver.py
+results/Claude Opus 4/set_cover_conflicts/solver.py
+results/Claude Opus 4/sha256_hashing/solver.py
+results/Claude Opus 4/shift_2d/solver.py
+results/Claude Opus 4/shortest_path_dijkstra/solver.py
+results/Claude Opus 4/sinkhorn/solver.py
+results/Claude Opus 4/sparse_eigenvectors_complex/solver.py
+results/Claude Opus 4/sparse_lowest_eigenvalues_posdef/solver.py
+results/Claude Opus 4/sparse_lowest_eigenvectors_posdef/solver.py
+results/Claude Opus 4/sparse_pca/solver.py
+results/Claude Opus 4/spectral_clustering/solver.py
+results/Claude Opus 4/stable_matching/solver.py
+results/Claude Opus 4/svd/solver.py
+results/Claude Opus 4/svm/solver.py
+results/Claude Opus 4/sylvester_solver/solver.py
+results/Claude Opus 4/tensor_completion_3d/solver.py
+results/Claude Opus 4/toeplitz_solver/solver.py
+results/Claude Opus 4/tsp/solver.py
+results/Claude Opus 4/two_eigenvalues_around_0/solver.py
+results/Claude Opus 4/unit_simplex_projection/solver.py
+results/Claude Opus 4/upfirdn1d/solver.py
+results/Claude Opus 4/vector_quantization/solver.py
+results/Claude Opus 4/vectorized_newton/solver.py
+results/Claude Opus 4/vehicle_routing/solver.py
+results/Claude Opus 4/vertex_cover/solver.py
+results/Claude Opus 4/voronoi_diagram/solver.py
+results/Claude Opus 4/wasserstein_dist/solver.py
+results/Claude Opus 4/water_filling/solver.py
+results/Claude Opus 4/zoom_2d/solver.py
+results/GPT-5 Pro (medium)/affine_transform_2d/solver.py
+results/GPT-5 Pro (medium)/aircraft_wing_design/solver.py
+results/GPT-5 Pro (medium)/articulation_points/solver.py
+results/GPT-5 Pro (medium)/base64_encoding/solver.py
+results/GPT-5 Pro (medium)/battery_scheduling/solver.py
+results/GPT-5 Pro (medium)/btsp/solver.py
+results/GPT-5 Pro (medium)/capacitated_facility_location/solver.py
+results/GPT-5 Pro (medium)/chacha_encryption/solver.py
+results/GPT-5 Pro (medium)/channel_capacity/solver.py
+results/GPT-5 Pro (medium)/chebyshev_center/solver.py
+results/GPT-5 Pro (medium)/cholesky_factorization/solver.py
+results/GPT-5 Pro (medium)/clustering_outliers/solver.py
+results/GPT-5 Pro (medium)/communicability/solver.py
+results/GPT-5 Pro (medium)/convex_hull/solver.py
+results/GPT-5 Pro (medium)/convolve2d_full_fill/solver.py
+results/GPT-5 Pro (medium)/convolve_1d/solver.py
+results/GPT-5 Pro (medium)/correlate2d_full_fill/solver.py
+results/GPT-5 Pro (medium)/correlate_1d/solver.py
+results/GPT-5 Pro (medium)/count_connected_components/solver.py
+results/GPT-5 Pro (medium)/count_riemann_zeta_zeros/solver.py
+results/GPT-5 Pro (medium)/cumulative_simpson_1d/solver.py
+results/GPT-5 Pro (medium)/cumulative_simpson_multid/solver.py
+results/GPT-5 Pro (medium)/cvar_projection/solver.py
+results/GPT-5 Pro (medium)/cyclic_independent_set/solver.py
+results/GPT-5 Pro (medium)/dct_type_I_scipy_fftpack/solver.py
+results/GPT-5 Pro (medium)/delaunay/solver.py
+results/GPT-5 Pro (medium)/dijkstra_from_indices/solver.py
+results/GPT-5 Pro (medium)/discrete_log/solver.py
+results/GPT-5 Pro (medium)/dst_type_II_scipy_fftpack/solver.py
+results/GPT-5 Pro (medium)/dynamic_assortment_planning/solver.py
+results/GPT-5 Pro (medium)/earth_movers_distance/solver.py
+results/GPT-5 Pro (medium)/edge_expansion/solver.py
+results/GPT-5 Pro (medium)/eigenvalues_complex/solver.py
+results/GPT-5 Pro (medium)/eigenvalues_real/solver.py
+results/GPT-5 Pro (medium)/eigenvectors_complex/solver.py
+results/GPT-5 Pro (medium)/eigenvectors_real/solver.py
+results/GPT-5 Pro (medium)/elementwise_integration/solver.py
+results/GPT-5 Pro (medium)/feedback_controller_design/solver.py
+results/GPT-5 Pro (medium)/fft_cmplx_scipy_fftpack/solver.py
+results/GPT-5 Pro (medium)/fft_convolution/solver.py
+results/GPT-5 Pro (medium)/fft_real_scipy_fftpack/solver.py
+results/GPT-5 Pro (medium)/firls/solver.py
+results/GPT-5 Pro (medium)/generalized_eigenvalues_complex/solver.py
+results/GPT-5 Pro (medium)/generalized_eigenvalues_real/solver.py
+results/GPT-5 Pro (medium)/generalized_eigenvectors_complex/solver.py
+results/GPT-5 Pro (medium)/generalized_eigenvectors_real/solver.py
+results/GPT-5 Pro (medium)/graph_coloring_assign/solver.py
+results/GPT-5 Pro (medium)/graph_global_efficiency/solver.py
+results/GPT-5 Pro (medium)/graph_isomorphism/solver.py
+results/GPT-5 Pro (medium)/group_lasso/solver.py
+results/GPT-5 Pro (medium)/gzip_compression/solver.py
+results/GPT-5 Pro (medium)/integer_factorization/solver.py
+results/GPT-5 Pro (medium)/job_shop_scheduling/solver.py
+results/GPT-5 Pro (medium)/kcenters/solver.py
+results/GPT-5 Pro (medium)/kd_tree/solver.py
+results/GPT-5 Pro (medium)/kernel_density_estimation/solver.py
+results/GPT-5 Pro (medium)/kmeans/solver.py
+results/GPT-5 Pro (medium)/ks_test_2samp/solver.py
+results/GPT-5 Pro (medium)/l0_pruning/solver.py
+results/GPT-5 Pro (medium)/l1_pruning/solver.py
+results/GPT-5 Pro (medium)/lasso/solver.py
+results/GPT-5 Pro (medium)/least_squares/solver.py
+results/GPT-5 Pro (medium)/linear_system_solver/solver.py
+results/GPT-5 Pro (medium)/lp_box/solver.py
+results/GPT-5 Pro (medium)/lp_centering/solver.py
+results/GPT-5 Pro (medium)/lp_mdp/solver.py
+results/GPT-5 Pro (medium)/lqr/solver.py
+results/GPT-5 Pro (medium)/lti_simulation/solver.py
+results/GPT-5 Pro (medium)/lu_factorization/solver.py
+results/GPT-5 Pro (medium)/lyapunov_stability/solver.py
+results/GPT-5 Pro (medium)/markowitz/solver.py
+results/GPT-5 Pro (medium)/matrix_completion/solver.py
+results/GPT-5 Pro (medium)/matrix_exponential/solver.py
+results/GPT-5 Pro (medium)/matrix_exponential_sparse/solver.py
+results/GPT-5 Pro (medium)/matrix_multiplication/solver.py
+results/GPT-5 Pro (medium)/max_clique_cpsat/solver.py
+results/GPT-5 Pro (medium)/max_common_subgraph/solver.py
+results/GPT-5 Pro (medium)/max_flow_min_cost/solver.py
+results/GPT-5 Pro (medium)/max_independent_set_cpsat/solver.py
+results/GPT-5 Pro (medium)/max_weighted_independent_set/solver.py
+results/GPT-5 Pro (medium)/min_weight_assignment/solver.py
+results/GPT-5 Pro (medium)/minimum_spanning_tree/solver.py
+results/GPT-5 Pro (medium)/minimum_volume_ellipsoid/solver.py
+results/GPT-5 Pro (medium)/multi_dim_knapsack/solver.py
+results/GPT-5 Pro (medium)/nmf/solver.py
+results/GPT-5 Pro (medium)/ode_brusselator/solver.py
+results/GPT-5 Pro (medium)/ode_fitzhughnagumo/solver.py
+results/GPT-5 Pro (medium)/ode_hires/solver.py
+results/GPT-5 Pro (medium)/ode_hodgkinhuxley/solver.py
+results/GPT-5 Pro (medium)/ode_lorenz96_nonchaotic/solver.py
+results/GPT-5 Pro (medium)/ode_lotkavolterra/solver.py
+results/GPT-5 Pro (medium)/ode_nbodyproblem/solver.py
+results/GPT-5 Pro (medium)/ode_seirs/solver.py
+results/GPT-5 Pro (medium)/ode_stiff_robertson/solver.py
+results/GPT-5 Pro (medium)/ode_stiff_vanderpol/solver.py
+results/GPT-5 Pro (medium)/odr/solver.py
+results/GPT-5 Pro (medium)/optimal_advertising/solver.py
+results/GPT-5 Pro (medium)/outer_product/solver.py
+results/GPT-5 Pro (medium)/pagerank/solver.py
+results/GPT-5 Pro (medium)/pca/solver.py
+results/GPT-5 Pro (medium)/pde_burgers1d/solver.py
+results/GPT-5 Pro (medium)/pde_heat1d/solver.py
+results/GPT-5 Pro (medium)/polynomial_mixed/solver.py
+results/GPT-5 Pro (medium)/polynomial_real/solver.py
+results/GPT-5 Pro (medium)/power_control/solver.py
+results/GPT-5 Pro (medium)/procrustes/solver.py
+results/GPT-5 Pro (medium)/psd_cone_projection/solver.py
+results/GPT-5 Pro (medium)/qp/solver.py
+results/GPT-5 Pro (medium)/qr_factorization/solver.py
+results/GPT-5 Pro (medium)/quantile_regression/solver.py
+results/GPT-5 Pro (medium)/queens_with_obstacles/solver.py
+results/GPT-5 Pro (medium)/queuing/solver.py
+results/GPT-5 Pro (medium)/qz_factorization/solver.py
+results/GPT-5 Pro (medium)/randomized_svd/solver.py
+results/GPT-5 Pro (medium)/rbf_interpolation/solver.py
+results/GPT-5 Pro (medium)/rectanglepacking/solver.py
+results/GPT-5 Pro (medium)/robust_kalman_filter/solver.py
+results/GPT-5 Pro (medium)/robust_linear_program/solver.py
+results/GPT-5 Pro (medium)/rocket_landing_optimization/solver.py
+results/GPT-5 Pro (medium)/set_cover_conflicts/solver.py
+results/GPT-5 Pro (medium)/sha256_hashing/solver.py
+results/GPT-5 Pro (medium)/shift_2d/solver.py
+results/GPT-5 Pro (medium)/shortest_path_dijkstra/solver.py
+results/GPT-5 Pro (medium)/sinkhorn/solver.py
+results/GPT-5 Pro (medium)/sparse_eigenvectors_complex/solver.py
+results/GPT-5 Pro (medium)/sparse_lowest_eigenvalues_posdef/solver.py
+results/GPT-5 Pro (medium)/sparse_lowest_eigenvectors_posdef/solver.py
+results/GPT-5 Pro (medium)/sparse_pca/solver.py
+results/GPT-5 Pro (medium)/spectral_clustering/solver.py
+results/GPT-5 Pro (medium)/stable_matching/solver.py
+results/GPT-5 Pro (medium)/svd/solver.py
+results/GPT-5 Pro (medium)/svm/solver.py
+results/GPT-5 Pro (medium)/sylvester_solver/solver.py
+results/GPT-5 Pro (medium)/toeplitz_solver/solver.py
+results/GPT-5 Pro (medium)/tsp/solver.py
+results/GPT-5 Pro (medium)/two_eigenvalues_around_0/solver.py
+results/GPT-5 Pro (medium)/unit_simplex_projection/solver.py
+results/GPT-5 Pro (medium)/upfirdn1d/solver.py
+results/GPT-5 Pro (medium)/vector_quantization/solver.py
+results/GPT-5 Pro (medium)/vectorized_newton/solver.py
+results/GPT-5 Pro (medium)/vehicle_routing/solver.py
+results/GPT-5 Pro (medium)/vertex_cover/solver.py
+results/GPT-5 Pro (medium)/voronoi_diagram/solver.py
+results/GPT-5 Pro (medium)/wasserstein_dist/solver.py
+results/GPT-5 Pro (medium)/water_filling/solver.py
+results/GPT-5 Pro (medium)/zoom_2d/solver.py
+results/GPT-5-mini/aes_gcm_encryption/solver.py
+results/GPT-5-mini/affine_transform_2d/solver.py
+results/GPT-5-mini/aircraft_wing_design/solver.py
+results/GPT-5-mini/articulation_points/setup.py
+results/GPT-5-mini/articulation_points/solver.py
+results/GPT-5-mini/base64_encoding/solver.py
+results/GPT-5-mini/battery_scheduling/solver.py
+results/GPT-5-mini/btsp/solver.py
+results/GPT-5-mini/capacitated_facility_location/solver.py
+results/GPT-5-mini/chacha_encryption/solver.py
+results/GPT-5-mini/channel_capacity/solver.py
+results/GPT-5-mini/chebyshev_center/solver.py
+results/GPT-5-mini/cholesky_factorization/solver.py
+results/GPT-5-mini/clustering_outliers/solver.py
+results/GPT-5-mini/communicability/solver.py
+results/GPT-5-mini/convex_hull/solver.py
+results/GPT-5-mini/convolve2d_full_fill/solver.py
+results/GPT-5-mini/convolve_1d/solver.py
+results/GPT-5-mini/correlate2d_full_fill/solver.py
+results/GPT-5-mini/correlate_1d/solver.py
+results/GPT-5-mini/count_connected_components/solver.py
+results/GPT-5-mini/count_riemann_zeta_zeros/solver.py
+results/GPT-5-mini/cumulative_simpson_1d/solver.py
+results/GPT-5-mini/cumulative_simpson_multid/solver.py
+results/GPT-5-mini/cvar_projection/solver.py
+results/GPT-5-mini/cyclic_independent_set/solver.py
+results/GPT-5-mini/dct_type_I_scipy_fftpack/solver.py
+results/GPT-5-mini/delaunay/solver.py
+results/GPT-5-mini/dijkstra_from_indices/solver.py
+results/GPT-5-mini/discrete_log/solver.py
+results/GPT-5-mini/dst_type_II_scipy_fftpack/solver.py
+results/GPT-5-mini/dynamic_assortment_planning/solver.py
+results/GPT-5-mini/earth_movers_distance/solver.py
+results/GPT-5-mini/edge_expansion/solver.py
+results/GPT-5-mini/eigenvalues_complex/solver.py
+results/GPT-5-mini/eigenvalues_real/solver.py
+results/GPT-5-mini/eigenvectors_complex/solver.py
+results/GPT-5-mini/eigenvectors_real/solver.py
+results/GPT-5-mini/elementwise_integration/solver.py
+results/GPT-5-mini/feedback_controller_design/solver.py
+results/GPT-5-mini/fft_cmplx_scipy_fftpack/solver.py
+results/GPT-5-mini/fft_convolution/solver.py
+results/GPT-5-mini/fft_real_scipy_fftpack/solver.py
+results/GPT-5-mini/firls/solver.py
+results/GPT-5-mini/generalized_eigenvalues_complex/solver.py
+results/GPT-5-mini/generalized_eigenvalues_real/solver.py
+results/GPT-5-mini/generalized_eigenvectors_complex/solver.py
+results/GPT-5-mini/generalized_eigenvectors_real/solver.py
+results/GPT-5-mini/graph_coloring_assign/solver.py
+results/GPT-5-mini/graph_global_efficiency/solver.py
+results/GPT-5-mini/graph_isomorphism/solver.py
+results/GPT-5-mini/graph_laplacian/solver.py
+results/GPT-5-mini/group_lasso/solver.py
+results/GPT-5-mini/gzip_compression/solver.py
+results/GPT-5-mini/integer_factorization/solver.py
+results/GPT-5-mini/job_shop_scheduling/solver.py
+results/GPT-5-mini/kalman_filter/solver.py
+results/GPT-5-mini/kcenters/solver.py
+results/GPT-5-mini/kd_tree/solver.py
+results/GPT-5-mini/kernel_density_estimation/solver.py
+results/GPT-5-mini/kmeans/solver.py
+results/GPT-5-mini/ks_test_2samp/solver.py
+results/GPT-5-mini/l0_pruning/solver.py
+results/GPT-5-mini/l1_pruning/solver.py
+results/GPT-5-mini/lasso/solver.py
+results/GPT-5-mini/least_squares/solver.py
+results/GPT-5-mini/linear_system_solver/solver.py
+results/GPT-5-mini/lp_box/solver.py
+results/GPT-5-mini/lp_centering/solver.py
+results/GPT-5-mini/lp_mdp/solver.py
+results/GPT-5-mini/lqr/solver.py
+results/GPT-5-mini/lti_simulation/solver.py
+results/GPT-5-mini/lu_factorization/solver.py
+results/GPT-5-mini/lyapunov_stability/solver.py
+results/GPT-5-mini/markowitz/solver.py
+results/GPT-5-mini/matrix_completion/solver.py
+results/GPT-5-mini/matrix_exponential/solver.py
+results/GPT-5-mini/matrix_exponential_sparse/solver.py
+results/GPT-5-mini/matrix_multiplication/solver.py
+results/GPT-5-mini/matrix_sqrt/solver.py
+results/GPT-5-mini/max_clique_cpsat/solver.py
+results/GPT-5-mini/max_common_subgraph/solver.py
+results/GPT-5-mini/max_flow_min_cost/solver.py
+results/GPT-5-mini/max_independent_set_cpsat/solver.py
+results/GPT-5-mini/max_weighted_independent_set/solver.py
+results/GPT-5-mini/min_dominating_set/solver.py
+results/GPT-5-mini/min_weight_assignment/solver.py
+results/GPT-5-mini/minimum_spanning_tree/solver.py
+results/GPT-5-mini/minimum_volume_ellipsoid/solver.py
+results/GPT-5-mini/multi_dim_knapsack/solver.py
+results/GPT-5-mini/nmf/solver.py
+results/GPT-5-mini/ode_brusselator/solver.py
+results/GPT-5-mini/ode_fitzhughnagumo/solver.py
+results/GPT-5-mini/ode_hires/solver.py
+results/GPT-5-mini/ode_hodgkinhuxley/solver.py
+results/GPT-5-mini/ode_lorenz96_nonchaotic/solver.py
+results/GPT-5-mini/ode_lotkavolterra/solver.py
+results/GPT-5-mini/ode_nbodyproblem/solver.py
+results/GPT-5-mini/ode_seirs/solver.py
+results/GPT-5-mini/ode_stiff_robertson/solver.py
+results/GPT-5-mini/ode_stiff_vanderpol/solver.py
+results/GPT-5-mini/odr/solver.py
+results/GPT-5-mini/optimal_advertising/solver.py
+results/GPT-5-mini/outer_product/solver.py
+results/GPT-5-mini/pagerank/solver.py
+results/GPT-5-mini/pca/solver.py
+results/GPT-5-mini/pde_burgers1d/solver.py
+results/GPT-5-mini/pde_heat1d/solver.py
+results/GPT-5-mini/polynomial_mixed/solver.py
+results/GPT-5-mini/polynomial_real/solver.py
+results/GPT-5-mini/power_control/solver.py
+results/GPT-5-mini/procrustes/solver.py
+results/GPT-5-mini/psd_cone_projection/solver.py
+results/GPT-5-mini/qp/solver.py
+results/GPT-5-mini/qr_factorization/solver.py
+results/GPT-5-mini/quantile_regression/solver.py
+results/GPT-5-mini/queens_with_obstacles/solver.py
+results/GPT-5-mini/queuing/solver.py
+results/GPT-5-mini/qz_factorization/solver.py
+results/GPT-5-mini/randomized_svd/solver.py
+results/GPT-5-mini/rbf_interpolation/solver.py
+results/GPT-5-mini/rectanglepacking/solver.py
+results/GPT-5-mini/robust_kalman_filter/solver.py
+results/GPT-5-mini/robust_linear_program/solver.py
+results/GPT-5-mini/rocket_landing_optimization/solver.py
+results/GPT-5-mini/rotate_2d/solver.py
+results/GPT-5-mini/set_cover/solver.py
+results/GPT-5-mini/set_cover_conflicts/solver.py
+results/GPT-5-mini/sha256_hashing/solver.py
+results/GPT-5-mini/shift_2d/solver.py
+results/GPT-5-mini/shortest_path_dijkstra/solver.py
+results/GPT-5-mini/sinkhorn/solver.py
+results/GPT-5-mini/sparse_eigenvectors_complex/solver.py
+results/GPT-5-mini/sparse_lowest_eigenvalues_posdef/solver.py
+results/GPT-5-mini/sparse_lowest_eigenvectors_posdef/solver.py
+results/GPT-5-mini/sparse_pca/solver.py
+results/GPT-5-mini/spectral_clustering/solver.py
+results/GPT-5-mini/stable_matching/setup.py
+results/GPT-5-mini/stable_matching/solver.py
+results/GPT-5-mini/svd/solver.py
+results/GPT-5-mini/svm/solver.py
+results/GPT-5-mini/sylvester_solver/solver.py
+results/GPT-5-mini/tensor_completion_3d/solver.py
+results/GPT-5-mini/toeplitz_solver/solver.py
+results/GPT-5-mini/tsp/solver.py
+results/GPT-5-mini/two_eigenvalues_around_0/solver.py
+results/GPT-5-mini/unit_simplex_projection/solver.py
+results/GPT-5-mini/upfirdn1d/solver.py
+results/GPT-5-mini/vector_quantization/solver.py
+results/GPT-5-mini/vectorized_newton/solver.py
+results/GPT-5-mini/vehicle_routing/solver.py
+results/GPT-5-mini/vertex_cover/solver.py
+results/GPT-5-mini/voronoi_diagram/solver.py
+results/GPT-5-mini/wasserstein_dist/setup.py
+results/GPT-5-mini/wasserstein_dist/solver.py
+results/GPT-5-mini/water_filling/solver.py
+results/GPT-5-mini/zoom_2d/solver.py
+results/GPT-5/aes_gcm_encryption/solver.py
+results/GPT-5/affine_transform_2d/solver.py
+results/GPT-5/aircraft_wing_design/solver.py
+results/GPT-5/articulation_points/setup.py
+results/GPT-5/articulation_points/solver.py
+results/GPT-5/base64_encoding/solver.py
+results/GPT-5/battery_scheduling/solver.py
+results/GPT-5/btsp/solver.py
+results/GPT-5/capacitated_facility_location/solver.py
+results/GPT-5/chacha_encryption/solver.py
+results/GPT-5/channel_capacity/solver.py
+results/GPT-5/chebyshev_center/solver.py
+results/GPT-5/cholesky_factorization/solver.py
+results/GPT-5/clustering_outliers/solver.py
+results/GPT-5/communicability/solver.py
+results/GPT-5/convex_hull/solver.py
+results/GPT-5/convolve2d_full_fill/solver.py
+results/GPT-5/convolve_1d/solver.py
+results/GPT-5/correlate2d_full_fill/solver.py
+results/GPT-5/correlate_1d/solver.py
+results/GPT-5/count_connected_components/solver.py
+results/GPT-5/count_riemann_zeta_zeros/solver.py
+results/GPT-5/cumulative_simpson_1d/solver.py
+results/GPT-5/cumulative_simpson_multid/solver.py
+results/GPT-5/cvar_projection/solver.py
+results/GPT-5/cyclic_independent_set/solver.py
+results/GPT-5/dct_type_I_scipy_fftpack/solver.py
+results/GPT-5/delaunay/solver.py
+results/GPT-5/dijkstra_from_indices/solver.py
+results/GPT-5/discrete_log/solver.py
+results/GPT-5/dst_type_II_scipy_fftpack/solver.py
+results/GPT-5/dynamic_assortment_planning/solver.py
+results/GPT-5/earth_movers_distance/solver.py
+results/GPT-5/edge_expansion/solver.py
+results/GPT-5/eigenvalues_complex/solver.py
+results/GPT-5/eigenvalues_real/solver.py
+results/GPT-5/eigenvectors_complex/solver.py
+results/GPT-5/eigenvectors_real/solver.py
+results/GPT-5/elementwise_integration/solver.py
+results/GPT-5/feedback_controller_design/solver.py
+results/GPT-5/fft_cmplx_scipy_fftpack/solver.py
+results/GPT-5/fft_convolution/solver.py
+results/GPT-5/fft_real_scipy_fftpack/solver.py
+results/GPT-5/firls/solver.py
+results/GPT-5/generalized_eigenvalues_complex/solver.py
+results/GPT-5/generalized_eigenvalues_real/solver.py
+results/GPT-5/generalized_eigenvectors_complex/solver.py
+results/GPT-5/generalized_eigenvectors_real/solver.py
+results/GPT-5/graph_coloring_assign/solver.py
+results/GPT-5/graph_global_efficiency/solver.py
+results/GPT-5/graph_isomorphism/solver.py
+results/GPT-5/graph_laplacian/solver.py
+results/GPT-5/group_lasso/solver.py
+results/GPT-5/gzip_compression/solver.py
+results/GPT-5/integer_factorization/solver.py
+results/GPT-5/job_shop_scheduling/solver.py
+results/GPT-5/kalman_filter/solver.py
+results/GPT-5/kcenters/solver.py
+results/GPT-5/kd_tree/solver.py
+results/GPT-5/kernel_density_estimation/solver.py
+results/GPT-5/kmeans/solver.py
+results/GPT-5/ks_test_2samp/solver.py
+results/GPT-5/l0_pruning/solver.py
+results/GPT-5/l1_pruning/solver.py
+results/GPT-5/lasso/solver.py
+results/GPT-5/least_squares/solver.py
+results/GPT-5/linear_system_solver/solver.py
+results/GPT-5/lp_box/solver.py
+results/GPT-5/lp_centering/solver.py
+results/GPT-5/lp_mdp/solver.py
+results/GPT-5/lqr/solver.py
+results/GPT-5/lti_simulation/solver.py
+results/GPT-5/lu_factorization/solver.py
+results/GPT-5/lyapunov_stability/solver.py
+results/GPT-5/markowitz/solver.py
+results/GPT-5/matrix_completion/solver.py
+results/GPT-5/matrix_exponential/solver.py
+results/GPT-5/matrix_exponential_sparse/solver.py
+results/GPT-5/matrix_multiplication/solver.py
+results/GPT-5/matrix_sqrt/solver.py
+results/GPT-5/max_clique_cpsat/solver.py
+results/GPT-5/max_common_subgraph/solver.py
+results/GPT-5/max_flow_min_cost/solver.py
+results/GPT-5/max_independent_set_cpsat/solver.py
+results/GPT-5/max_weighted_independent_set/solver.py
+results/GPT-5/min_dominating_set/solver.py
+results/GPT-5/min_weight_assignment/solver.py
+results/GPT-5/minimum_spanning_tree/solver.py
+results/GPT-5/minimum_volume_ellipsoid/solver.py
+results/GPT-5/multi_dim_knapsack/solver.py
+results/GPT-5/nmf/solver.py
+results/GPT-5/ode_brusselator/solver.py
+results/GPT-5/ode_fitzhughnagumo/solver.py
+results/GPT-5/ode_hires/solver.py
+results/GPT-5/ode_hodgkinhuxley/solver.py
+results/GPT-5/ode_lorenz96_nonchaotic/solver.py
+results/GPT-5/ode_lotkavolterra/solver.py
+results/GPT-5/ode_nbodyproblem/solver.py
+results/GPT-5/ode_seirs/solver.py
+results/GPT-5/ode_stiff_robertson/solver.py
+results/GPT-5/ode_stiff_vanderpol/solver.py
+results/GPT-5/odr/solver.py
+results/GPT-5/optimal_advertising/solver.py
+results/GPT-5/outer_product/solver.py
+results/GPT-5/pagerank/solver.py
+results/GPT-5/pca/solver.py
+results/GPT-5/pde_burgers1d/solver.py
+results/GPT-5/pde_heat1d/solver.py
+results/GPT-5/polynomial_mixed/solver.py
+results/GPT-5/polynomial_real/solver.py
+results/GPT-5/power_control/solver.py
+results/GPT-5/procrustes/solver.py
+results/GPT-5/psd_cone_projection/solver.py
+results/GPT-5/qp/solver.py
+results/GPT-5/qr_factorization/solver.py
+results/GPT-5/quantile_regression/solver.py
+results/GPT-5/queens_with_obstacles/solver.py
+results/GPT-5/queuing/solver.py
+results/GPT-5/qz_factorization/solver.py
+results/GPT-5/randomized_svd/solver.py
+results/GPT-5/rbf_interpolation/solver.py
+results/GPT-5/rectanglepacking/solver.py
+results/GPT-5/robust_kalman_filter/solver.py
+results/GPT-5/robust_linear_program/solver.py
+results/GPT-5/rocket_landing_optimization/solver.py
+results/GPT-5/rotate_2d/solver.py
+results/GPT-5/set_cover/solver.py
+results/GPT-5/set_cover_conflicts/solver.py
+results/GPT-5/sha256_hashing/solver.py
+results/GPT-5/shift_2d/solver.py
+results/GPT-5/shortest_path_dijkstra/solver.py
+results/GPT-5/sinkhorn/solver.py
+results/GPT-5/sparse_eigenvectors_complex/solver.py
+results/GPT-5/sparse_lowest_eigenvalues_posdef/solver.py
+results/GPT-5/sparse_lowest_eigenvectors_posdef/solver.py
+results/GPT-5/sparse_pca/solver.py
+results/GPT-5/spectral_clustering/solver.py
+results/GPT-5/stable_matching/setup.py
+results/GPT-5/stable_matching/solver.py
+results/GPT-5/svd/solver.py
+results/GPT-5/svm/solver.py
+results/GPT-5/sylvester_solver/solver.py
+results/GPT-5/tensor_completion_3d/solver.py
+results/GPT-5/toeplitz_solver/solver.py
+results/GPT-5/tsp/solver.py
+results/GPT-5/two_eigenvalues_around_0/solver.py
+results/GPT-5/unit_simplex_projection/solver.py
+results/GPT-5/upfirdn1d/solver.py
+results/GPT-5/vector_quantization/solver.py
+results/GPT-5/vectorized_newton/solver.py
+results/GPT-5/vehicle_routing/solver.py
+results/GPT-5/vertex_cover/solver.py
+results/GPT-5/voronoi_diagram/solver.py
+results/GPT-5/wasserstein_dist/solver.py
+results/GPT-5/water_filling/solver.py
+results/GPT-5/zoom_2d/solver.py
+results/GPT-OSS-120b/aes_gcm_encryption/solver.py
+results/GPT-OSS-120b/affine_transform_2d/solver.py
+results/GPT-OSS-120b/aircraft_wing_design/solver.py
+results/GPT-OSS-120b/articulation_points/solver.py
+results/GPT-OSS-120b/base64_encoding/solver.py
+results/GPT-OSS-120b/battery_scheduling/solver.py
+results/GPT-OSS-120b/btsp/solver.py
+results/GPT-OSS-120b/capacitated_facility_location/solver.py
+results/GPT-OSS-120b/chacha_encryption/solver.py
+results/GPT-OSS-120b/chebyshev_center/solver.py
+results/GPT-OSS-120b/cholesky_factorization/solver.py
+results/GPT-OSS-120b/clustering_outliers/solver.py
+results/GPT-OSS-120b/communicability/solver.py
+results/GPT-OSS-120b/convex_hull/solver.py
+results/GPT-OSS-120b/convolve2d_full_fill/solver.py
+results/GPT-OSS-120b/convolve_1d/solver.py
+results/GPT-OSS-120b/correlate_1d/solver.py
+results/GPT-OSS-120b/count_connected_components/solver.py
+results/GPT-OSS-120b/count_riemann_zeta_zeros/solver.py
+results/GPT-OSS-120b/cumulative_simpson_1d/solver.py
+results/GPT-OSS-120b/cumulative_simpson_multid/solver.py
+results/GPT-OSS-120b/cyclic_independent_set/solver.py
+results/GPT-OSS-120b/dct_type_I_scipy_fftpack/solver.py
+results/GPT-OSS-120b/delaunay/solver.py
+results/GPT-OSS-120b/dijkstra_from_indices/solver.py
+results/GPT-OSS-120b/discrete_log/solver.py
+results/GPT-OSS-120b/dst_type_II_scipy_fftpack/solver.py
+results/GPT-OSS-120b/dynamic_assortment_planning/solver.py
+results/GPT-OSS-120b/earth_movers_distance/solver.py
+results/GPT-OSS-120b/edge_expansion/solver.py
+results/GPT-OSS-120b/eigenvalues_complex/solver.py
+results/GPT-OSS-120b/eigenvalues_real/solver.py
+results/GPT-OSS-120b/eigenvectors_complex/solver.py
+results/GPT-OSS-120b/eigenvectors_real/solver.py
+results/GPT-OSS-120b/elementwise_integration/solver.py
+results/GPT-OSS-120b/feedback_controller_design/solver.py
+results/GPT-OSS-120b/fft_cmplx_scipy_fftpack/solver.py
+results/GPT-OSS-120b/fft_convolution/solver.py
+results/GPT-OSS-120b/fft_real_scipy_fftpack/solver.py
+results/GPT-OSS-120b/firls/solver.py
+results/GPT-OSS-120b/generalized_eigenvalues_complex/solver.py
+results/GPT-OSS-120b/generalized_eigenvalues_real/solver.py
+results/GPT-OSS-120b/generalized_eigenvectors_complex/solver.py
+results/GPT-OSS-120b/generalized_eigenvectors_real/solver.py
+results/GPT-OSS-120b/graph_coloring_assign/solver.py
+results/GPT-OSS-120b/graph_global_efficiency/solver.py
+results/GPT-OSS-120b/graph_isomorphism/solver.py
+results/GPT-OSS-120b/graph_laplacian/solver.py
+results/GPT-OSS-120b/group_lasso/solver.py
+results/GPT-OSS-120b/gzip_compression/solver.py
+results/GPT-OSS-120b/job_shop_scheduling/solver.py
+results/GPT-OSS-120b/kalman_filter/solver.py
+results/GPT-OSS-120b/kcenters/solver.py
+results/GPT-OSS-120b/kd_tree/solver.py
+results/GPT-OSS-120b/kernel_density_estimation/solver.py
+results/GPT-OSS-120b/kmeans/solver.py
+results/GPT-OSS-120b/ks_test_2samp/solver.py
+results/GPT-OSS-120b/l1_pruning/solver.py
+results/GPT-OSS-120b/lasso/solver.py
+results/GPT-OSS-120b/least_squares/solver.py
+results/GPT-OSS-120b/linear_system_solver/solver.py
+results/GPT-OSS-120b/lp_box/solver.py
+results/GPT-OSS-120b/lp_centering/solver.py
+results/GPT-OSS-120b/lp_mdp/solver.py
+results/GPT-OSS-120b/lqr/solver.py
+results/GPT-OSS-120b/lti_simulation/solver.py
+results/GPT-OSS-120b/lu_factorization/solver.py
+results/GPT-OSS-120b/lyapunov_stability/solver.py
+results/GPT-OSS-120b/markowitz/solver.py
+results/GPT-OSS-120b/matrix_exponential/solver.py
+results/GPT-OSS-120b/matrix_exponential_sparse/solver.py
+results/GPT-OSS-120b/matrix_multiplication/solver.py
+results/GPT-OSS-120b/matrix_sqrt/solver.py
+results/GPT-OSS-120b/max_clique_cpsat/solver.py
+results/GPT-OSS-120b/max_common_subgraph/solver.py
+results/GPT-OSS-120b/max_flow_min_cost/solver.py
+results/GPT-OSS-120b/max_independent_set_cpsat/solver.py
+results/GPT-OSS-120b/min_dominating_set/solver.py
+results/GPT-OSS-120b/min_weight_assignment/solver.py
+results/GPT-OSS-120b/minimum_spanning_tree/solver.py
+results/GPT-OSS-120b/minimum_volume_ellipsoid/solver.py
+results/GPT-OSS-120b/nmf/solver.py
+results/GPT-OSS-120b/ode_brusselator/solver.py
+results/GPT-OSS-120b/ode_fitzhughnagumo/solver.py
+results/GPT-OSS-120b/ode_hires/solver.py
+results/GPT-OSS-120b/ode_hodgkinhuxley/solver.py
+results/GPT-OSS-120b/ode_lorenz96_nonchaotic/solver.py
+results/GPT-OSS-120b/ode_lotkavolterra/solver.py
+results/GPT-OSS-120b/ode_nbodyproblem/solver.py
+results/GPT-OSS-120b/ode_seirs/solver.py
+results/GPT-OSS-120b/ode_stiff_robertson/solver.py
+results/GPT-OSS-120b/ode_stiff_vanderpol/solver.py
+results/GPT-OSS-120b/odr/solver.py
+results/GPT-OSS-120b/optimal_advertising/solver.py
+results/GPT-OSS-120b/outer_product/solver.py
+results/GPT-OSS-120b/pagerank/solver.py
+results/GPT-OSS-120b/pca/solver.py
+results/GPT-OSS-120b/pde_burgers1d/solver.py
+results/GPT-OSS-120b/pde_heat1d/solver.py
+results/GPT-OSS-120b/polynomial_mixed/solver.py
+results/GPT-OSS-120b/polynomial_real/solver.py
+results/GPT-OSS-120b/power_control/solver.py
+results/GPT-OSS-120b/procrustes/solver.py
+results/GPT-OSS-120b/psd_cone_projection/solver.py
+results/GPT-OSS-120b/qp/solver.py
+results/GPT-OSS-120b/quantile_regression/solver.py
+results/GPT-OSS-120b/queens_with_obstacles/solver.py
+results/GPT-OSS-120b/queuing/solver.py
+results/GPT-OSS-120b/qz_factorization/solver.py
+results/GPT-OSS-120b/randomized_svd/solver.py
+results/GPT-OSS-120b/rbf_interpolation/solver.py
+results/GPT-OSS-120b/robust_kalman_filter/solver.py
+results/GPT-OSS-120b/robust_linear_program/solver.py
+results/GPT-OSS-120b/rocket_landing_optimization/solver.py
+results/GPT-OSS-120b/rotate_2d/solver.py
+results/GPT-OSS-120b/set_cover/solver.py
+results/GPT-OSS-120b/set_cover_conflicts/solver.py
+results/GPT-OSS-120b/shift_2d/solver.py
+results/GPT-OSS-120b/shortest_path_dijkstra/solver.py
+results/GPT-OSS-120b/sinkhorn/solver.py
+results/GPT-OSS-120b/sparse_eigenvectors_complex/solver.py
+results/GPT-OSS-120b/sparse_lowest_eigenvalues_posdef/solver.py
+results/GPT-OSS-120b/sparse_lowest_eigenvectors_posdef/solver.py
+results/GPT-OSS-120b/sparse_pca/solver.py
+results/GPT-OSS-120b/spectral_clustering/solver.py
+results/GPT-OSS-120b/stable_matching/solver.py
+results/GPT-OSS-120b/svd/solver.py
+results/GPT-OSS-120b/svm/solver.py
+results/GPT-OSS-120b/sylvester_solver/solver.py
+results/GPT-OSS-120b/tensor_completion_3d/solver.py
+results/GPT-OSS-120b/toeplitz_solver/solver.py
+results/GPT-OSS-120b/tsp/solver.py
+results/GPT-OSS-120b/two_eigenvalues_around_0/solver.py
+results/GPT-OSS-120b/unit_simplex_projection/solver.py
+results/GPT-OSS-120b/upfirdn1d/solver.py
+results/GPT-OSS-120b/vector_quantization/solver.py
+results/GPT-OSS-120b/vectorized_newton/solver.py
+results/GPT-OSS-120b/vehicle_routing/solver.py
+results/GPT-OSS-120b/vertex_cover/solver.py
+results/GPT-OSS-120b/voronoi_diagram/solver.py
+results/GPT-OSS-120b/wasserstein_dist/solver.py
+results/GPT-OSS-120b/water_filling/solver.py
+results/GPT-OSS-120b/zoom_2d/solver.py
+results/Qwen3 Coder/aes_gcm_encryption/solver.py
+results/Qwen3 Coder/affine_transform_2d/solver.py
+results/Qwen3 Coder/aircraft_wing_design/solver.py
+results/Qwen3 Coder/articulation_points/solver.py
+results/Qwen3 Coder/base64_encoding/solver.py
+results/Qwen3 Coder/battery_scheduling/solver.py
+results/Qwen3 Coder/btsp/solver.py
+results/Qwen3 Coder/capacitated_facility_location/solver.py
+results/Qwen3 Coder/chacha_encryption/solver.py
+results/Qwen3 Coder/channel_capacity/solver.py
+results/Qwen3 Coder/chebyshev_center/solver.py
+results/Qwen3 Coder/cholesky_factorization/solver.py
+results/Qwen3 Coder/clustering_outliers/solver.py
+results/Qwen3 Coder/communicability/solver.py
+results/Qwen3 Coder/convex_hull/solver.py
+results/Qwen3 Coder/convolve2d_full_fill/solver.py
+results/Qwen3 Coder/convolve_1d/solver.py
+results/Qwen3 Coder/correlate2d_full_fill/solver.py
+results/Qwen3 Coder/correlate_1d/solver.py
+results/Qwen3 Coder/count_connected_components/solver.py
+results/Qwen3 Coder/count_riemann_zeta_zeros/solver.py
+results/Qwen3 Coder/cumulative_simpson_1d/solver.py
+results/Qwen3 Coder/cumulative_simpson_multid/solver.py
+results/Qwen3 Coder/cvar_projection/solver.py
+results/Qwen3 Coder/cyclic_independent_set/solver.py
+results/Qwen3 Coder/dct_type_I_scipy_fftpack/solver.py
+results/Qwen3 Coder/delaunay/solver.py
+results/Qwen3 Coder/dijkstra_from_indices/solver.py
+results/Qwen3 Coder/discrete_log/solver.py
+results/Qwen3 Coder/dst_type_II_scipy_fftpack/solver.py
+results/Qwen3 Coder/dynamic_assortment_planning/solver.py
+results/Qwen3 Coder/earth_movers_distance/solver.py
+results/Qwen3 Coder/edge_expansion/solver.py
+results/Qwen3 Coder/eigenvalues_complex/solver.py
+results/Qwen3 Coder/eigenvalues_real/solver.py
+results/Qwen3 Coder/eigenvectors_complex/solver.py
+results/Qwen3 Coder/eigenvectors_real/solver.py
+results/Qwen3 Coder/elementwise_integration/solver.py
+results/Qwen3 Coder/feedback_controller_design/solver.py
+results/Qwen3 Coder/fft_cmplx_scipy_fftpack/solver.py
+results/Qwen3 Coder/fft_convolution/solver.py
+results/Qwen3 Coder/fft_real_scipy_fftpack/solver.py
+results/Qwen3 Coder/firls/solver.py
+results/Qwen3 Coder/generalized_eigenvalues_complex/solver.py
+results/Qwen3 Coder/generalized_eigenvalues_real/solver.py
+results/Qwen3 Coder/generalized_eigenvectors_complex/solver.py
+results/Qwen3 Coder/generalized_eigenvectors_real/solver.py
+results/Qwen3 Coder/graph_coloring_assign/solver.py
+results/Qwen3 Coder/graph_global_efficiency/solver.py
+results/Qwen3 Coder/graph_isomorphism/solver.py
+results/Qwen3 Coder/graph_laplacian/solver.py
+results/Qwen3 Coder/group_lasso/solver.py
+results/Qwen3 Coder/gzip_compression/solver.py
+results/Qwen3 Coder/integer_factorization/solver.py
+results/Qwen3 Coder/job_shop_scheduling/solver.py
+results/Qwen3 Coder/kalman_filter/solver.py
+results/Qwen3 Coder/kcenters/solver.py
+results/Qwen3 Coder/kd_tree/solver.py
+results/Qwen3 Coder/kernel_density_estimation/solver.py
+results/Qwen3 Coder/kmeans/solver.py
+results/Qwen3 Coder/ks_test_2samp/solver.py
+results/Qwen3 Coder/l0_pruning/solver.py
+results/Qwen3 Coder/l1_pruning/solver.py
+results/Qwen3 Coder/lasso/solver.py
+results/Qwen3 Coder/least_squares/solver.py
+results/Qwen3 Coder/linear_system_solver/solver.py
+results/Qwen3 Coder/lp_box/solver.py
+results/Qwen3 Coder/lp_centering/solver.py
+results/Qwen3 Coder/lp_mdp/solver.py
+results/Qwen3 Coder/lqr/solver.py
+results/Qwen3 Coder/lti_simulation/solver.py
+results/Qwen3 Coder/lu_factorization/solver.py
+results/Qwen3 Coder/lyapunov_stability/solver.py
+results/Qwen3 Coder/markowitz/solver.py
+results/Qwen3 Coder/matrix_completion/solver.py
+results/Qwen3 Coder/matrix_exponential/solver.py
+results/Qwen3 Coder/matrix_exponential_sparse/solver.py
+results/Qwen3 Coder/matrix_multiplication/solver.py
+results/Qwen3 Coder/matrix_sqrt/solver.py
+results/Qwen3 Coder/max_clique_cpsat/solver.py
+results/Qwen3 Coder/max_common_subgraph/solver.py
+results/Qwen3 Coder/max_flow_min_cost/solver.py
+results/Qwen3 Coder/max_independent_set_cpsat/solver.py
+results/Qwen3 Coder/max_weighted_independent_set/solver.py
+results/Qwen3 Coder/min_dominating_set/solver.py
+results/Qwen3 Coder/min_weight_assignment/solver.py
+results/Qwen3 Coder/minimum_spanning_tree/solver.py
+results/Qwen3 Coder/minimum_volume_ellipsoid/solver.py
+results/Qwen3 Coder/multi_dim_knapsack/solver.py
+results/Qwen3 Coder/nmf/solver.py
+results/Qwen3 Coder/ode_brusselator/solver.py
+results/Qwen3 Coder/ode_fitzhughnagumo/solver.py
+results/Qwen3 Coder/ode_hires/solver.py
+results/Qwen3 Coder/ode_hodgkinhuxley/solver.py
+results/Qwen3 Coder/ode_lorenz96_nonchaotic/solver.py
+results/Qwen3 Coder/ode_lotkavolterra/solver.py
+results/Qwen3 Coder/ode_nbodyproblem/solver.py
+results/Qwen3 Coder/ode_seirs/solver.py
+results/Qwen3 Coder/ode_stiff_robertson/solver.py
+results/Qwen3 Coder/ode_stiff_vanderpol/solver.py
+results/Qwen3 Coder/odr/solver.py
+results/Qwen3 Coder/optimal_advertising/solver.py
+results/Qwen3 Coder/outer_product/solver.py
+results/Qwen3 Coder/pagerank/solver.py
+results/Qwen3 Coder/pca/solver.py
+results/Qwen3 Coder/pde_burgers1d/solver.py
+results/Qwen3 Coder/pde_heat1d/solver.py
+results/Qwen3 Coder/polynomial_mixed/solver.py
+results/Qwen3 Coder/polynomial_real/solver.py
+results/Qwen3 Coder/power_control/solver.py
+results/Qwen3 Coder/procrustes/solver.py
+results/Qwen3 Coder/psd_cone_projection/solver.py
+results/Qwen3 Coder/qp/solver.py
+results/Qwen3 Coder/qr_factorization/solver.py
+results/Qwen3 Coder/quantile_regression/solver.py
+results/Qwen3 Coder/queens_with_obstacles/solver.py
+results/Qwen3 Coder/queuing/solver.py
+results/Qwen3 Coder/qz_factorization/solver.py
+results/Qwen3 Coder/randomized_svd/solver.py
+results/Qwen3 Coder/rbf_interpolation/solver.py
+results/Qwen3 Coder/rectanglepacking/solver.py
+results/Qwen3 Coder/robust_kalman_filter/solver.py
+results/Qwen3 Coder/robust_linear_program/solver.py
+results/Qwen3 Coder/rocket_landing_optimization/solver.py
+results/Qwen3 Coder/rotate_2d/solver.py
+results/Qwen3 Coder/set_cover/solver.py
+results/Qwen3 Coder/set_cover_conflicts/solver.py
+results/Qwen3 Coder/sha256_hashing/solver.py
+results/Qwen3 Coder/shift_2d/solver.py
+results/Qwen3 Coder/shortest_path_dijkstra/solver.py
+results/Qwen3 Coder/sinkhorn/solver.py
+results/Qwen3 Coder/sparse_eigenvectors_complex/solver.py
+results/Qwen3 Coder/sparse_lowest_eigenvalues_posdef/solver.py
+results/Qwen3 Coder/sparse_lowest_eigenvectors_posdef/solver.py
+results/Qwen3 Coder/sparse_pca/solver.py
+results/Qwen3 Coder/spectral_clustering/solver.py
+results/Qwen3 Coder/stable_matching/solver.py
+results/Qwen3 Coder/svd/solver.py
+results/Qwen3 Coder/svm/solver.py
+results/Qwen3 Coder/sylvester_solver/solver.py
+results/Qwen3 Coder/tensor_completion_3d/solver.py
+results/Qwen3 Coder/toeplitz_solver/solver.py
+results/Qwen3 Coder/tsp/solver.py
+results/Qwen3 Coder/two_eigenvalues_around_0/solver.py
+results/Qwen3 Coder/unit_simplex_projection/solver.py
+results/Qwen3 Coder/upfirdn1d/solver.py
+results/Qwen3 Coder/vector_quantization/solver.py
+results/Qwen3 Coder/vectorized_newton/solver.py
+results/Qwen3 Coder/vehicle_routing/solver.py
+results/Qwen3 Coder/vertex_cover/solver.py
+results/Qwen3 Coder/voronoi_diagram/solver.py
+results/Qwen3 Coder/wasserstein_dist/solver.py
+results/Qwen3 Coder/water_filling/solver.py
+results/Qwen3 Coder/zoom_2d/solver.py
+results/R1/aes_gcm_encryption/solver.py
+results/R1/affine_transform_2d/solver.py
+results/R1/aircraft_wing_design/solver.py
+results/R1/articulation_points/solver.py
+results/R1/base64_encoding/solver.py
+results/R1/battery_scheduling/solver.py
+results/R1/btsp/solver.py
+results/R1/capacitated_facility_location/solver.py
+results/R1/chacha_encryption/solver.py
+results/R1/channel_capacity/solver.py
+results/R1/chebyshev_center/solver.py
+results/R1/cholesky_factorization/solver.py
+results/R1/clustering_outliers/solver.py
+results/R1/communicability/solver.py
+results/R1/convex_hull/solver.py
+results/R1/convolve2d_full_fill/solver.py
+results/R1/convolve_1d/solver.py
+results/R1/correlate2d_full_fill/solver.py
+results/R1/correlate_1d/solver.py
+results/R1/count_connected_components/solver.py
+results/R1/count_riemann_zeta_zeros/solver.py
+results/R1/cumulative_simpson_1d/solver.py
+results/R1/cumulative_simpson_multid/solver.py
+results/R1/cvar_projection/solver.py
+results/R1/cyclic_independent_set/solver.py
+results/R1/dct_type_I_scipy_fftpack/solver.py
+results/R1/delaunay/solver.py
+results/R1/dijkstra_from_indices/solver.py
+results/R1/discrete_log/solver.py
+results/R1/dst_type_II_scipy_fftpack/solver.py
+results/R1/dynamic_assortment_planning/solver.py
+results/R1/earth_movers_distance/solver.py
+results/R1/edge_expansion/solver.py
+results/R1/eigenvalues_complex/solver.py
+results/R1/eigenvalues_real/solver.py
+results/R1/eigenvectors_complex/solver.py
+results/R1/eigenvectors_real/solver.py
+results/R1/elementwise_integration/solver.py
+results/R1/feedback_controller_design/solver.py
+results/R1/fft_cmplx_scipy_fftpack/solver.py
+results/R1/fft_convolution/solver.py
+results/R1/fft_real_scipy_fftpack/solver.py
+results/R1/firls/solver.py
+results/R1/generalized_eigenvalues_complex/solver.py
+results/R1/generalized_eigenvalues_real/solver.py
+results/R1/generalized_eigenvectors_complex/solver.py
+results/R1/generalized_eigenvectors_real/solver.py
+results/R1/graph_coloring_assign/solver.py
+results/R1/graph_global_efficiency/solver.py
+results/R1/graph_isomorphism/solver.py
+results/R1/graph_laplacian/solver.py
+results/R1/group_lasso/solver.py
+results/R1/gzip_compression/solver.py
+results/R1/integer_factorization/solver.py
+results/R1/job_shop_scheduling/solver.py
+results/R1/kalman_filter/solver.py
+results/R1/kcenters/solver.py
+results/R1/kd_tree/solver.py
+results/R1/kernel_density_estimation/solver.py
+results/R1/kmeans/solver.py
+results/R1/ks_test_2samp/solver.py
+results/R1/l0_pruning/solver.py
+results/R1/l1_pruning/solver.py
+results/R1/lasso/solver.py
+results/R1/least_squares/solver.py
+results/R1/linear_system_solver/solver.py
+results/R1/lp_box/solver.py
+results/R1/lp_centering/solver.py
+results/R1/lp_mdp/solver.py
+results/R1/lqr/solver.py
+results/R1/lti_simulation/solver.py
+results/R1/lu_factorization/solver.py
+results/R1/lyapunov_stability/solver.py
+results/R1/markowitz/solver.py
+results/R1/matrix_completion/solver.py
+results/R1/matrix_exponential/solver.py
+results/R1/matrix_exponential_sparse/solver.py
+results/R1/matrix_multiplication/solver.py
+results/R1/matrix_sqrt/solver.py
+results/R1/max_clique_cpsat/solver.py
+results/R1/max_common_subgraph/solver.py
+results/R1/max_flow_min_cost/solver.py
+results/R1/max_independent_set_cpsat/solver.py
+results/R1/max_weighted_independent_set/solver.py
+results/R1/min_dominating_set/solver.py
+results/R1/min_weight_assignment/solver.py
+results/R1/minimum_spanning_tree/solver.py
+results/R1/minimum_volume_ellipsoid/solver.py
+results/R1/multi_dim_knapsack/solver.py
+results/R1/nmf/solver.py
+results/R1/ode_brusselator/solver.py
+results/R1/ode_fitzhughnagumo/solver.py
+results/R1/ode_hires/solver.py
+results/R1/ode_hodgkinhuxley/solver.py
+results/R1/ode_lorenz96_nonchaotic/solver.py
+results/R1/ode_lotkavolterra/solver.py
+results/R1/ode_nbodyproblem/solver.py
+results/R1/ode_seirs/solver.py
+results/R1/ode_stiff_robertson/solver.py
+results/R1/ode_stiff_vanderpol/solver.py
+results/R1/odr/solver.py
+results/R1/optimal_advertising/solver.py
+results/R1/outer_product/solver.py
+results/R1/pagerank/solver.py
+results/R1/pca/solver.py
+results/R1/pde_burgers1d/solver.py
+results/R1/pde_heat1d/solver.py
+results/R1/polynomial_mixed/solver.py
+results/R1/polynomial_real/solver.py
+results/R1/power_control/solver.py
+results/R1/procrustes/solver.py
+results/R1/psd_cone_projection/solver.py
+results/R1/qp/solver.py
+results/R1/qr_factorization/solver.py
+results/R1/quantile_regression/solver.py
+results/R1/queens_with_obstacles/solver.py
+results/R1/queuing/solver.py
+results/R1/qz_factorization/solver.py
+results/R1/randomized_svd/solver.py
+results/R1/rbf_interpolation/solver.py
+results/R1/rectanglepacking/solver.py
+results/R1/robust_kalman_filter/solver.py
+results/R1/robust_linear_program/solver.py
+results/R1/rocket_landing_optimization/solver.py
+results/R1/rotate_2d/solver.py
+results/R1/set_cover/solver.py
+results/R1/set_cover_conflicts/solver.py
+results/R1/sha256_hashing/solver.py
+results/R1/shift_2d/solver.py
+results/R1/shortest_path_dijkstra/solver.py
+results/R1/sinkhorn/solver.py
+results/R1/sparse_eigenvectors_complex/solver.py
+results/R1/sparse_lowest_eigenvalues_posdef/solver.py
+results/R1/sparse_lowest_eigenvectors_posdef/solver.py
+results/R1/sparse_pca/solver.py
+results/R1/spectral_clustering/solver.py
+results/R1/stable_matching/solver.py
+results/R1/svd/solver.py
+results/R1/svm/solver.py
+results/R1/sylvester_solver/solver.py
+results/R1/tensor_completion_3d/solver.py
+results/R1/toeplitz_solver/solver.py
+results/R1/tsp/solver.py
+results/R1/two_eigenvalues_around_0/solver.py
+results/R1/unit_simplex_projection/solver.py
+results/R1/upfirdn1d/solver.py
+results/R1/vector_quantization/solver.py
+results/R1/vectorized_newton/solver.py
+results/R1/vehicle_routing/solver.py
+results/R1/vertex_cover/solver.py
+results/R1/voronoi_diagram/solver.py
+results/R1/wasserstein_dist/solver.py
+results/R1/water_filling/solver.py
+results/R1/zoom_2d/solver.py
+results/claude-sonnet-4-5-20250929/aes_gcm_encryption/solver.py
+results/claude-sonnet-4-5-20250929/affine_transform_2d/solver.py
+results/claude-sonnet-4-5-20250929/aircraft_wing_design/solver.py
+results/claude-sonnet-4-5-20250929/articulation_points/solver.py
+results/claude-sonnet-4-5-20250929/base64_encoding/solver.py
+results/claude-sonnet-4-5-20250929/battery_scheduling/solver.py
+results/claude-sonnet-4-5-20250929/btsp/solver.py
+results/claude-sonnet-4-5-20250929/capacitated_facility_location/solver.py
+results/claude-sonnet-4-5-20250929/chacha_encryption/solver.py
+results/claude-sonnet-4-5-20250929/channel_capacity/solver.py
+results/claude-sonnet-4-5-20250929/chebyshev_center/solver.py
+results/claude-sonnet-4-5-20250929/cholesky_factorization/solver.py
+results/claude-sonnet-4-5-20250929/clustering_outliers/solver.py
+results/claude-sonnet-4-5-20250929/communicability/solver.py
+results/claude-sonnet-4-5-20250929/convex_hull/solver.py
+results/claude-sonnet-4-5-20250929/convolve2d_full_fill/solver.py
+results/claude-sonnet-4-5-20250929/convolve_1d/solver.py
+results/claude-sonnet-4-5-20250929/correlate2d_full_fill/solver.py
+results/claude-sonnet-4-5-20250929/correlate_1d/solver.py
+results/claude-sonnet-4-5-20250929/count_connected_components/solver.py
+results/claude-sonnet-4-5-20250929/count_riemann_zeta_zeros/solver.py
+results/claude-sonnet-4-5-20250929/cumulative_simpson_1d/setup.py
+results/claude-sonnet-4-5-20250929/cumulative_simpson_1d/solver.py
+results/claude-sonnet-4-5-20250929/cumulative_simpson_multid/solver.py
+results/claude-sonnet-4-5-20250929/cvar_projection/solver.py
+results/claude-sonnet-4-5-20250929/cyclic_independent_set/solver.py
+results/claude-sonnet-4-5-20250929/dct_type_I_scipy_fftpack/solver.py
+results/claude-sonnet-4-5-20250929/delaunay/solver.py
+results/claude-sonnet-4-5-20250929/dijkstra_from_indices/solver.py
+results/claude-sonnet-4-5-20250929/discrete_log/setup.py
+results/claude-sonnet-4-5-20250929/discrete_log/solver.py
+results/claude-sonnet-4-5-20250929/dst_type_II_scipy_fftpack/solver.py
+results/claude-sonnet-4-5-20250929/dynamic_assortment_planning/solver.py
+results/claude-sonnet-4-5-20250929/earth_movers_distance/solver.py
+results/claude-sonnet-4-5-20250929/edge_expansion/solver.py
+results/claude-sonnet-4-5-20250929/eigenvalues_complex/solver.py
+results/claude-sonnet-4-5-20250929/eigenvalues_real/solver.py
+results/claude-sonnet-4-5-20250929/eigenvectors_complex/solver.py
+results/claude-sonnet-4-5-20250929/eigenvectors_real/solver.py
+results/claude-sonnet-4-5-20250929/elementwise_integration/solver.py
+results/claude-sonnet-4-5-20250929/feedback_controller_design/solver.py
+results/claude-sonnet-4-5-20250929/fft_cmplx_scipy_fftpack/solver.py
+results/claude-sonnet-4-5-20250929/fft_convolution/solver.py
+results/claude-sonnet-4-5-20250929/fft_real_scipy_fftpack/solver.py
+results/claude-sonnet-4-5-20250929/firls/solver.py
+results/claude-sonnet-4-5-20250929/generalized_eigenvalues_complex/solver.py
+results/claude-sonnet-4-5-20250929/generalized_eigenvalues_real/solver.py
+results/claude-sonnet-4-5-20250929/generalized_eigenvectors_complex/solver.py
+results/claude-sonnet-4-5-20250929/generalized_eigenvectors_real/solver.py
+results/claude-sonnet-4-5-20250929/graph_coloring_assign/solver.py
+results/claude-sonnet-4-5-20250929/graph_global_efficiency/solver.py
+results/claude-sonnet-4-5-20250929/graph_isomorphism/solver.py
+results/claude-sonnet-4-5-20250929/graph_laplacian/solver.py
+results/claude-sonnet-4-5-20250929/group_lasso/solver.py
+results/claude-sonnet-4-5-20250929/gzip_compression/solver.py
+results/claude-sonnet-4-5-20250929/integer_factorization/setup.py
+results/claude-sonnet-4-5-20250929/integer_factorization/solver.py
+results/claude-sonnet-4-5-20250929/job_shop_scheduling/solver.py
+results/claude-sonnet-4-5-20250929/kalman_filter/solver.py
+results/claude-sonnet-4-5-20250929/kcenters/solver.py
+results/claude-sonnet-4-5-20250929/kd_tree/solver.py
+results/claude-sonnet-4-5-20250929/kernel_density_estimation/solver.py
+results/claude-sonnet-4-5-20250929/kmeans/solver.py
+results/claude-sonnet-4-5-20250929/ks_test_2samp/solver.py
+results/claude-sonnet-4-5-20250929/l0_pruning/solver.py
+results/claude-sonnet-4-5-20250929/l1_pruning/solver.py
+results/claude-sonnet-4-5-20250929/lasso/solver.py
+results/claude-sonnet-4-5-20250929/least_squares/solver.py
+results/claude-sonnet-4-5-20250929/linear_system_solver/solver.py
+results/claude-sonnet-4-5-20250929/lp_box/solver.py
+results/claude-sonnet-4-5-20250929/lp_centering/solver.py
+results/claude-sonnet-4-5-20250929/lp_mdp/solver.py
+results/claude-sonnet-4-5-20250929/lqr/solver.py
+results/claude-sonnet-4-5-20250929/lti_simulation/solver.py
+results/claude-sonnet-4-5-20250929/lu_factorization/solver.py
+results/claude-sonnet-4-5-20250929/lyapunov_stability/solver.py
+results/claude-sonnet-4-5-20250929/markowitz/solver.py
+results/claude-sonnet-4-5-20250929/matrix_completion/solver.py
+results/claude-sonnet-4-5-20250929/matrix_exponential/solver.py
+results/claude-sonnet-4-5-20250929/matrix_exponential_sparse/solver.py
+results/claude-sonnet-4-5-20250929/matrix_multiplication/solver.py
+results/claude-sonnet-4-5-20250929/matrix_sqrt/solver.py
+results/claude-sonnet-4-5-20250929/max_clique_cpsat/solver.py
+results/claude-sonnet-4-5-20250929/max_common_subgraph/solver.py
+results/claude-sonnet-4-5-20250929/max_flow_min_cost/solver.py
+results/claude-sonnet-4-5-20250929/max_independent_set_cpsat/solver.py
+results/claude-sonnet-4-5-20250929/max_weighted_independent_set/solver.py
+results/claude-sonnet-4-5-20250929/min_dominating_set/solver.py
+results/claude-sonnet-4-5-20250929/min_weight_assignment/setup.py
+results/claude-sonnet-4-5-20250929/min_weight_assignment/solver.py
+results/claude-sonnet-4-5-20250929/minimum_spanning_tree/solver.py
+results/claude-sonnet-4-5-20250929/minimum_volume_ellipsoid/solver.py
+results/claude-sonnet-4-5-20250929/multi_dim_knapsack/solver.py
+results/claude-sonnet-4-5-20250929/nmf/solver.py
+results/claude-sonnet-4-5-20250929/ode_brusselator/solver.py
+results/claude-sonnet-4-5-20250929/ode_fitzhughnagumo/solver.py
+results/claude-sonnet-4-5-20250929/ode_hires/solver.py
+results/claude-sonnet-4-5-20250929/ode_hodgkinhuxley/setup.py
+results/claude-sonnet-4-5-20250929/ode_hodgkinhuxley/solver.py
+results/claude-sonnet-4-5-20250929/ode_lorenz96_nonchaotic/solver.py
+results/claude-sonnet-4-5-20250929/ode_lotkavolterra/solver.py
+results/claude-sonnet-4-5-20250929/ode_nbodyproblem/solver.py
+results/claude-sonnet-4-5-20250929/ode_seirs/solver.py
+results/claude-sonnet-4-5-20250929/ode_stiff_robertson/solver.py
+results/claude-sonnet-4-5-20250929/ode_stiff_vanderpol/solver.py
+results/claude-sonnet-4-5-20250929/odr/solver.py
+results/claude-sonnet-4-5-20250929/optimal_advertising/solver.py
+results/claude-sonnet-4-5-20250929/outer_product/solver.py
+results/claude-sonnet-4-5-20250929/pagerank/solver.py
+results/claude-sonnet-4-5-20250929/pca/solver.py
+results/claude-sonnet-4-5-20250929/pde_burgers1d/solver.py
+results/claude-sonnet-4-5-20250929/pde_heat1d/solver.py
+results/claude-sonnet-4-5-20250929/polynomial_mixed/solver.py
+results/claude-sonnet-4-5-20250929/polynomial_real/solver.py
+results/claude-sonnet-4-5-20250929/power_control/solver.py
+results/claude-sonnet-4-5-20250929/procrustes/solver.py
+results/claude-sonnet-4-5-20250929/psd_cone_projection/solver.py
+results/claude-sonnet-4-5-20250929/qp/solver.py
+results/claude-sonnet-4-5-20250929/qr_factorization/solver.py
+results/claude-sonnet-4-5-20250929/quantile_regression/solver.py
+results/claude-sonnet-4-5-20250929/queens_with_obstacles/solver.py
+results/claude-sonnet-4-5-20250929/queuing/solver.py
+results/claude-sonnet-4-5-20250929/qz_factorization/solver.py
+results/claude-sonnet-4-5-20250929/randomized_svd/solver.py
+results/claude-sonnet-4-5-20250929/rbf_interpolation/solver.py
+results/claude-sonnet-4-5-20250929/rectanglepacking/solver.py
+results/claude-sonnet-4-5-20250929/robust_kalman_filter/solver.py
+results/claude-sonnet-4-5-20250929/robust_linear_program/solver.py
+results/claude-sonnet-4-5-20250929/rocket_landing_optimization/solver.py
+results/claude-sonnet-4-5-20250929/rotate_2d/solver.py
+results/claude-sonnet-4-5-20250929/set_cover/solver.py
+results/claude-sonnet-4-5-20250929/set_cover_conflicts/solver.py
+results/claude-sonnet-4-5-20250929/sha256_hashing/solver.py
+results/claude-sonnet-4-5-20250929/shift_2d/solver.py
+results/claude-sonnet-4-5-20250929/shortest_path_dijkstra/solver.py
+results/claude-sonnet-4-5-20250929/sinkhorn/solver.py
+results/claude-sonnet-4-5-20250929/sparse_eigenvectors_complex/solver.py
+results/claude-sonnet-4-5-20250929/sparse_lowest_eigenvalues_posdef/solver.py
+results/claude-sonnet-4-5-20250929/sparse_lowest_eigenvectors_posdef/solver.py
+results/claude-sonnet-4-5-20250929/sparse_pca/solver.py
+results/claude-sonnet-4-5-20250929/spectral_clustering/solver.py
+results/claude-sonnet-4-5-20250929/stable_matching/solver.py
+results/claude-sonnet-4-5-20250929/svd/solver.py
+results/claude-sonnet-4-5-20250929/svm/solver.py
+results/claude-sonnet-4-5-20250929/sylvester_solver/solver.py
+results/claude-sonnet-4-5-20250929/tensor_completion_3d/solver.py
+results/claude-sonnet-4-5-20250929/toeplitz_solver/solver.py
+results/claude-sonnet-4-5-20250929/tsp/solver.py
+results/claude-sonnet-4-5-20250929/two_eigenvalues_around_0/solver.py
+results/claude-sonnet-4-5-20250929/unit_simplex_projection/solver.py
+results/claude-sonnet-4-5-20250929/upfirdn1d/solver.py
+results/claude-sonnet-4-5-20250929/vector_quantization/solver.py
+results/claude-sonnet-4-5-20250929/vectorized_newton/solver.py
+results/claude-sonnet-4-5-20250929/vehicle_routing/solver.py
+results/claude-sonnet-4-5-20250929/vertex_cover/solver.py
+results/claude-sonnet-4-5-20250929/voronoi_diagram/solver.py
+results/claude-sonnet-4-5-20250929/wasserstein_dist/solver.py
+results/claude-sonnet-4-5-20250929/water_filling/setup.py
+results/claude-sonnet-4-5-20250929/water_filling/solver.py
+results/claude-sonnet-4-5-20250929/zoom_2d/solver.py
+results/o4-mini/aes_gcm_encryption/solver.py
+results/o4-mini/affine_transform_2d/solver.py
+results/o4-mini/aircraft_wing_design/solver.py
+results/o4-mini/articulation_points/solver.py
+results/o4-mini/base64_encoding/solver.py
+results/o4-mini/battery_scheduling/solver.py
+results/o4-mini/btsp/solver.py
+results/o4-mini/capacitated_facility_location/solver.py
+results/o4-mini/chacha_encryption/solver.py
+results/o4-mini/channel_capacity/solver.py
+results/o4-mini/chebyshev_center/solver.py
+results/o4-mini/cholesky_factorization/solver.py
+results/o4-mini/clustering_outliers/solver.py
+results/o4-mini/communicability/solver.py
+results/o4-mini/convex_hull/solver.py
+results/o4-mini/convolve2d_full_fill/solver.py
+results/o4-mini/convolve_1d/solver.py
+results/o4-mini/correlate2d_full_fill/solver.py
+results/o4-mini/correlate_1d/solver.py
+results/o4-mini/count_connected_components/solver.py
+results/o4-mini/count_riemann_zeta_zeros/solver.py
+results/o4-mini/cumulative_simpson_1d/solver.py
+results/o4-mini/cumulative_simpson_multid/solver.py
+results/o4-mini/cvar_projection/solver.py
+results/o4-mini/cyclic_independent_set/solver.py
+results/o4-mini/dct_type_I_scipy_fftpack/solver.py
+results/o4-mini/delaunay/solver.py
+results/o4-mini/dijkstra_from_indices/solver.py
+results/o4-mini/discrete_log/solver.py
+results/o4-mini/dst_type_II_scipy_fftpack/solver.py
+results/o4-mini/dynamic_assortment_planning/solver.py
+results/o4-mini/earth_movers_distance/solver.py
+results/o4-mini/edge_expansion/solver.py
+results/o4-mini/eigenvalues_complex/solver.py
+results/o4-mini/eigenvalues_real/solver.py
+results/o4-mini/eigenvectors_complex/solver.py
+results/o4-mini/eigenvectors_real/solver.py
+results/o4-mini/elementwise_integration/solver.py
+results/o4-mini/feedback_controller_design/solver.py
+results/o4-mini/fft_cmplx_scipy_fftpack/solver.py
+results/o4-mini/fft_convolution/solver.py
+results/o4-mini/fft_real_scipy_fftpack/solver.py
+results/o4-mini/firls/solver.py
+results/o4-mini/generalized_eigenvalues_complex/solver.py
+results/o4-mini/generalized_eigenvalues_real/solver.py
+results/o4-mini/generalized_eigenvectors_complex/solver.py
+results/o4-mini/generalized_eigenvectors_real/solver.py
+results/o4-mini/graph_coloring_assign/solver.py
+results/o4-mini/graph_global_efficiency/solver.py
+results/o4-mini/graph_isomorphism/solver.py
+results/o4-mini/graph_laplacian/solver.py
+results/o4-mini/group_lasso/solver.py
+results/o4-mini/gzip_compression/solver.py
+results/o4-mini/integer_factorization/solver.py
+results/o4-mini/job_shop_scheduling/solver.py
+results/o4-mini/kalman_filter/solver.py
+results/o4-mini/kcenters/solver.py
+results/o4-mini/kd_tree/solver.py
+results/o4-mini/kernel_density_estimation/solver.py
+results/o4-mini/kmeans/solver.py
+results/o4-mini/ks_test_2samp/solver.py
+results/o4-mini/l0_pruning/setup.py
+results/o4-mini/l0_pruning/solver.py
+results/o4-mini/l1_pruning/solver.py
+results/o4-mini/lasso/solver.py
+results/o4-mini/least_squares/solver.py
+results/o4-mini/linear_system_solver/solver.py
+results/o4-mini/lp_box/solver.py
+results/o4-mini/lp_centering/solver.py
+results/o4-mini/lp_mdp/solver.py
+results/o4-mini/lqr/solver.py
+results/o4-mini/lti_simulation/solver.py
+results/o4-mini/lu_factorization/solver.py
+results/o4-mini/lyapunov_stability/solver.py
+results/o4-mini/markowitz/solver.py
+results/o4-mini/matrix_completion/solver.py
+results/o4-mini/matrix_exponential/solver.py
+results/o4-mini/matrix_exponential_sparse/solver.py
+results/o4-mini/matrix_multiplication/solver.py
+results/o4-mini/matrix_sqrt/solver.py
+results/o4-mini/max_clique_cpsat/solver.py
+results/o4-mini/max_common_subgraph/solver.py
+results/o4-mini/max_flow_min_cost/solver.py
+results/o4-mini/max_independent_set_cpsat/setup.py
+results/o4-mini/max_independent_set_cpsat/solver.py
+results/o4-mini/max_weighted_independent_set/solver.py
+results/o4-mini/min_dominating_set/solver.py
+results/o4-mini/min_weight_assignment/solver.py
+results/o4-mini/minimum_spanning_tree/solver.py
+results/o4-mini/minimum_volume_ellipsoid/solver.py
+results/o4-mini/multi_dim_knapsack/solver.py
+results/o4-mini/nmf/solver.py
+results/o4-mini/ode_brusselator/solver.py
+results/o4-mini/ode_fitzhughnagumo/solver.py
+results/o4-mini/ode_hires/solver.py
+results/o4-mini/ode_hodgkinhuxley/solver.py
+results/o4-mini/ode_lorenz96_nonchaotic/solver.py
+results/o4-mini/ode_lotkavolterra/solver.py
+results/o4-mini/ode_nbodyproblem/solver.py
+results/o4-mini/ode_seirs/solver.py
+results/o4-mini/ode_stiff_robertson/solver.py
+results/o4-mini/ode_stiff_vanderpol/solver.py
+results/o4-mini/odr/solver.py
+results/o4-mini/optimal_advertising/solver.py
+results/o4-mini/outer_product/solver.py
+results/o4-mini/pagerank/solver.py
+results/o4-mini/pca/solver.py
+results/o4-mini/pde_burgers1d/solver.py
+results/o4-mini/pde_heat1d/solver.py
+results/o4-mini/polynomial_mixed/solver.py
+results/o4-mini/polynomial_real/solver.py
+results/o4-mini/power_control/solver.py
+results/o4-mini/procrustes/solver.py
+results/o4-mini/psd_cone_projection/solver.py
+results/o4-mini/qp/solver.py
+results/o4-mini/qr_factorization/solver.py
+results/o4-mini/quantile_regression/solver.py
+results/o4-mini/queens_with_obstacles/solver.py
+results/o4-mini/queuing/solver.py
+results/o4-mini/qz_factorization/solver.py
+results/o4-mini/randomized_svd/solver.py
+results/o4-mini/rbf_interpolation/solver.py
+results/o4-mini/rectanglepacking/solver.py
+results/o4-mini/robust_kalman_filter/solver.py
+results/o4-mini/robust_linear_program/solver.py
+results/o4-mini/rocket_landing_optimization/solver.py
+results/o4-mini/rotate_2d/solver.py
+results/o4-mini/set_cover/solver.py
+results/o4-mini/set_cover_conflicts/solver.py
+results/o4-mini/sha256_hashing/solver.py
+results/o4-mini/shift_2d/solver.py
+results/o4-mini/shortest_path_dijkstra/solver.py
+results/o4-mini/sinkhorn/solver.py
+results/o4-mini/sparse_eigenvectors_complex/solver.py
+results/o4-mini/sparse_lowest_eigenvalues_posdef/solver.py
+results/o4-mini/sparse_lowest_eigenvectors_posdef/solver.py
+results/o4-mini/sparse_pca/solver.py
+results/o4-mini/spectral_clustering/solver.py
+results/o4-mini/stable_matching/solver.py
+results/o4-mini/svd/solver.py
+results/o4-mini/svm/solver.py
+results/o4-mini/sylvester_solver/solver.py
+results/o4-mini/tensor_completion_3d/solver.py
+results/o4-mini/toeplitz_solver/solver.py
+results/o4-mini/tsp/solver.py
+results/o4-mini/two_eigenvalues_around_0/solver.py
+results/o4-mini/unit_simplex_projection/solver.py
+results/o4-mini/upfirdn1d/solver.py
+results/o4-mini/vector_quantization/solver.py
+results/o4-mini/vectorized_newton/solver.py
+results/o4-mini/vehicle_routing/solver.py
+results/o4-mini/vertex_cover/solver.py
+results/o4-mini/voronoi_diagram/solver.py
+results/o4-mini/wasserstein_dist/solver.py
+results/o4-mini/water_filling/solver.py
+results/o4-mini/zoom_2d/solver.py
+scripts/algotune.py
+scripts/evaluate_results.py
+scripts/evaluate_single_task.py
+scripts/simple_evaluate.py
+scripts/submit_generate_python.py
