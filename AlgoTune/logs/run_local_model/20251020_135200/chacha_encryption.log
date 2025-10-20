@@ -1,0 +1,38 @@
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/run_local_model.py", line 15, in <module>
+    import litellm
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/litellm/__init__.py", line 413, in <module>
+    model_cost = get_model_cost_map(url=model_cost_map_url)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/litellm/litellm_core_utils/get_model_cost_map.py", line 31, in get_model_cost_map
+    response = httpx.get(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpx/_api.py", line 195, in get
+    return request(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpx/_api.py", line 109, in request
+    return client.request(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpx/_client.py", line 825, in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpx/_client.py", line 914, in send
+    response = self._send_handling_auth(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpx/_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpx/_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpx/_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpx/_transports/default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpcore/_sync/connection.py", line 101, in handle_request
+    raise exc
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpcore/_sync/connection.py", line 78, in handle_request
+    stream = self._connect(request)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpcore/_sync/connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/httpcore/_backends/sync.py", line 208, in connect_tcp
+    sock = socket.create_connection(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/socket.py", line 845, in create_connection
+    sock.connect(sa)
+KeyboardInterrupt

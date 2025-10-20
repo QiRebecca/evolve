@@ -351,7 +351,7 @@ def _build_system_prompt(task_name: str) -> str:
 def _build_single_prompt(task_name: str) -> tuple[str, str]:
     system_prompt = _build_system_prompt(task_name)
     user_prompt = (
-        "请直接根据系统消息输出最终的 solver.py 实现，且仅返回包含完整代码的 ```python fenced block。"
+        "Please produce the final solver.py implementation directly from the system message, and return only a ```python fenced block containing the complete code."
     )
     return system_prompt, user_prompt
 
