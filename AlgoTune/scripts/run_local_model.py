@@ -356,6 +356,25 @@ def _build_single_prompt(task_name: str) -> tuple[str, str]:
     return system_prompt, user_prompt
 
 
+def _coerce_message_to_text(content: object) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, bytes):
+        return content.decode("utf-8", errors="replace")
+    if isinstance(content, dict):
+        for key in ("text", "content", "value"):
+            if key in content:
+                return _coerce_message_to_text(content[key])
+        if "parts" in content:
+            return "".join(_coerce_message_to_text(part) for part in content["parts"])
+        return "".join(
+            _coerce_message_to_text(content[key]) for key in sorted(content.keys())
+        )
+    if isinstance(content, (list, tuple, set)):
+        return "".join(_coerce_message_to_text(item) for item in content)
+    return str(content)
+
+
 def _extract_code(response_text: str) -> Optional[str]:
     pattern = re.compile(r"```(?:python)?\n(.*?)```", re.DOTALL)
     match = pattern.search(response_text)
@@ -396,10 +415,11 @@ def run_local_model(
 
     response = litellm.completion(**completion_params)
     try:
-        message = response["choices"][0]["message"]["content"]
+        raw_message = response["choices"][0]["message"]["content"]
     except (KeyError, IndexError) as exc:
         raise RuntimeError(f"Unexpected response structure from model: {response}") from exc
 
+    message = _coerce_message_to_text(raw_message)
     code = _extract_code(message)
     if not code:
         raise RuntimeError("Model response did not contain any code block.")
