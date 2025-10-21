@@ -1,0 +1,4 @@
+2025-10-21 11:47:35,306 - INFO - Starting generation for task 'aircraft_wing_design'
+2025-10-21 11:47:35,306 - INFO - Parameters: model=openai/chatgptoss-20b api_base=http://127.0.0.1:8010/v1 temperature=0.0 max_tokens=1024 overwrite=False
+2025-10-21 11:49:29,916 - INFO - Starting generation for task 'aircraft_wing_design'
+2025-10-21 11:49:29,916 - INFO - Parameters: model=openai/chatgptoss-20b api_base=http://127.0.0.1:8010/v1 temperature=0.0 max_tokens=1024 overwrite=False

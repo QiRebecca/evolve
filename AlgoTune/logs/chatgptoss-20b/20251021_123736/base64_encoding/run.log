@@ -1,0 +1,9 @@
+2025-10-21 12:37:58,857 - INFO - Starting generation for task 'base64_encoding'
+2025-10-21 12:37:58,857 - INFO - Parameters: model=openai/chatgptoss-20b api_base=http://127.0.0.1:8010/v1 temperature=0.0 max_tokens=1024 overwrite=True
+2025-10-21 12:38:04,198 - ERROR - Task 'base64_encoding' failed
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/run_local_model_all_tasks.py", line 130, in _run_tasks
+    final_path = run_local_model(
+  File "/data/zq/evolve/AlgoTune/scripts/run_local_model.py", line 484, in run_local_model
+    raise RuntimeError(
+RuntimeError: Model response did not include any text content. Raw response snippet: ModelResponse(id='chatcmpl-8800a76c71da4c30ba167ea6e4ab8073', created=1761021478, model='chatgptoss-20b', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='length', index=0, message=Message(content=None, role='assistant', tool_calls=None, function_call=None, reasoning_content='', provider_specific_fields={'refusal': None}), provider_specific_fields={'stop_reason': None, 'token_ids': None})], usage=Usage(completion_tokens=1024, prompt_tokens=1405, total_tokens=...

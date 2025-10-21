@@ -1,0 +1,2 @@
+2025-10-21 12:31:06,337 - INFO - Starting generation for task 'base64_encoding'
+2025-10-21 12:31:06,337 - INFO - Parameters: model=openai/chatgptoss-20b api_base=http://127.0.0.1:8010/v1 temperature=0.0 max_tokens=1024 overwrite=True

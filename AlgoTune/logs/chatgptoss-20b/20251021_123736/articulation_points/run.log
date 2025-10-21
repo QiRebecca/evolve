@@ -1,0 +1,9 @@
+2025-10-21 12:37:53,555 - INFO - Starting generation for task 'articulation_points'
+2025-10-21 12:37:53,555 - INFO - Parameters: model=openai/chatgptoss-20b api_base=http://127.0.0.1:8010/v1 temperature=0.0 max_tokens=1024 overwrite=True
+2025-10-21 12:37:58,854 - ERROR - Task 'articulation_points' failed
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/run_local_model_all_tasks.py", line 130, in _run_tasks
+    final_path = run_local_model(
+  File "/data/zq/evolve/AlgoTune/scripts/run_local_model.py", line 484, in run_local_model
+    raise RuntimeError(
+RuntimeError: Model response did not include any text content. Raw response snippet: ModelResponse(id='chatcmpl-9728edf16d254ca3b8915458bb606338', created=1761021473, model='chatgptoss-20b', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='length', index=0, message=Message(content=None, role='assistant', tool_calls=None, function_call=None, reasoning_content='', provider_specific_fields={'refusal': None}), provider_specific_fields={'stop_reason': None, 'token_ids': None})], usage=Usage(completion_tokens=1024, prompt_tokens=1147, total_tokens=...

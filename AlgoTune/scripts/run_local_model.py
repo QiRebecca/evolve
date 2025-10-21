@@ -1,25 +1,39 @@
 #!/usr/bin/env python3
-"""Utility to call a local OpenAI-compatible model without the AlgoTune agent loop."""
+"""Utility to call a local OpenAI-compatible model without the AlgoTune agent loop.
+
+- Tries streaming first to avoid finish_reason='length' mapping issues.
+- Falls back to non-stream with a robust extractor that can read:
+  choices[0].message.content, choices[0].text, or provider raw JSON.
+- Builds the same prompts as the original script from project files.
+"""
 
 from __future__ import annotations
 
 import argparse
 import ast
+import json
 import os
 import re
 import textwrap
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 import litellm
 
-from AlgoTuner.config.loader import load_config
+# -----------------------------------------------------------------------------
+# Optional: allow running outside full AlgoTune env. If import fails, use stub.
+# -----------------------------------------------------------------------------
+try:
+    from AlgoTuner.config.loader import load_config  # type: ignore
+except Exception:  # pragma: no cover
+    def load_config() -> Dict[str, Any]:
+        return {}
 
-# ---------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 # Prompt construction helpers
-# ---------------------------------------------------------------------------
-
+# -----------------------------------------------------------------------------
 
 def _load_initial_template() -> str:
     template_path = Path("AlgoTuner/messages/initial_system_message.txt")
@@ -38,6 +52,7 @@ def _load_task_description(task_name: str) -> str:
         )
     return description_path.read_text(encoding="utf-8").strip()
 
+
 # Utility -----------------------------------------------------------------
 
 def _gather_extra_packages() -> str:
@@ -47,13 +62,13 @@ def _gather_extra_packages() -> str:
 
     try:
         import tomllib as toml_lib  # Python 3.11+
-    except ImportError:  # pragma: no cover - fallback for older Python
+    except ImportError:  # pragma: no cover
         import toml as toml_lib  # type: ignore
 
     try:
         with pyproject_path.open("rb") as fp:
             project = toml_lib.load(fp)
-    except Exception as exc:  # pragma: no cover - just surface message to the user
+    except Exception as exc:  # pragma: no cover
         return f" - (failed to inspect pyproject.toml: {exc})\n"
 
     deps = project.get("project", {}).get("dependencies")
@@ -79,21 +94,21 @@ def _gather_extra_packages() -> str:
         "pillow",
     }
 
-    cleaned = []
+    cleaned: List[str] = []
     for dep in dep_names:
         if not dep:
             continue
         name = (
-            dep.split("[")[0]
+            str(dep).split("[")[0]
             .split(" ")[0]
             .split("=")[0]
             .split(">")[0]
             .split("<")[0]
             .strip()
-            .strip("\"")
+            .strip('"')
             .strip("'")
         )
-        if name and name not in exclude:
+        if name and name.lower() not in exclude:
             cleaned.append(name)
 
     if not cleaned:
@@ -125,7 +140,7 @@ def _read_task_module(task_name: str) -> str:
 
 
 def _find_task_class(tree: ast.AST) -> Optional[ast.ClassDef]:
-    for node in tree.body:  # type: ignore[attr-defined]
+    for node in getattr(tree, "body", []):  # type: ignore[attr-defined]
         if isinstance(node, ast.ClassDef):
             for base in node.bases:
                 if isinstance(base, ast.Name) and base.id == "Task":
@@ -351,22 +366,28 @@ def _build_system_prompt(task_name: str) -> str:
 def _build_single_prompt(task_name: str) -> tuple[str, str]:
     system_prompt = _build_system_prompt(task_name)
     user_prompt = (
-        "Please produce the final solver.py implementation directly from the system message, and return only a ```python fenced block containing the complete code."
+        "Please produce the final solver.py implementation directly from the system message. "
+        "Output only a single ```python fenced code block containing the complete file with no extra text. "
+        "After the closing triple backticks, append the exact string <END_OF_CODE> on its own line."
     )
     return system_prompt, user_prompt
 
 
+
+_CODE_FENCE_RE = re.compile(r"```(?:python)?\n(.*?)```", re.DOTALL)
+
+
 def _extract_code(response_text: str) -> Optional[str]:
-    pattern = re.compile(r"```(?:python)?\n(.*?)```", re.DOTALL)
-    match = pattern.search(response_text)
+    match = _CODE_FENCE_RE.search(response_text)
     if match:
         return match.group(1).strip() + "\n"
-    # Fallback: if no fenced code, return full text
     stripped = response_text.strip()
     return stripped + ("\n" if not stripped.endswith("\n") else "") if stripped else None
 
 
-# Main ---------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Robust runner (streaming first, then fallback)
+# -----------------------------------------------------------------------------
 
 def run_local_model(
     model_name: str,
@@ -377,16 +398,26 @@ def run_local_model(
     max_tokens: int,
     save_path: Path,
 ) -> Path:
+    """
+    Robust runner:
+    1) Build prompts
+    2) Try streaming to collect text pieces (works around finish_reason='length' mapping issues)
+    3) Fallback to non-stream; extract visible text from multiple possible fields
+    4) Extract code block (with a fence-missing fallback) and write to save_path
+    """
+    # Build prompts
     system_prompt, user_prompt = _build_single_prompt(task_name)
 
-    completion_params = {
+    # Compose base params
+    completion_params: Dict[str, Any] = {
         "model": model_name,
         "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
         ],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
+        "temperature": float(temperature),
+        "max_tokens": int(max_tokens),
+        "stop": ["<END_OF_CODE>"],
     }
 
     if api_base:
@@ -394,31 +425,215 @@ def run_local_model(
     if api_key:
         completion_params["api_key"] = api_key
 
-    response = litellm.completion(**completion_params)
-    try:
-        message = response["choices"][0]["message"]["content"]
-    except (KeyError, IndexError) as exc:
-        raise RuntimeError(f"Unexpected response structure from model: {response}") from exc
+    def _dig(obj: Any, *path: Any) -> Any:
+        cur = obj
+        for key in path:
+            if cur is None:
+                return None
+            if isinstance(key, int):
+                try:
+                    if isinstance(cur, list):
+                        cur = cur[key]
+                    else:
+                        cur = cur[key]  # may raise
+                except Exception:
+                    return None
+            else:
+                if isinstance(cur, dict):
+                    cur = cur.get(key)
+                else:
+                    cur = getattr(cur, key, None)
+        return cur
 
-    code = _extract_code(message)
-    if not code:
-        raise RuntimeError("Model response did not contain any code block.")
+    def _extract_visible_text(resp: Any) -> Optional[str]:
+        """Try multiple layouts to pull visible text."""
+        def _from_dict(d: Dict[str, Any]) -> Optional[str]:
+            if not isinstance(d, dict):
+                return None
+            choices = d.get("choices") or []
+            if not choices:
+                return None
+            ch0 = choices[0] or {}
+
+            # Chat style
+            msg = ch0.get("message") or {}
+            content = msg.get("content")
+            if isinstance(content, str) and content.strip():
+                return content
+            if isinstance(content, list):
+                parts: List[str] = []
+                for it in content:
+                    if isinstance(it, dict):
+                        parts.append(it.get("text") or it.get("content") or it.get("value") or "")
+                    else:
+                        parts.append(str(it))
+                joined = "".join(parts).strip()
+                if joined:
+                    return joined
+
+            # Completions style
+            txt = ch0.get("text")
+            if isinstance(txt, str) and txt.strip():
+                return txt
+
+            return None
+
+        # 1) dict-like data
+        data = None
+        try:
+            if hasattr(resp, "model_dump"):
+                data = resp.model_dump()
+            elif isinstance(resp, dict):
+                data = resp
+        except Exception:
+            data = None
+
+        text = _from_dict(data) if data is not None else None
+        if text:
+            return text
+
+        # 2) attributes (LiteLLM pydantic types)
+        try:
+            content = getattr(resp.choices[0].message, "content", None)
+            if isinstance(content, str) and content.strip():
+                return content
+            if isinstance(content, list):
+                return "".join(
+                    (c.get("text") if isinstance(c, dict) else str(c)) for c in content
+                )
+        except Exception:
+            pass
+
+        # 3) raw_response
+        raw = getattr(resp, "raw_response", None)
+        if isinstance(raw, dict):
+            text = _from_dict(raw)
+            if text:
+                return text
+
+        return None
+
+    def _extract_code_lenient(body: str) -> str:
+        code = _extract_code(body)
+        if code:
+            return code
+        # Fallback if the model didn't close the fence
+        m = re.search(r"```(?:python)?\n(.*)$", body, flags=re.DOTALL)
+        if m:
+            return m.group(1).rstrip() + "\n"
+        # Final fallback: dump everything
+        body = body.strip()
+        return body + ("\n" if not body.endswith("\n") else "")
+
+    message: Optional[str] = None
+    finish_reason: Optional[str] = None
+
+    # ------------------
+    # 1) Try streaming
+    # ------------------
+    try:
+        print("DEBUG: Trying streaming mode...")
+        stream = litellm.completion(stream=True, **completion_params)
+        buf: list[str] = []
+        for chunk in stream:
+            piece = (
+                _dig(chunk, "choices", 0, "delta", "content")
+                or _dig(chunk, "choices", 0, "text")
+                or _dig(chunk, "choices", 0, "message", "content")
+            )
+            if piece:
+                buf.append(piece)
+            fr = _dig(chunk, "choices", 0, "finish_reason")
+            if fr:
+                finish_reason = fr
+        message = "".join(buf).strip()
+        print(f"DEBUG: collected {len(message)} characters from stream.")
+    except Exception as e:
+        print(f"DEBUG: Streaming failed, falling back to non-streaming. Error: {e}")
+
+    # -------------------------------------
+    # 2) Fallback: non-streaming completion
+    # -------------------------------------
+    if not message:
+        response = litellm.completion(**completion_params)
+
+        print("=" * 80)
+        print("DEBUG: Raw response object:")
+        print(response)
+        print("=" * 80)
+
+        # Try to dump raw JSON for visibility
+        try:
+            raw_dump = response.model_dump() if hasattr(response, "model_dump") else (
+                response if isinstance(response, dict) else None
+            )
+            if raw_dump is not None:
+                s = json.dumps(raw_dump, ensure_ascii=False)
+                print("\nDEBUG: raw response JSON (first 2000 chars):")
+                print(s[:2000])
+        except Exception as dump_exc:
+            print("DEBUG: could not dump raw response JSON:", repr(dump_exc))
+
+        # finish reason (best effort)
+        try:
+            if isinstance(response, dict):
+                finish_reason = _dig(response, "choices", 0, "finish_reason")
+            else:
+                finish_reason = getattr(response.choices[0], "finish_reason", None)
+        except Exception:
+            finish_reason = None
+
+        # Extract visible text robustly
+        message = _extract_visible_text(response)
+
+        # Debug print
+        try:
+            if message:
+                print("\n" + "=" * 80)
+                print("DEBUG: Final message content (first 2000 chars):")
+                print("=" * 80)
+                print(message[:2000])
+                print("=" * 80)
+        except Exception:
+            pass
+
+    # -----------------
+    # 3) Sanity checks
+    # -----------------
+    if finish_reason == "length":
+        print(
+            "\nWARNING: Response was truncated (finish_reason='length'). "
+            "Consider increasing --max-tokens or reducing prompt size."
+        )
+
+    if not message:
+        print("\nERROR: No message content found, cannot proceed")
+        raise RuntimeError("Model returned no usable content from stream or standard response")
+
+    # ------------------------------
+    # 4) Extract code & write to file
+    # ------------------------------
+    code = _extract_code_lenient(message)
 
     save_path.parent.mkdir(parents=True, exist_ok=True)
-    save_path.write_text(code)
+    save_path.write_text(code, encoding="utf-8")
     return save_path
 
+
+# -----------------------------------------------------------------------------
+# CLI
+# -----------------------------------------------------------------------------
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run a local OpenAI-compatible model on an AlgoTune task without the agent loop",
     )
-    parser.add_argument("task", help="Registered AlgoTune task name (e.g. 'svm')")
+    parser.add_argument("task", help="Registered AlgoTune task name (e.g. 'svm' or 'aes_gcm_encryption')")
     parser.add_argument("output", help="Destination path for the generated solver.py")
     parser.add_argument(
         "--model-name",
-        required=False,
-        help="Model identifier to send to the OpenAI-compatible endpoint. Defaults to the config entry for the task.",
+        required=True,
+        help="Model identifier to send to the OpenAI-compatible endpoint.",
     )
     parser.add_argument("--api-base", dest="api_base", help="Base URL of the OpenAI-compatible endpoint", default=None)
     parser.add_argument(
@@ -428,24 +643,31 @@ def main() -> None:
         default=None,
     )
     parser.add_argument("--temperature", type=float, default=0.0)
-    parser.add_argument("--max-tokens", type=int, default=4096)
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=8192,
+        help="Maximum tokens to generate (interpreted by many backends as the total budget: prompt + completion).",
+    )
     args = parser.parse_args()
 
-    config = load_config()
-    models_config = config.get("models", {})
+    # Try to load config (optional)
+    try:
+        config = load_config()
+        print(f"Attempting to load config from: {config.get('_loaded_from', '(unknown)')}" if isinstance(config, dict) else "Loaded config (unknown format)")
+    except Exception as e:
+        print(f"WARNING: Could not load AlgoTuner config: {e}")
+        config = {}
 
-    model_name = args.model_name
+    # Honor model-specific config if present (optional)
+    models_config = config.get("models", {}) if isinstance(config, dict) else {}
+    model_entry = models_config.get(args.model_name, {}) if isinstance(models_config, dict) else {}
+
     api_key = args.api_key
     api_base = args.api_base
 
-    if not model_name:
-        raise SystemExit("--model-name is required when bypassing the AlgoTune agent.")
-
-    model_entry = models_config.get(model_name, {}) if isinstance(models_config, dict) else {}
-
-    if api_key is None:
-        # Try to honour config entry if it exists
-        env_name = model_entry.get("api_key_env") if isinstance(model_entry, dict) else None
+    if api_key is None and isinstance(model_entry, dict):
+        env_name = model_entry.get("api_key_env")
         if env_name:
             api_key = os.environ.get(env_name)
 
@@ -457,7 +679,7 @@ def main() -> None:
 
     output_path = Path(args.output)
     final_path = run_local_model(
-        model_name=model_name,
+        model_name=args.model_name,
         api_base=api_base,
         api_key=api_key,
         task_name=args.task,

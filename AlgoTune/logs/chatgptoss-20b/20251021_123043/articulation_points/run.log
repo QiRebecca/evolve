@@ -1,0 +1,9 @@
+2025-10-21 12:31:01,059 - INFO - Starting generation for task 'articulation_points'
+2025-10-21 12:31:01,059 - INFO - Parameters: model=openai/chatgptoss-20b api_base=http://127.0.0.1:8010/v1 temperature=0.0 max_tokens=1024 overwrite=True
+2025-10-21 12:31:06,333 - ERROR - Task 'articulation_points' failed
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/run_local_model_all_tasks.py", line 130, in _run_tasks
+    final_path = run_local_model(
+  File "/data/zq/evolve/AlgoTune/scripts/run_local_model.py", line 446, in run_local_model
+    raise RuntimeError("Model response did not contain any code block.")
+RuntimeError: Model response did not contain any code block.

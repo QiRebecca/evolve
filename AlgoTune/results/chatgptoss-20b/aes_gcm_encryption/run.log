@@ -1,0 +1,11 @@
+2025-10-21 11:49:18,784 - INFO - Starting generation for task 'aes_gcm_encryption'
+2025-10-21 11:49:18,784 - INFO - Parameters: model=openai/chatgptoss-20b api_base=http://127.0.0.1:8010/v1 temperature=0.0 max_tokens=1024 overwrite=False
+2025-10-21 11:49:24,456 - ERROR - Task 'aes_gcm_encryption' failed
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/run_local_model_all_tasks.py", line 125, in _run_tasks
+    final_path = run_local_model(
+  File "/data/zq/evolve/AlgoTune/scripts/run_local_model.py", line 403, in run_local_model
+    code = _extract_code(message)
+  File "/data/zq/evolve/AlgoTune/scripts/run_local_model.py", line 361, in _extract_code
+    match = pattern.search(response_text)
+TypeError: expected string or bytes-like object
