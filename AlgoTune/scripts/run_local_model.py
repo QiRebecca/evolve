@@ -5,6 +5,12 @@
 - Falls back to non-stream with a robust extractor that can read:
   choices[0].message.content, choices[0].text, or provider raw JSON.
 - Builds the same prompts as the original script from project files.
+
+Hardening added:
+- Auto-retry with larger max_tokens when finish_reason='length' or message missing.
+- Much more robust text extraction, including array-style content and provider-deep fields.
+- Raw HTTP fallbacks against /chat/completions, /completions, and /responses
+  with and without the /v1 prefix.
 """
 
 from __future__ import annotations
@@ -20,6 +26,8 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 import litellm
+import urllib.request
+import urllib.error
 
 # -----------------------------------------------------------------------------
 # Optional: allow running outside full AlgoTune env. If import fails, use stub.
@@ -385,6 +393,116 @@ def _extract_code(response_text: str) -> Optional[str]:
     return stripped + ("\n" if not stripped.endswith("\n") else "") if stripped else None
 
 
+# --------------------------
+# NEW: helpers for extraction
+# --------------------------
+def _flatten_content_parts(content: Any) -> Optional[str]:
+    """Turn content (str or array-of-parts) into a flat string."""
+    if isinstance(content, str):
+        return content.strip() or None
+    if isinstance(content, list):
+        parts: List[str] = []
+        for it in content:
+            if isinstance(it, dict):
+                for k in ("text", "content", "value", "output_text", "generated_text"):
+                    v = it.get(k)
+                    if isinstance(v, str) and v:
+                        parts.append(v)
+            elif isinstance(it, str):
+                parts.append(it)
+        joined = "".join(parts).strip()
+        return joined or None
+    return None
+
+
+def _as_dict(obj: Any) -> Optional[Dict[str, Any]]:
+    try:
+        if hasattr(obj, "model_dump"):
+            return obj.model_dump()
+        if isinstance(obj, dict):
+            return obj
+    except Exception:
+        pass
+    return None
+
+
+def _dig_dict(d: Optional[Dict[str, Any]], *path: Any) -> Any:
+    cur: Any = d
+    for key in path:
+        if cur is None:
+            return None
+        if isinstance(key, int):
+            try:
+                if isinstance(cur, list):
+                    cur = cur[key]
+                else:
+                    cur = cur[key]
+            except Exception:
+                return None
+        else:
+            if isinstance(cur, dict):
+                cur = cur.get(key)
+            else:
+                return None
+    return cur
+
+
+def _heuristic_find_text(obj: Any) -> Optional[str]:
+    """Last-resort deep scan for a plausible long text blob containing code/fence."""
+    stack = [obj]
+    best = None
+    while stack:
+        x = stack.pop()
+        if isinstance(x, dict):
+            stack.extend(x.values())
+        elif isinstance(x, list):
+            stack.extend(x)
+        elif isinstance(x, str):
+            s = x.strip()
+            if len(s) >= 20 and ("```" in s or "def " in s or "class " in s):
+                return s
+            if best is None and len(s) > 400:
+                best = s
+    return best
+
+
+def _extract_from_any_dict_layout(d: Dict[str, Any]) -> Optional[str]:
+    """
+    Robust extractor from a raw dict, covering many provider variants.
+    """
+    # 1) chat-completions style
+    msg = _dig_dict(d, "choices", 0, "message")
+    if isinstance(msg, dict):
+        c = msg.get("content")
+        flat = _flatten_content_parts(c)
+        if flat:
+            return flat
+        rc = msg.get("reasoning_content")
+        if isinstance(rc, str) and rc.strip():
+            return rc.strip()
+
+    # 2) completions style
+    txt = _dig_dict(d, "choices", 0, "text")
+    if isinstance(txt, str) and txt.strip():
+        return txt.strip()
+
+    # 3) open-source variants
+    for k in ("output_text", "generated_text"):
+        v = d.get(k)
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+
+    # 4) sometimes put in nested provider fields
+    raw = _dig_dict(d, "provider_specific_fields", "raw_response")
+    if isinstance(raw, dict):
+        inner = _extract_from_any_dict_layout(raw)
+        if inner:
+            return inner
+
+    # 5) last resort: deep scan
+    return _heuristic_find_text(d)
+
+
 # -----------------------------------------------------------------------------
 # Robust runner (streaming first, then fallback)
 # -----------------------------------------------------------------------------
@@ -403,7 +521,9 @@ def run_local_model(
     1) Build prompts
     2) Try streaming to collect text pieces (works around finish_reason='length' mapping issues)
     3) Fallback to non-stream; extract visible text from multiple possible fields
-    4) Extract code block (with a fence-missing fallback) and write to save_path
+    4) Raw HTTP permutations fallback
+    5) Auto-increase max_tokens and retry if needed
+    6) Extract code block and write to save_path
     """
     # Build prompts
     system_prompt, user_prompt = _build_single_prompt(task_name)
@@ -412,12 +532,17 @@ def run_local_model(
     completion_params: Dict[str, Any] = {
         "model": model_name,
         "messages": [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt},
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
         ],
         "temperature": float(temperature),
         "max_tokens": int(max_tokens),
         "stop": ["<END_OF_CODE>"],
+        # push provider-specific synonyms to help weird backends
+        "extra_body": {
+            "max_output_tokens": int(max_tokens),
+            "stop_sequences": ["<END_OF_CODE>"],
+        },
     }
 
     if api_base:
@@ -450,33 +575,8 @@ def run_local_model(
         def _from_dict(d: Dict[str, Any]) -> Optional[str]:
             if not isinstance(d, dict):
                 return None
-            choices = d.get("choices") or []
-            if not choices:
-                return None
-            ch0 = choices[0] or {}
-
-            # Chat style
-            msg = ch0.get("message") or {}
-            content = msg.get("content")
-            if isinstance(content, str) and content.strip():
-                return content
-            if isinstance(content, list):
-                parts: List[str] = []
-                for it in content:
-                    if isinstance(it, dict):
-                        parts.append(it.get("text") or it.get("content") or it.get("value") or "")
-                    else:
-                        parts.append(str(it))
-                joined = "".join(parts).strip()
-                if joined:
-                    return joined
-
-            # Completions style
-            txt = ch0.get("text")
-            if isinstance(txt, str) and txt.strip():
-                return txt
-
-            return None
+            # Use the robust dict extractor above
+            return _extract_from_any_dict_layout(d)
 
         # 1) dict-like data
         data = None
@@ -495,12 +595,15 @@ def run_local_model(
         # 2) attributes (LiteLLM pydantic types)
         try:
             content = getattr(resp.choices[0].message, "content", None)
-            if isinstance(content, str) and content.strip():
-                return content
-            if isinstance(content, list):
-                return "".join(
-                    (c.get("text") if isinstance(c, dict) else str(c)) for c in content
-                )
+            flat = _flatten_content_parts(content)
+            if flat:
+                return flat
+            rc = getattr(resp.choices[0].message, "reasoning_content", None)
+            if isinstance(rc, str) and rc.strip():
+                return rc.strip()
+            txt = getattr(resp.choices[0], "text", None)
+            if isinstance(txt, str) and txt.strip():
+                return txt.strip()
         except Exception:
             pass
 
@@ -528,41 +631,111 @@ def run_local_model(
     message: Optional[str] = None
     finish_reason: Optional[str] = None
 
+    # --------------------------------
+    # Raw HTTP fallback: helpers
+    # --------------------------------
+    def _http_post_json(full_url: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        try:
+            body = json.dumps(payload).encode("utf-8")
+            headers = {
+                "Content-Type": "application/json; charset=utf-8",
+                "Accept": "application/json",
+            }
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
+            req = urllib.request.Request(full_url, data=body, headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=120) as r:
+                return json.loads(r.read().decode("utf-8", errors="ignore"))
+        except urllib.error.HTTPError as he:
+            print(f"DEBUG: Raw HTTP POST to {full_url} failed: HTTP {he.code}: {he.reason}")
+            return None
+        except Exception as e:
+            print(f"DEBUG: Raw HTTP POST to {full_url} failed: {e}")
+            return None
+
+    def _try_http_variants(payload: Dict[str, Any]) -> Optional[str]:
+        """Try /chat/completions, /completions, /responses with and without /v1."""
+        if not api_base:
+            return None
+        bases: List[str] = []
+        base = api_base.rstrip("/")
+        bases.append(base)
+        if base.endswith("/v1"):
+            bases.append(base[:-3])  # strip /v1 -> root
+        else:
+            bases.append(base + "/v1")  # add /v1
+
+        paths = ["/chat/completions", "/completions", "/responses"]
+        for b in bases:
+            for p in paths:
+                url = f"{b}{p}"
+                raw = _http_post_json(url, payload)
+                if raw:
+                    try:
+                        print("DEBUG: raw HTTP JSON (first 2000 chars) from", url)
+                        print(json.dumps(raw, ensure_ascii=False)[:2000])
+                    except Exception:
+                        pass
+                    txt = _extract_from_any_dict_layout(raw)
+                    if txt:
+                        return txt
+        return None
+
     # ------------------
     # 1) Try streaming
     # ------------------
     try:
-        print("DEBUG: Trying streaming mode...")
-        stream = litellm.completion(stream=True, **completion_params)
-        buf: list[str] = []
-        for chunk in stream:
-            piece = (
-                _dig(chunk, "choices", 0, "delta", "content")
-                or _dig(chunk, "choices", 0, "text")
-                or _dig(chunk, "choices", 0, "message", "content")
-            )
-            if piece:
-                buf.append(piece)
-            fr = _dig(chunk, "choices", 0, "finish_reason")
-            if fr:
-                finish_reason = fr
-        message = "".join(buf).strip()
-        print(f"DEBUG: collected {len(message)} characters from stream.")
+        if os.getenv("ALGOTUNE_NO_STREAM", "").strip() != "1":
+            print("DEBUG: Trying streaming mode...")
+            stream = litellm.completion(stream=True, **completion_params)
+            buf: list[str] = []
+            for chunk in stream:
+                # Normalize chunk to dict if possible
+                cd = _as_dict(chunk) or {}
+                # standard paths
+                piece = _dig_dict(cd, "choices", 0, "delta", "content") \
+                    or _dig_dict(cd, "choices", 0, "delta", "reasoning_content")
+                if not piece:
+                    # some providers stream full message at end or odd fields
+                    mc = _dig_dict(cd, "choices", 0, "message", "content")
+                    piece = _flatten_content_parts(mc) or _dig_dict(cd, "choices", 0, "text")
+                if piece:
+                    buf.append(piece)
+                fr = _dig_dict(cd, "choices", 0, "finish_reason")
+                if fr:
+                    finish_reason = fr
+            message = "".join(buf).strip()
+            print(f"DEBUG: collected {len(message)} characters from stream.")
+        else:
+            print("DEBUG: Skipping streaming due to ALGOTUNE_NO_STREAM=1")
     except Exception as e:
         print(f"DEBUG: Streaming failed, falling back to non-streaming. Error: {e}")
 
     # -------------------------------------
     # 2) Fallback: non-streaming completion
     # -------------------------------------
+    def _one_call_and_extract(params: Dict[str, Any]) -> tuple[Optional[str], Optional[str], Any]:
+        resp = litellm.completion(**params)
+        fr = None
+        try:
+            if isinstance(resp, dict):
+                fr = _dig(resp, "choices", 0, "finish_reason")
+            else:
+                fr = getattr(resp.choices[0], "finish_reason", None)
+        except Exception:
+            fr = None
+        text = _extract_visible_text(resp)
+        return text, fr, resp
+
     if not message:
-        response = litellm.completion(**completion_params)
+        text, fr, response = _one_call_and_extract(completion_params)
 
         print("=" * 80)
         print("DEBUG: Raw response object:")
         print(response)
         print("=" * 80)
 
-        # Try to dump raw JSON for visibility
+        # Dump JSONs for visibility
         try:
             raw_dump = response.model_dump() if hasattr(response, "model_dump") else (
                 response if isinstance(response, dict) else None
@@ -571,31 +744,74 @@ def run_local_model(
                 s = json.dumps(raw_dump, ensure_ascii=False)
                 print("\nDEBUG: raw response JSON (first 2000 chars):")
                 print(s[:2000])
+            rr = getattr(response, "raw_response", None)
+            if isinstance(rr, dict):
+                rs = json.dumps(rr, ensure_ascii=False)
+                print("\nDEBUG: provider raw_response (first 2000 chars):")
+                print(rs[:2000])
         except Exception as dump_exc:
             print("DEBUG: could not dump raw response JSON:", repr(dump_exc))
 
-        # finish reason (best effort)
-        try:
-            if isinstance(response, dict):
-                finish_reason = _dig(response, "choices", 0, "finish_reason")
+        message = text
+        finish_reason = fr
+
+    # -------------------------------------
+    # 2b) Auto-increase max_tokens if needed
+    # -------------------------------------
+    if (not message) or (finish_reason == "length"):
+        grow_plan = []
+        start = int(max_tokens)
+        grow_plan.extend([max(start * 2, 4096), 8192, 12288, 16384])
+        tried = set()
+        for mt in grow_plan:
+            if mt in tried:
+                continue
+            tried.add(mt)
+            print(f"DEBUG: Retrying non-stream with larger max_tokens={mt} ...")
+            params = dict(completion_params)
+            params["max_tokens"] = int(mt)
+            eb = dict(params.get("extra_body", {}) or {})
+            eb["max_output_tokens"] = int(mt)
+            eb["stop_sequences"] = ["<END_OF_CODE>"]
+            params["extra_body"] = eb
+            text, fr, _resp = _one_call_and_extract(params)
+            if text:
+                message = text
+                finish_reason = fr
+                print(f"DEBUG: Success with max_tokens={mt}, finish_reason={finish_reason}")
+                break
             else:
-                finish_reason = getattr(response.choices[0], "finish_reason", None)
-        except Exception:
-            finish_reason = None
+                print(f"DEBUG: Still no content at max_tokens={mt}, finish_reason={fr}")
 
-        # Extract visible text robustly
-        message = _extract_visible_text(response)
+    # -------------------------------------
+    # 2c) Raw HTTP fallback(s) if still empty
+    # -------------------------------------
+    if not message and api_base:
+        print("DEBUG: No content via LiteLLM. Trying raw HTTP endpoints ...")
+        chat_payload = {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": float(temperature),
+            "max_tokens": int(max(max_tokens, 4096)),
+            "stop": ["<END_OF_CODE>"],
+        }
+        # Try chat/completions, completions, responses (+/- /v1)
+        message = _try_http_variants(chat_payload)
 
-        # Debug print
-        try:
-            if message:
-                print("\n" + "=" * 80)
-                print("DEBUG: Final message content (first 2000 chars):")
-                print("=" * 80)
-                print(message[:2000])
-                print("=" * 80)
-        except Exception:
-            pass
+        # For completions API, also try flattened prompt if above didn't work
+        if not message:
+            flat_prompt = f"<system>\n{system_prompt}\n</system>\n\n<user>\n{user_prompt}\n</user>"
+            comp_payload = {
+                "model": model_name,
+                "prompt": flat_prompt,
+                "temperature": float(temperature),
+                "max_tokens": int(max(max_tokens, 4096)),
+                "stop": ["<END_OF_CODE>"],
+            }
+            message = _try_http_variants(comp_payload)
 
     # -----------------
     # 3) Sanity checks
@@ -608,7 +824,7 @@ def run_local_model(
 
     if not message:
         print("\nERROR: No message content found, cannot proceed")
-        raise RuntimeError("Model returned no usable content from stream or standard response")
+        raise RuntimeError("Model returned no usable content from any path (stream, non-stream, HTTP variants)")
 
     # ------------------------------
     # 4) Extract code & write to file
