@@ -16,6 +16,9 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import GPT2Tokenizer  # 用于 slow 回退（BPE）
 
+MARKER_START = "<<<SOLVER_PY_START>>>"
+MARKER_END = "<<<SOLVER_PY_END>>>"
+
 # --- Safety switches ---
 os.environ.setdefault("FLASH_ATTENTION_SKIP_IMPORT", "1")
 os.environ.setdefault("XFORMERS_DISABLED", "1")
@@ -147,15 +150,24 @@ def build_prompt(desc_text: str, solve_src: str, is_solution_src: str) -> str:
     prompt = prompt.replace("<task/description.txt>", "\n" + desc_text.strip() + "\n")
     prompt = prompt.replace("<task.solve>", "\n" + solve_src + "\n")
     prompt = prompt.replace("<task.is_solution>", "\n" + is_solution_src + "\n")
-    prompt += textwrap.dedent("""
-
+    prompt += textwrap.dedent(f"""
     -----
-    VERY IMPORTANT OUTPUT INSTRUCTION:
-    Output ONLY the exact contents of the file `solver.py` (no explanations, no backticks, no surrounding text).
-    The file must contain:
-      - `from typing import Any`
-      - `class Solver:` with a method `def solve(self, problem, **kwargs) -> Any:`
-    Do not include any other files or text in your reply.
+    ABSOLUTE OUTPUT FORMAT (STRICT):
+
+    You MUST wrap the **entire and only** contents of solver.py between the
+    following two sentinel lines, with no extra characters, spaces or text
+    before/after them:
+
+    {MARKER_START}
+    <solver.py contents ONLY — no backticks, no explanations>
+    {MARKER_END}
+
+    Rules:
+    - Do NOT use Markdown code fences (no ```).
+    - Do NOT print anything outside {MARKER_START} … {MARKER_END}.
+    - The code must contain:
+        - `from typing import Any`
+        - `class Solver:` with `def solve(self, problem, **kwargs) -> Any:`
     """)
     return prompt
 
@@ -221,20 +233,18 @@ def load_model(model_path: Path):
     if tok.pad_token_id is None and getattr(tok, "eos_token_id", None) is not None:
         tok.pad_token_id = tok.eos_token_id
 
-    # 2) 先尝试常规 Auto 路径（万一后续版本已修好 __init__.py 的导出）
+    # 2) 先尝试常规 Auto 路径（直接在 GPU 上构建，避免 CPU->GPU 大搬运峰值）
     try:
         mdl = AutoModelForCausalLM.from_pretrained(
             str(model_path),
             dtype=dtype,
-            device_map="auto",
+            device_map="cuda",          # ★ 关键：直接落到 GPU
             trust_remote_code=True,
             local_files_only=True,
             low_cpu_mem_usage=True,
         )
-        try:
-            mdl.config.attn_implementation = "eager"
-        except Exception:
-            pass
+        try: mdl.config.attn_implementation = "eager"
+        except Exception: pass
         return tok, mdl
     except Exception as e:
         auto_err = e
@@ -300,15 +310,13 @@ def load_model(model_path: Path):
         str(model_path),
         config=cfg,
         torch_dtype=dtype,
-        device_map="auto",
+        device_map="cuda",             # ★ 手动 fallback 也直接落到 GPU
         trust_remote_code=True,
         local_files_only=True,
         low_cpu_mem_usage=True,
     )
-    try:
-        mdl.config.attn_implementation = "eager"
-    except Exception:
-        pass
+    try: mdl.config.attn_implementation = "eager"
+    except Exception: pass
     return tok, mdl
 
 
@@ -333,13 +341,15 @@ def run_inference(tokenizer, model, prompt: str, max_new_tokens: int = 2048) -> 
     for k in inputs:
         inputs[k] = inputs[k].to(dev)
 
+    # 预热：触发 Triton kernel 首编译，降低首次卡顿/碎片
     with torch.inference_mode():
+        _ = model.generate(**inputs, max_new_tokens=1, do_sample=False)
+        if next(model.parameters()).is_cuda:
+            torch.cuda.synchronize()
         out = model.generate(
             **inputs,
             max_new_tokens=max_new_tokens,
-            do_sample=False,
-            temperature=0.0,
-            top_p=1.0,
+            do_sample=False,             # 保持可复现
             repetition_penalty=1.05,
             eos_token_id=getattr(tokenizer, "eos_token_id", None),
             pad_token_id=getattr(tokenizer, "pad_token_id", None),
@@ -350,19 +360,50 @@ def run_inference(tokenizer, model, prompt: str, max_new_tokens: int = 2048) -> 
 
 
 def extract_solver_py(text: str) -> str:
-    blocks = [m.group(1).strip() for m in re.finditer(r"```(?:python)?\s*(.*?)```", text, re.DOTALL | re.IGNORECASE)]
-    chosen = None
-    for b in blocks:
-        if re.search(r"\bclass\s+Solver\b", b):
-            chosen = b; break
-    if not chosen:
-        chosen = max(blocks, key=len) if blocks else (text if "class Solver" in text else text)
-    chosen = chosen.strip().lstrip("\ufeff")
+    """
+    只提取 {MARKER_START} 与 {MARKER_END} 之间的代码并返回。
+    不做任何其它兜底，不拼 baseline，不抓 fenced block。
+    若标记缺失，直接报错。
+    """
+    t = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\ufeff")
+
+    # 允许标记前后有空白，但标记字符串必须原样出现
+    start = t.find(MARKER_START)
+    if start == -1:
+        raise RuntimeError("MARKER_START not found in model output")
+
+    start += len(MARKER_START)
+    end = t.find(MARKER_END, start)
+    if end == -1:
+        raise RuntimeError("MARKER_END not found in model output")
+
+    code = t[start:end].strip()
+
+    # 如果模型仍然把代码包进了 ```python fenced block，去掉围栏
+    code = re.sub(r"^```(?:python|py)?\s*", "", code, flags=re.IGNORECASE).strip()
+    code = re.sub(r"\s*```$", "", code).strip()
+
+    # 可选：小修补——若使用了 Any 却没导入，补上 import（仍为纯代码）
+    if "from typing import Any" not in code and re.search(r"\bAny\b", code):
+        code = "from typing import Any\n" + code
+
+    # 可选：快速契约检查，确保真的有 class Solver.solve（不满足则报错）
     try:
-        compile(chosen, "solver.py", "exec")
+        tree = ast.parse(code)
+        ok = False
+        for n in tree.body:
+            if isinstance(n, ast.ClassDef) and n.name == "Solver":
+                for m in n.body:
+                    if isinstance(m, ast.FunctionDef) and m.name == "solve":
+                        ok = True
+                        break
+        if not ok:
+            raise RuntimeError("extracted segment does not contain class Solver.solve")
     except Exception as e:
-        chosen += f"\n\n# NOTE: compile() failed for the extracted code above: {e}\n"
-    return chosen
+        raise RuntimeError(f"invalid solver.py segment: {e}")
+
+    return code
+
 
 
 def main():

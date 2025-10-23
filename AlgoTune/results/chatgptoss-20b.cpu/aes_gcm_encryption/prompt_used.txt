@@ -183,20 +183,11 @@ for <task.xxx> please extract from the file directly
 --------
 
 the only output we need is solver.py, please let the model output this only in exact form mentioned in the prompt, and the solver should be putted in solver.py under output path with corresponding task name.
+
 -----
-ABSOLUTE OUTPUT FORMAT (STRICT):
-
-You MUST wrap the **entire and only** contents of solver.py between the
-following two sentinel lines, with no extra characters, spaces or text
-before/after them:
-
-<<<SOLVER_PY_START>>>
-<solver.py contents ONLY — no backticks, no explanations>
-<<<SOLVER_PY_END>>>
-
-Rules:
-- Do NOT use Markdown code fences (no ```).
-- Do NOT print anything outside <<<SOLVER_PY_START>>> … <<<SOLVER_PY_END>>>.
-- The code must contain:
-    - `from typing import Any`
-    - `class Solver:` with `def solve(self, problem, **kwargs) -> Any:`
+VERY IMPORTANT OUTPUT INSTRUCTION:
+Output ONLY the exact contents of the file `solver.py` (no explanations, no backticks, no surrounding text).
+The file must contain:
+  - `from typing import Any`
+  - `class Solver:` with a method `def solve(self, problem, **kwargs) -> Any:`
+Do not include any other files or text in your reply.
