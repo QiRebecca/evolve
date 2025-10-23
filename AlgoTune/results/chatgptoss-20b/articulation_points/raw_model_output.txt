@@ -1,0 +1,101 @@
+analysisWe need to implement efficient articulation point detection. Use DFS algorithm O(V+E). Input: dict with num_nodes and edges list. Output sorted list. Implementation straightforward.
+
+Edge cases: isolated nodes? They are not articulation points unless graph has >1 node? In standard definition, articulation point is vertex whose removal increases number of connected components. For isolated node, removal doesn't change components? Actually removing isolated node reduces component count by 1, but does it increase? Usually articulation point requires that after removal, number of connected components increases compared to original. Removing isolated node decreases components, so not AP. So algorithm handles.
+
+Implement iterative recursion? Use recursion depth up to V maybe 1e5? Might exceed recursion limit. Use sys.setrecursionlimit. But we can implement iterative stack.
+
+Simpler: use recursion with increased limit; typical constraints unknown. We'll set recursionlimit to 1e6.
+
+Implementation:
+
+def solve(self, problem, **kwargs):
+    n=problem["num_nodes"]; edges=problem["edges"]
+    adj=[[] for _ in range(n)]
+    for u,v in edges:
+        adj[u].append(v); adj[v].append(u)
+    disc=[-1]*n; low=[0]*n; parent=[-1]*n; ap=[False]*n
+    time=0
+    def dfs(u):
+        nonlocal time
+        children=0
+        disc[u]=low[u]=time; time+=1
+        for v in adj[u]:
+            if disc[v]==-1:
+                parent[v]=u; children+=1
+                dfs(v)
+                low[u]=min(low[u], low[v])
+                if parent[u]==-1 and children>1:
+                    ap[u]=True
+                if parent[u]!=-1 and low[v]>=disc[u]:
+                    ap[u]=True
+            elif v!=parent[u]:
+                low[u]=min(low[u], disc[v])
+    for i in range(n):
+        if disc[i]==-1:
+            dfs(i)
+    result=[i for i,flag in enumerate(ap) if flag]
+    result.sort()
+    return {"articulation_points": result}
+
+Need imports: typing.Any, maybe sys.
+
+Return type Any.
+
+Add __init__? Not needed.
+
+Wrap in solver.py.
+
+Let's produce final content.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import sys
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """Find articulation points in an undirected graph using DFS."""
+        n = problem["num_nodes"]
+        edges = problem["edges"]
+
+        # Build adjacency list
+        adj = [[] for _ in range(n)]
+        for u, v in edges:
+            adj[u].append(v)
+            adj[v].append(u)
+
+        sys.setrecursionlimit(max(1000000, n * 2))
+
+        disc = [-1] * n          # discovery times
+        low = [0] * n            # low-link values
+        parent = [-1] * n
+        ap = [False] * n         # articulation point flags
+        time = 0
+
+        def dfs(u: int):
+            nonlocal time
+            disc[u] = low[u] = time
+            time += 1
+            children = 0
+
+            for v in adj[u]:
+                if disc[v] == -1:
+                    parent[v] = u
+                    children += 1
+                    dfs(v)
+                    low[u] = min(low[u], low[v])
+
+                    # Case 1: root with more than one child
+                    if parent[u] == -1 and children > 1:
+                        ap[u] = True
+                    # Case 2: non-root and low value of child >= discovery time of u
+                    if parent[u] != -1 and low[v] >= disc[u]:
+                        ap[u] = True
+                elif v != parent[u]:
+                    low[u] = min(low[u], disc[v])
+
+        for i in range(n):
+            if disc[i] == -1:
+                dfs(i)
+
+        articulation_points = [i for i, flag in enumerate(ap) if flag]
+        articulation_points.sort()
+        return {"articulation_points": articulation_points}
+<<<SOLVER_PY_END>>

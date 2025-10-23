@@ -1,0 +1,66 @@
+
+=== 2025-10-23T19:11:01.940744 | GPU 2 | attempt 1 ===
+CMD: python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task __pycache__ --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : __pycache__
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/__pycache__/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/__pycache__/__pycache__.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/__pycache__
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 479, in <module>
+    main()
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 462, in main
+    desc_text = read_text(desc_path)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 31, in read_text
+    raise FileNotFoundError(f"File not found: {path}")
+FileNotFoundError: File not found: /data/zq/evolve/AlgoTune/AlgoTuneTasks/__pycache__/description.txt
+[W1023 19:11:06.437473889 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
+terminate called after throwing an instance of 'c10::Error'
+  what():  i < config_.size() INTERNAL ASSERT FAILED at "/pytorch/c10/core/AllocatorConfig.h":116, please report a bug to PyTorch. Index out of bounds in ConfigTokenizer
+Exception raised from checkIndex at /pytorch/c10/core/AllocatorConfig.h:116 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x7f86f3008b80 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x65 (0x7f86f2f9afbf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: c10::detail::torchInternalAssertFail(char const*, char const*, unsigned int, char const*, char const*) + 0x42 (0x7f86f3005522 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: c10::CachingAllocator::AcceleratorAllocatorConfig::parseArgs(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x8f1 (0x7f86f2f9f271 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #4: <unknown function> + 0x343d8 (0x7f86f2f9f3d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #5: c10::CachingAllocator::AcceleratorAllocatorConfig::instance() + 0x58 (0x7f86f2f9f7d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #6: <unknown function> + 0xc7b424 (0x7f86f3db2424 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #7: <unknown function> + 0xc7406b (0x7f86f3dab06b in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #8: <unknown function> + 0x468a7 (0x7f8752fc78a7 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #9: on_exit + 0 (0x7f8752fc7a60 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #10: __libc_start_main + 0xfa (0x7f8752fa508a in /lib/x86_64-linux-gnu/libc.so.6)
+<omitting python frames>
+
+
+=== 2025-10-23T19:11:06.462115 | GPU 2 | attempt 2 ===
+CMD: python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task __pycache__ --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : __pycache__
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/__pycache__/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/__pycache__/__pycache__.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/__pycache__
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 479, in <module>
+    main()
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 462, in main
+    desc_text = read_text(desc_path)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 31, in read_text
+    raise FileNotFoundError(f"File not found: {path}")
+FileNotFoundError: File not found: /data/zq/evolve/AlgoTune/AlgoTuneTasks/__pycache__/description.txt
+[W1023 19:11:10.773586844 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
+terminate called after throwing an instance of 'c10::Error'
+  what():  i < config_.size() INTERNAL ASSERT FAILED at "/pytorch/c10/core/AllocatorConfig.h":116, please report a bug to PyTorch. Index out of bounds in ConfigTokenizer
+Exception raised from checkIndex at /pytorch/c10/core/AllocatorConfig.h:116 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x7f45f1123b80 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x65 (0x7f45f10b5fbf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: c10::detail::torchInternalAssertFail(char const*, char const*, unsigned int, char const*, char const*) + 0x42 (0x7f45f1120522 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: c10::CachingAllocator::AcceleratorAllocatorConfig::parseArgs(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x8f1 (0x7f45f10ba271 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #4: <unknown function> + 0x343d8 (0x7f45f10ba3d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #5: c10::CachingAllocator::AcceleratorAllocatorConfig::instance() + 0x58 (0x7f45f10ba7d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #6: <unknown function> + 0xc7b424 (0x7f45f1ecd424 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #7: <unknown function> + 0xc7406b (0x7f45f1ec606b in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #8: <unknown function> + 0x468a7 (0x7f46510e28a7 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #9: on_exit + 0 (0x7f46510e2a60 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #10: __libc_start_main + 0xfa (0x7f46510c008a in /lib/x86_64-linux-gnu/libc.so.6)
+<omitting python frames>
+

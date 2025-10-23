@@ -1,0 +1,98 @@
+analysisWe need to implement a fast solver for 2D affine transform with cubic spline interpolation (order=3) and constant mode padding zeros. Baseline uses scipy.ndimage.affine_transform. We can use scipy's ndimage or maybe use skimage transform warp? But we want speed. For small images maybe overhead negligible. But we can implement using numpy and SciPy's map_coordinates? But that's similar.
+
+We can attempt to use scipy.ndimage.affine_transform directly but maybe set order=3, mode='constant', cval=0.0. That is baseline. But we can maybe precompute inverse matrix? But affine_transform already does that.
+
+Maybe we can use numba to accelerate? But implementing cubic spline interpolation manually is heavy.
+
+Given constraints, simplest is to call scipy.ndimage.affine_transform. That matches baseline. But we need to ensure same parameters: order=self.order, mode=self.mode. In baseline, self.order and self.mode presumably defined elsewhere. We need to set them in our class. Let's set order=3, mode='constant', cval=0.0.
+
+Also need to handle potential exceptions.
+
+Thus implement:
+
+class Solver:
+    def __init__(self):
+        self.order=3
+        self.mode='constant'
+        self.cval=0.0
+
+    def solve(self, problem, **kwargs):
+        image=problem['image']
+        matrix=problem['matrix']
+        try:
+            transformed_image=scipy.ndimage.affine_transform(image, matrix, order=self.order, mode=self.mode, cval=self.cval)
+        except Exception as e:
+            logging.error(...)
+            return {"transformed_image":[]}
+        return {"transformed_image": transformed_image.tolist()}
+
+But note: The solution expects array, not list? In baseline they return array. In is_solution, they convert proposed_list to array. They expect list? They check if proposed_list is list. So we should return list of lists. So convert to list.
+
+Also need imports: numpy, scipy.ndimage, logging.
+
+Return type Any.
+
+Let's produce solver.py accordingly.
+
+Ensure no extra text. Use sentinel lines.
+
+Let's craft code.assistantfinal<<<SOLVER_PY_START>>>
+import logging
+from typing import Any
+
+import numpy as np
+import scipy.ndimage
+
+
+class Solver:
+    def __init__(self):
+        # Parameters matching the baseline configuration
+        self.order = 3          # Cubic spline interpolation
+        self.mode = "constant"  # Pad with zeros outside the input
+        self.cval = 0.0         # Constant value for padding
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> Any:
+        """
+        Apply a 2D affine transformation to the input image using
+        scipy.ndimage.affine_transform with cubic spline interpolation
+        and zero padding.
+
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing:
+                - "image": 2D array-like of shape (n, n) with float values.
+                - "matrix": 2x3 array-like defining the affine transformation.
+
+        Returns
+        -------
+        dict
+            Dictionary with key "transformed_image" containing the
+            transformed image as a nested list of floats.
+        """
+        image = problem.get("image")
+        matrix = problem.get("matrix")
+
+        if image is None or matrix is None:
+            logging.error("Missing 'image' or 'matrix' in problem input.")
+            return {"transformed_image": []}
+
+        try:
+            # Convert inputs to numpy arrays to ensure correct dtype
+            image_arr = np.asarray(image, dtype=float)
+            matrix_arr = np.asarray(matrix, dtype=float)
+
+            transformed = scipy.ndimage.affine_transform(
+                image_arr,
+                matrix_arr,
+                order=self.order,
+                mode=self.mode,
+                cval=self.cval,
+            )
+        except Exception as exc:
+            logging.error(f"Affine transformation failed: {exc}")
+            return {"transformed_image": []}
+
+        # Convert the resulting array back to a nested list for consistency
+        return {"transformed_image": transformed.tolist()}
+<<<SOLVER_PY_END>>>

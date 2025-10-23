@@ -1,0 +1,112 @@
+
+=== 2025-10-23T19:24:56.962868 | GPU 2 | attempt 1 ===
+CMD: /home/zhangqi/.conda/envs/env/bin/python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task chebyshev_center --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : chebyshev_center
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/chebyshev_center/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/chebyshev_center/chebyshev_center.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/chebyshev_center
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 10423.47it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 14583.32it/s]
+Loading checkpoint shards:  33%|███▎      | 1/3 [00:03<00:06,  3.00s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:06<00:03,  3.51s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:07<00:03,  3.78s/it]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 4746.91it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 6281.88it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 479, in <module>
+    main()
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 468, in main
+    tok, mdl = load_model(model_path)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 316, in load_model
+    mdl = candidate.from_pretrained(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 277, in _wrapper
+    return func(*args, **kwargs)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 5048, in from_pretrained
+    ) = cls._load_pretrained_model(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 5468, in _load_pretrained_model
+    _error_msgs, disk_offload_index = load_shard_file(args)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 843, in load_shard_file
+    disk_offload_index = _load_state_dict_into_meta_model(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 774, in _load_state_dict_into_meta_model
+    hf_quantizer.create_quantized_param(model, param, param_name, param_device)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/quantizers/quantizer_mxfp4.py", line 248, in create_quantized_param
+    load_and_swizzle_mxfp4(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/integrations/mxfp4.py", line 399, in load_and_swizzle_mxfp4
+    blocks = blocks.to(target_device).contiguous()
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 10.44 MiB is free. Process 1375619 has 27.67 GiB memory in use. Including non-PyTorch memory, this process has 11.70 GiB memory in use. Of the allocated memory 11.23 GiB is allocated by PyTorch, and 60.62 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+terminate called after throwing an instance of 'c10::Error'
+  what():  Expected 'True' or 'False' at index 2 in ConfigTokenizer but got 'true'
+Exception raised from toBool at /pytorch/c10/core/AllocatorConfig.h:79 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x7fedc8f57b80 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x65 (0x7fedc8ee9fbf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: c10::CachingAllocator::AcceleratorAllocatorConfig::parseExpandableSegments(c10::CachingAllocator::ConfigTokenizer const&, unsigned long) + 0x10d (0x7fedc8eed45d in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: c10::CachingAllocator::AcceleratorAllocatorConfig::parseArgs(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x44a (0x7fedc8eeddca in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #4: <unknown function> + 0x344cf (0x7fedc8eee4cf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #5: c10::CachingAllocator::AcceleratorAllocatorConfig::instance() + 0x58 (0x7fedc8eee7d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #6: <unknown function> + 0xc7b424 (0x7fedc9d01424 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #7: <unknown function> + 0xc7406b (0x7fedc9cfa06b in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #8: <unknown function> + 0x468a7 (0x7fee28f168a7 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #9: on_exit + 0 (0x7fee28f16a60 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #10: __libc_start_main + 0xfa (0x7fee28ef408a in /lib/x86_64-linux-gnu/libc.so.6)
+frame #11: <unknown function> + 0x1c434e (0x56422359834e in /home/zhangqi/.conda/envs/env/bin/python)
+
+
+=== 2025-10-23T19:25:18.010619 | GPU 2 | attempt 2 ===
+CMD: /home/zhangqi/.conda/envs/env/bin/python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task chebyshev_center --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : chebyshev_center
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/chebyshev_center/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/chebyshev_center/chebyshev_center.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/chebyshev_center
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 269118.10it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 5203.54it/s]
+Loading checkpoint shards:  33%|███▎      | 1/3 [00:01<00:02,  1.48s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:02<00:01,  1.40s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:05<00:02,  2.86s/it]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 4810.65it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 5674.34it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:02<?, ?it/s]
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 479, in <module>
+    main()
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 468, in main
+    tok, mdl = load_model(model_path)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 316, in load_model
+    mdl = candidate.from_pretrained(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 277, in _wrapper
+    return func(*args, **kwargs)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 5048, in from_pretrained
+    ) = cls._load_pretrained_model(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 5468, in _load_pretrained_model
+    _error_msgs, disk_offload_index = load_shard_file(args)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 843, in load_shard_file
+    disk_offload_index = _load_state_dict_into_meta_model(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 774, in _load_state_dict_into_meta_model
+    hf_quantizer.create_quantized_param(model, param, param_name, param_device)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/quantizers/quantizer_mxfp4.py", line 248, in create_quantized_param
+    load_and_swizzle_mxfp4(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/integrations/mxfp4.py", line 399, in load_and_swizzle_mxfp4
+    blocks = blocks.to(target_device).contiguous()
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 10.44 MiB is free. Process 1375619 has 27.67 GiB memory in use. Including non-PyTorch memory, this process has 11.70 GiB memory in use. Of the allocated memory 11.23 GiB is allocated by PyTorch, and 60.62 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+terminate called after throwing an instance of 'c10::Error'
+  what():  Expected 'True' or 'False' at index 2 in ConfigTokenizer but got 'true'
+Exception raised from toBool at /pytorch/c10/core/AllocatorConfig.h:79 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x7f725d7cdb80 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x65 (0x7f725d75ffbf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: c10::CachingAllocator::AcceleratorAllocatorConfig::parseExpandableSegments(c10::CachingAllocator::ConfigTokenizer const&, unsigned long) + 0x10d (0x7f725d76345d in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: c10::CachingAllocator::AcceleratorAllocatorConfig::parseArgs(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x44a (0x7f725d763dca in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #4: <unknown function> + 0x344cf (0x7f725d7644cf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #5: c10::CachingAllocator::AcceleratorAllocatorConfig::instance() + 0x58 (0x7f725d7647d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #6: <unknown function> + 0xc7b424 (0x7f725e577424 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #7: <unknown function> + 0xc7406b (0x7f725e57006b in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #8: <unknown function> + 0x468a7 (0x7f72bd78c8a7 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #9: on_exit + 0 (0x7f72bd78ca60 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #10: __libc_start_main + 0xfa (0x7f72bd76a08a in /lib/x86_64-linux-gnu/libc.so.6)
+frame #11: <unknown function> + 0x1c434e (0x55e389db534e in /home/zhangqi/.conda/envs/env/bin/python)
+

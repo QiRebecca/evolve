@@ -9,3 +9,303 @@ Traceback (most recent call last):
   File "/data/zq/evolve/AlgoTune/scripts/run_local_model.py", line 361, in _extract_code
     match = pattern.search(response_text)
 TypeError: expected string or bytes-like object
+
+=== 2025-10-23T19:08:04.417269 | GPU 6 | attempt 1 ===
+CMD: /home/zhangqi/.conda/envs/env/bin/python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task affine_transform_2d --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : affine_transform_2d
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/affine_transform_2d.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/affine_transform_2d
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 10928.91it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 6884.72it/s]
+Loading checkpoint shards:  33%|███▎      | 1/3 [00:02<00:04,  2.33s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:04<00:02,  2.30s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:09<00:00,  3.28s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:09<00:00,  3.02s/it]
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 425, in extract_solver_py
+    raise RuntimeError("extracted segment does not contain class Solver.solve")
+RuntimeError: extracted segment does not contain class Solver.solve
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 479, in <module>
+    main()
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 473, in main
+    code = extract_solver_py(gen)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 427, in extract_solver_py
+    raise RuntimeError(f"invalid solver.py segment: {e}")
+RuntimeError: invalid solver.py segment: extracted segment does not contain class Solver.solve
+terminate called after throwing an instance of 'c10::Error'
+  what():  Expected 'True' or 'False' at index 2 in ConfigTokenizer but got 'true'
+Exception raised from toBool at /pytorch/c10/core/AllocatorConfig.h:79 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x7ff766b51b80 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x65 (0x7ff766ae3fbf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: c10::CachingAllocator::AcceleratorAllocatorConfig::parseExpandableSegments(c10::CachingAllocator::ConfigTokenizer const&, unsigned long) + 0x10d (0x7ff766ae745d in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: c10::CachingAllocator::AcceleratorAllocatorConfig::parseArgs(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x44a (0x7ff766ae7dca in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #4: <unknown function> + 0x344cf (0x7ff766ae84cf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #5: c10::CachingAllocator::AcceleratorAllocatorConfig::instance() + 0x58 (0x7ff766ae87d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #6: <unknown function> + 0xc7b424 (0x7ff7678fb424 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #7: <unknown function> + 0xc7406b (0x7ff7678f406b in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #8: <unknown function> + 0x468a7 (0x7ff7c6b108a7 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #9: on_exit + 0 (0x7ff7c6b10a60 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #10: __libc_start_main + 0xfa (0x7ff7c6aee08a in /lib/x86_64-linux-gnu/libc.so.6)
+frame #11: <unknown function> + 0x1c434e (0x558ef570e34e in /home/zhangqi/.conda/envs/env/bin/python)
+
+
+=== 2025-10-23T19:09:30.396068 | GPU 6 | attempt 2 ===
+CMD: /home/zhangqi/.conda/envs/env/bin/python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task affine_transform_2d --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : affine_transform_2d
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/affine_transform_2d.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/affine_transform_2d
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 10851.67it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+=== 2025-10-23T19:11:01.942103 | GPU 2 | attempt 1 ===
+CMD: python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task affine_transform_2d --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : affine_transform_2d
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/affine_transform_2d.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/affine_transform_2d
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 479, in <module>
+    main()
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 468, in main
+    tok, mdl = load_model(model_path)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 222, in load_model
+    dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/cuda/__init__.py", line 196, in is_bf16_supported
+    device = torch.cuda.current_device()
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/cuda/__init__.py", line 1069, in current_device
+    _lazy_init()
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/cuda/__init__.py", line 410, in _lazy_init
+    torch._C._cuda_init()
+RuntimeError: Unrecognized CachingAllocator option: max_split_size_mb=96
+[W1023 19:11:06.178052400 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
+terminate called after throwing an instance of 'c10::Error'
+  what():  i < config_.size() INTERNAL ASSERT FAILED at "/pytorch/c10/core/AllocatorConfig.h":116, please report a bug to PyTorch. Index out of bounds in ConfigTokenizer
+Exception raised from checkIndex at /pytorch/c10/core/AllocatorConfig.h:116 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x7f4fc14c2b80 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x65 (0x7f4fc1454fbf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: c10::detail::torchInternalAssertFail(char const*, char const*, unsigned int, char const*, char const*) + 0x42 (0x7f4fc14bf522 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: c10::CachingAllocator::AcceleratorAllocatorConfig::parseArgs(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x8f1 (0x7f4fc1459271 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #4: <unknown function> + 0x343d8 (0x7f4fc14593d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #5: c10::CachingAllocator::AcceleratorAllocatorConfig::instance() + 0x58 (0x7f4fc14597d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #6: <unknown function> + 0xc7b424 (0x7f4fc226c424 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #7: <unknown function> + 0xc7406b (0x7f4fc226506b in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #8: <unknown function> + 0x468a7 (0x7f50214818a7 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #9: on_exit + 0 (0x7f5021481a60 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #10: __libc_start_main + 0xfa (0x7f502145f08a in /lib/x86_64-linux-gnu/libc.so.6)
+<omitting python frames>
+
+
+=== 2025-10-23T19:11:07.201426 | GPU 2 | attempt 2 ===
+CMD: python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task affine_transform_2d --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : affine_transform_2d
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/affine_transform_2d.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/affine_transform_2d
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 479, in <module>
+    main()
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 468, in main
+    tok, mdl = load_model(model_path)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 222, in load_model
+    dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/cuda/__init__.py", line 196, in is_bf16_supported
+    device = torch.cuda.current_device()
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/cuda/__init__.py", line 1069, in current_device
+    _lazy_init()
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/cuda/__init__.py", line 410, in _lazy_init
+    torch._C._cuda_init()
+RuntimeError: Unrecognized CachingAllocator option: max_split_size_mb=96
+[W1023 19:11:13.002878959 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
+terminate called after throwing an instance of 'c10::Error'
+  what():  i < config_.size() INTERNAL ASSERT FAILED at "/pytorch/c10/core/AllocatorConfig.h":116, please report a bug to PyTorch. Index out of bounds in ConfigTokenizer
+Exception raised from checkIndex at /pytorch/c10/core/AllocatorConfig.h:116 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x7f28e8c83b80 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x65 (0x7f28e8c15fbf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: c10::detail::torchInternalAssertFail(char const*, char const*, unsigned int, char const*, char const*) + 0x42 (0x7f28e8c80522 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: c10::CachingAllocator::AcceleratorAllocatorConfig::parseArgs(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x8f1 (0x7f28e8c1a271 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #4: <unknown function> + 0x343d8 (0x7f28e8c1a3d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #5: c10::CachingAllocator::AcceleratorAllocatorConfig::instance() + 0x58 (0x7f28e8c1a7d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #6: <unknown function> + 0xc7b424 (0x7f28e9a2d424 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #7: <unknown function> + 0xc7406b (0x7f28e9a2606b in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #8: <unknown function> + 0x468a7 (0x7f2948c428a7 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #9: on_exit + 0 (0x7f2948c42a60 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #10: __libc_start_main + 0xfa (0x7f2948c2008a in /lib/x86_64-linux-gnu/libc.so.6)
+<omitting python frames>
+
+
+=== 2025-10-23T19:20:04.541199 | GPU 6 | attempt 1 ===
+CMD: /home/zhangqi/.conda/envs/env/bin/python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task affine_transform_2d --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : affine_transform_2d
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/affine_transform_2d.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/affine_transform_2d
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 10000.38it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 7863.84it/s]
+Loading checkpoint shards:  33%|███▎      | 1/3 [00:03<00:06,  3.03s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:06<00:03,  3.44s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:10<00:00,  3.35s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:10<00:00,  3.34s/it]
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 425, in extract_solver_py
+    raise RuntimeError("extracted segment does not contain class Solver.solve")
+RuntimeError: extracted segment does not contain class Solver.solve
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 479, in <module>
+    main()
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 473, in main
+    code = extract_solver_py(gen)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 427, in extract_solver_py
+    raise RuntimeError(f"invalid solver.py segment: {e}")
+RuntimeError: invalid solver.py segment: extracted segment does not contain class Solver.solve
+terminate called after throwing an instance of 'c10::Error'
+  what():  Expected 'True' or 'False' at index 2 in ConfigTokenizer but got 'true'
+Exception raised from toBool at /pytorch/c10/core/AllocatorConfig.h:79 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x7f5cf4b88b80 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x65 (0x7f5cf4b1afbf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: c10::CachingAllocator::AcceleratorAllocatorConfig::parseExpandableSegments(c10::CachingAllocator::ConfigTokenizer const&, unsigned long) + 0x10d (0x7f5cf4b1e45d in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: c10::CachingAllocator::AcceleratorAllocatorConfig::parseArgs(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x44a (0x7f5cf4b1edca in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #4: <unknown function> + 0x344cf (0x7f5cf4b1f4cf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #5: c10::CachingAllocator::AcceleratorAllocatorConfig::instance() + 0x58 (0x7f5cf4b1f7d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #6: <unknown function> + 0xc7b424 (0x7f5cf5932424 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #7: <unknown function> + 0xc7406b (0x7f5cf592b06b in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #8: <unknown function> + 0x468a7 (0x7f5d54b478a7 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #9: on_exit + 0 (0x7f5d54b47a60 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #10: __libc_start_main + 0xfa (0x7f5d54b2508a in /lib/x86_64-linux-gnu/libc.so.6)
+frame #11: <unknown function> + 0x1c434e (0x55bc1222534e in /home/zhangqi/.conda/envs/env/bin/python)
+
+
+=== 2025-10-23T19:21:27.461160 | GPU 6 | attempt 2 ===
+CMD: /home/zhangqi/.conda/envs/env/bin/python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task affine_transform_2d --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : affine_transform_2d
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/affine_transform_2d.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/affine_transform_2d
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 14882.43it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 7912.32it/s]
+Loading checkpoint shards:  33%|███▎      | 1/3 [00:04<00:08,  4.13s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:11<00:05,  5.75s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:14<00:00,  4.76s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:14<00:00,  4.86s/it]
+
+=== 2025-10-23T19:22:17.174470 | GPU 6 | attempt 1 ===
+CMD: /home/zhangqi/.conda/envs/env/bin/python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task affine_transform_2d --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : affine_transform_2d
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/affine_transform_2d.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/affine_transform_2d
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 10870.88it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 5966.09it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:01<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 4170.40it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 6559.85it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 479, in <module>
+    main()
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 468, in main
+    tok, mdl = load_model(model_path)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 316, in load_model
+    mdl = candidate.from_pretrained(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 277, in _wrapper
+    return func(*args, **kwargs)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 5048, in from_pretrained
+    ) = cls._load_pretrained_model(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 5468, in _load_pretrained_model
+    _error_msgs, disk_offload_index = load_shard_file(args)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 843, in load_shard_file
+    disk_offload_index = _load_state_dict_into_meta_model(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 774, in _load_state_dict_into_meta_model
+    hf_quantizer.create_quantized_param(model, param, param_name, param_device)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/quantizers/quantizer_mxfp4.py", line 248, in create_quantized_param
+    load_and_swizzle_mxfp4(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/integrations/mxfp4.py", line 399, in load_and_swizzle_mxfp4
+    blocks = blocks.to(target_device).contiguous()
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 254.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 113.31 MiB is free. Process 1378414 has 6.28 GiB memory in use. Process 1395723 has 15.01 GiB memory in use. Process 1396788 has 16.39 GiB memory in use. Including non-PyTorch memory, this process has 1.57 GiB memory in use. Of the allocated memory 1.15 GiB is allocated by PyTorch, and 16.51 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+terminate called after throwing an instance of 'c10::Error'
+  what():  Expected 'True' or 'False' at index 2 in ConfigTokenizer but got 'true'
+Exception raised from toBool at /pytorch/c10/core/AllocatorConfig.h:79 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x7f9a415a5b80 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x65 (0x7f9a41537fbf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: c10::CachingAllocator::AcceleratorAllocatorConfig::parseExpandableSegments(c10::CachingAllocator::ConfigTokenizer const&, unsigned long) + 0x10d (0x7f9a4153b45d in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: c10::CachingAllocator::AcceleratorAllocatorConfig::parseArgs(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x44a (0x7f9a4153bdca in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #4: <unknown function> + 0x344cf (0x7f9a4153c4cf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #5: c10::CachingAllocator::AcceleratorAllocatorConfig::instance() + 0x58 (0x7f9a4153c7d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #6: <unknown function> + 0xc7b424 (0x7f9a4234f424 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #7: <unknown function> + 0xc7406b (0x7f9a4234806b in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #8: <unknown function> + 0x468a7 (0x7f9aa15648a7 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #9: on_exit + 0 (0x7f9aa1564a60 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #10: __libc_start_main + 0xfa (0x7f9aa154208a in /lib/x86_64-linux-gnu/libc.so.6)
+frame #11: <unknown function> + 0x1c434e (0x558a61cbf34e in /home/zhangqi/.conda/envs/env/bin/python)
+
+
+=== 2025-10-23T19:22:32.271349 | GPU 6 | attempt 2 ===
+CMD: /home/zhangqi/.conda/envs/env/bin/python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task affine_transform_2d --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+[INFO] Task       : affine_transform_2d
+[INFO] Model Path : /data/zq/models/gpt-oss-20b
+[INFO] Desc Path  : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/description.txt
+[INFO] Task Py    : /data/zq/evolve/AlgoTune/AlgoTuneTasks/affine_transform_2d/affine_transform_2d.py
+[INFO] Output Dir : /data/zq/evolve/AlgoTune/results/chatgptoss-20b/affine_transform_2d
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 10868.82it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 6342.82it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s]Fetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 4313.72it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 6255.60it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:01<?, ?it/s]
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 479, in <module>
+    main()
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 468, in main
+    tok, mdl = load_model(model_path)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 316, in load_model
+    mdl = candidate.from_pretrained(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 277, in _wrapper
+    return func(*args, **kwargs)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 5048, in from_pretrained
+    ) = cls._load_pretrained_model(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 5468, in _load_pretrained_model
+    _error_msgs, disk_offload_index = load_shard_file(args)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 843, in load_shard_file
+    disk_offload_index = _load_state_dict_into_meta_model(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/modeling_utils.py", line 774, in _load_state_dict_into_meta_model
+    hf_quantizer.create_quantized_param(model, param, param_name, param_device)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/quantizers/quantizer_mxfp4.py", line 248, in create_quantized_param
+    load_and_swizzle_mxfp4(
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/transformers/integrations/mxfp4.py", line 399, in load_and_swizzle_mxfp4
+    blocks = blocks.to(target_device).contiguous()
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 254.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 113.31 MiB is free. Process 1378414 has 6.28 GiB memory in use. Process 1395723 has 15.01 GiB memory in use. Process 1396788 has 16.39 GiB memory in use. Including non-PyTorch memory, this process has 1.57 GiB memory in use. Of the allocated memory 1.15 GiB is allocated by PyTorch, and 16.51 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+terminate called after throwing an instance of 'c10::Error'
+  what():  Expected 'True' or 'False' at index 2 in ConfigTokenizer but got 'true'
+Exception raised from toBool at /pytorch/c10/core/AllocatorConfig.h:79 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x7f9932b6ab80 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x65 (0x7f9932afcfbf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: c10::CachingAllocator::AcceleratorAllocatorConfig::parseExpandableSegments(c10::CachingAllocator::ConfigTokenizer const&, unsigned long) + 0x10d (0x7f9932b0045d in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: c10::CachingAllocator::AcceleratorAllocatorConfig::parseArgs(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x44a (0x7f9932b00dca in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #4: <unknown function> + 0x344cf (0x7f9932b014cf in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #5: c10::CachingAllocator::AcceleratorAllocatorConfig::instance() + 0x58 (0x7f9932b017d8 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #6: <unknown function> + 0xc7b424 (0x7f9933914424 in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #7: <unknown function> + 0xc7406b (0x7f993390d06b in /home/zhangqi/.conda/envs/env/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #8: <unknown function> + 0x468a7 (0x7f9992b298a7 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #9: on_exit + 0 (0x7f9992b29a60 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #10: __libc_start_main + 0xfa (0x7f9992b0708a in /lib/x86_64-linux-gnu/libc.so.6)
+frame #11: <unknown function> + 0x1c434e (0x558eb898234e in /home/zhangqi/.conda/envs/env/bin/python)
+
+
+=== [2025-10-23T19:47:02.589166] START affine_transform_2d (GPU 2) ===
+=== END affine_transform_2d -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/affine_transform_2d/solver.py
