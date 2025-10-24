@@ -1,0 +1,53 @@
+analysisWe need to produce solver.py that implements solve method performing QZ factorization. Baseline uses scipy.linalg.qz with mode='real'. We can just call that. But we can maybe speed up by using numpy.linalg? But QZ is specialized. Use scipy.linalg.qz. That is fine. We need to import numpy and scipy.linalg.qz. Use from scipy.linalg import qz. Implementation: parse problem dict, convert to np.array, call qz(A,B,output='real'), return dict as specified. Ensure keys: "QZ" with "AA","BB","Q","Z". Use .tolist().
+
+We need to import typing.Any. Also maybe import numpy as np. Use from scipy.linalg import qz.
+
+Return type Any.
+
+We need to ensure we don't use any other packages. That's fine.
+
+We need to ensure we don't exceed time. The baseline uses qz. So we replicate.
+
+Potential optimization: use np.array(problem["A"], dtype=float) to avoid conversion overhead. But fine.
+
+We need to ensure we don't use any other modules. Use only numpy and scipy.linalg.
+
+Let's write code.
+
+Also we need to ensure we don't use any logging. Just return.
+
+Edge: problem may contain lists of lists. Use np.array.
+
+Return solution dict.
+
+Ok.
+
+Let's produce final output.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+from scipy.linalg import qz
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute the QZ factorization of the matrix pair (A, B).
+        Uses scipy.linalg.qz with output='real' to obtain real Schur form.
+        """
+        # Convert input lists to numpy arrays
+        A = np.array(problem["A"])
+        B = np.array(problem["B"])
+
+        # Perform QZ factorization
+        AA, BB, Q, Z = qz(A, B, output="real")
+
+        # Prepare solution dictionary
+        solution = {
+            "QZ": {
+                "AA": AA.tolist(),
+                "BB": BB.tolist(),
+                "Q": Q.tolist(),
+                "Z": Z.tolist()
+            }
+        }
+        return solution
+<<<SOLVER_PY_END>>>

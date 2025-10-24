@@ -1,0 +1,69 @@
+analysisWe need to produce solver.py that implements solve method. We can use scipy.linalg.sqrtm as baseline. But we can try to optimize. But baseline uses sqrtm. We can maybe use numpy.linalg.eig to compute sqrt via eigen decomposition: X = V sqrt(D) V^{-1}. That might be faster for small matrices? But sqrtm uses Schur decomposition which is efficient. For speed, we can use scipy.linalg.sqrtm directly. But we can also use numpy.linalg.eig for diagonalizable matrices. But for general complex matrices, sqrtm is robust. We can just call sqrtm. But we can also use numpy.linalg.eig if matrix is diagonalizable. But we don't know. Use sqrtm.
+
+We need to parse input: problem["matrix"] is a numpy array? The baseline expects problem: dict[str, np.ndarray]. So we can assume it's numpy array. But the input example shows strings. But the harness likely passes numpy array. We'll just use as is.
+
+We need to return {"sqrtm": {"X": X.tolist()}}.
+
+We need to import numpy, scipy.linalg, logging maybe. But not required. But we can import logging.
+
+We need to handle exceptions: return empty list if sqrtm fails.
+
+We need to ensure we import from typing import Any.
+
+We need to ensure the file ends with sentinel.
+
+Let's produce code.
+
+We can also add small optimization: use sqrtm with disp=False. That's fine.
+
+We can also use numpy.linalg.eig if sqrtm fails? But not necessary.
+
+We can also use numpy.linalg.eigvals? But no.
+
+Let's just implement baseline.
+
+We need to ensure we import numpy as np, scipy.linalg.
+
+We need to handle potential complex numbers.
+
+Ok.
+
+Let's produce solver.py content.
+
+We need to wrap between sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+import scipy.linalg
+import logging
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Computes the principal matrix square root of a square matrix A.
+
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing the key 'matrix' with a numpy.ndarray of shape (n, n).
+
+        Returns
+        -------
+        dict
+            Dictionary with key 'sqrtm' mapping to a dictionary containing the key 'X',
+            which is a list of lists of complex numbers representing the principal square root.
+        """
+        A = problem.get("matrix")
+        if A is None:
+            logging.error("Problem does not contain 'matrix'.")
+            return {"sqrtm": {"X": []}}
+
+        try:
+            X, _ = scipy.linalg.sqrtm(A, disp=False)
+        except Exception as e:
+            logging.error(f"scipy.linalg.sqrtm failed: {e}")
+            return {"sqrtm": {"X": []}}
+
+        return {"sqrtm": {"X": X.tolist()}}
+<<<SOLVER_PY_END>>>

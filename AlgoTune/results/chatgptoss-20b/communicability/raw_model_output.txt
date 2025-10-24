@@ -1,0 +1,92 @@
+analysisWe need to produce solver.py that computes communicability matrix efficiently. Baseline uses networkx.communicability which uses scipy.linalg.expm on adjacency matrix. We can implement directly using scipy.linalg.expm on adjacency matrix. For small graphs, that's fine. For larger graphs, we need efficient. But constraints unknown. We can use numpy and scipy. Use adjacency matrix as numpy array of shape (n,n). Compute expm via scipy.linalg.expm. That returns matrix. Then convert to dict of dicts. Complexity O(n^3). For moderate n up to maybe 200? Acceptable. Use numpy and scipy. Use from typing import Any. Provide solve method. Should handle empty graph. Use math.isfinite? Not needed. Just produce floats. Use float conversion. Use list comprehension. Ensure keys are ints. Use dict comprehension. Implementation:
+
+```
+import numpy as np
+from scipy.linalg import expm
+```
+
+But we need to import numpy and scipy. They are available. Use np.array. Build adjacency matrix: zeros, then for each u, for v in neighbors: set 1. Since undirected, adjacency symmetric. Use adjacency_list. Build matrix.
+
+Edge case: n==0: return {"communicability": {}}.
+
+Return dict.
+
+We need to ensure output format: keys are ints, values floats. Use float conversion.
+
+Potential performance: Use np.zeros((n,n), dtype=float). Then for each u, for v in neighbors: set 1.0. Since adjacency list sorted, but not needed.
+
+Compute expm(A). Use scipy.linalg.expm. That returns numpy array. Then convert to dict.
+
+We can use comprehension:
+
+```
+expA = expm(A)
+result = {u: {v: float(expA[u, v]) for v in range(n)} for u in range(n)}
+```
+
+Return {"communicability": result}.
+
+Also handle potential errors: wrap in try/except? Not necessary.
+
+We need to import typing.Any.
+
+Also need to import math? Not needed.
+
+Return type Any.
+
+Ok.
+
+Let's produce solver.py content accordingly.
+
+We need to wrap between sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+from scipy.linalg import expm
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Calculates the communicability matrix for an undirected graph
+        represented by an adjacency list. The communicability is defined
+        as the matrix exponential of the adjacency matrix.
+
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing the key "adjacency_list" with the
+            adjacency list representation of the graph.
+
+        Returns
+        -------
+        dict
+            Dictionary with a single key "communicability" whose value
+            is a nested dictionary mapping node indices to dictionaries
+            of communicability values with all other nodes.
+        """
+        adj_list = problem.get("adjacency_list", [])
+        n = len(adj_list)
+
+        # Handle empty graph
+        if n == 0:
+            return {"communicability": {}}
+
+        # Build adjacency matrix
+        A = np.zeros((n, n), dtype=float)
+        for u, neighbors in enumerate(adj_list):
+            for v in neighbors:
+                A[u, v] = 1.0
+                A[v, u] = 1.0  # ensure symmetry
+
+        # Compute matrix exponential
+        expA = expm(A)
+
+        # Convert to nested dict with int keys and float values
+        communicability = {
+            u: {v: float(expA[u, v]) for v in range(n)}
+            for u in range(n)
+        }
+
+        return {"communicability": communicability}
+<<<SOLVER_PY_END>>>

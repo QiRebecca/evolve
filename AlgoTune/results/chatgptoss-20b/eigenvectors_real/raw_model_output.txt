@@ -1,0 +1,47 @@
+analysisWe need to produce solver.py content. The baseline uses np.linalg.eigh. We can use same. But we can optimize? For speed, we can use numpy's eigh. It's already efficient. We can maybe use np.linalg.eigvalsh? But need eigenvectors. So use eigh. We can also use np.linalg.eigh with check_finite=False? But not necessary. We can also use np.linalg.eigh with lower=True? But matrix is symmetric. Use np.linalg.eigh. Then reverse. Convert to list. That's baseline. We can maybe use np.linalg.eigh with 'UPLO' parameter? But not needed.
+
+We need to import numpy as np. Also typing.Any. Provide solve method. Accept problem: NDArray. We can type hint but not required. Use **kwargs. Return tuple of list[float], list[list[float]].
+
+We need to ensure eigenvectors are rows? Baseline returns eigenvectors as columns, then they convert to list of columns. But is_solution expects eigenvectors as list of lists where each row is eigenvector. Wait: In is_solution, they convert eigenvectors_arr = np.array(eigenvectors) shape (n,n) where each row is an eigenvector. So they expect eigenvectors list of rows. But baseline returns eigenvectors_list = [eigenvectors[:, i].tolist() for i in range(eigenvectors.shape[1])]. That yields columns as lists. But shape (n,) each. That is columns. But they treat each as row? Actually eigenvectors_arr shape (n,n) where each row is an eigenvector. If we pass list of columns, then eigenvectors_arr will have shape (n,n) but each row is a column vector? Wait: Suppose eigenvectors is shape (n,n) columns. eigenvectors[:, i] is column vector of length n. They create list of these columns. So eigenvectors list length n, each element length n. So eigenvectors_arr will be shape (n,n) where each row is a column vector. So eigenvectors_arr[i] is the i-th column vector. But is_solution expects each row to be eigenvector. But they treat eigenvectors_arr[i] as eigenvector. So it's fine. So we can keep same.
+
+Thus implement same.
+
+We can also use np.linalg.eigh(problem, UPLO='L')? But not needed.
+
+We can also use np.linalg.eigh(problem, check_finite=False) to speed. But not necessary.
+
+We can also use np.linalg.eigh(problem, UPLO='L', check_finite=False). But we need to import numpy.
+
+Let's implement.
+
+Also we need to ensure we don't import logging. Not needed.
+
+Return tuple.
+
+Ok.
+
+We need to output only solver.py content between sentinel lines.
+
+Let's produce:
+
+<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute eigenvalues and eigenvectors of a real symmetric matrix.
+        Returns eigenvalues sorted in descending order and corresponding eigenvectors
+        as a list of lists (each inner list is an eigenvector).
+        """
+        # Use numpy's eigh which is efficient for symmetric matrices.
+        eigenvalues, eigenvectors = np.linalg.eigh(problem)
+        # Reverse to descending order
+        eigenvalues = eigenvalues[::-1]
+        eigenvectors = eigenvectors[:, ::-1]
+        # Convert to lists
+        eigenvalues_list = eigenvalues.tolist()
+        eigenvectors_list = [eigenvectors[:, i].tolist() for i in range(eigenvectors.shape[1])]
+        return (eigenvalues_list, eigenvectors_list)
+<<<SOLVER_PY_END>>>

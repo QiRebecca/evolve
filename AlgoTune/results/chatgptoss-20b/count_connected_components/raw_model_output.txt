@@ -1,0 +1,58 @@
+analysisWe need to produce solver.py that counts connected components efficiently. Use networkx? But we can implement union-find ourselves for speed. Input edges list, num_nodes. Use DSU. Complexity O(n + m α(n)). Should be fast. Implementation: class Solver with solve method. Use typing.Any. Return dict. No logging. Should handle errors? baseline uses try/except. We can also wrap in try/except to return -1 sentinel. But we can assume input valid. But to be safe, we can catch exceptions and return -1. Use DSU.
+
+Edge list may contain duplicates? Use union. Node indices 0..num_nodes-1. Use list parent, rank. Implementation.
+
+Return {"number_connected_components": cc}. If error, return -1.
+
+Let's produce code.
+
+Also need to import typing.Any. Use from typing import Any.
+
+No other imports needed. But we might use sys? Not needed.
+
+Let's produce final output with sentinel lines.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Count the number of connected components in an undirected graph
+        represented by a list of edges and the total number of nodes.
+        """
+        try:
+            n = problem.get("num_nodes", 0)
+            edges = problem.get("edges", [])
+
+            # Disjoint Set Union (Union-Find) implementation
+            parent = list(range(n))
+            rank = [0] * n
+
+            def find(x: int) -> int:
+                while parent[x] != x:
+                    parent[x] = parent[parent[x]]  # Path compression
+                    x = parent[x]
+                return x
+
+            def union(x: int, y: int) -> None:
+                rx, ry = find(x), find(y)
+                if rx == ry:
+                    return
+                if rank[rx] < rank[ry]:
+                    parent[rx] = ry
+                elif rank[rx] > rank[ry]:
+                    parent[ry] = rx
+                else:
+                    parent[ry] = rx
+                    rank[rx] += 1
+
+            for u, v in edges:
+                if 0 <= u < n and 0 <= v < n:
+                    union(u, v)
+
+            # Count unique roots
+            roots = set(find(i) for i in range(n))
+            return {"number_connected_components": len(roots)}
+        except Exception:
+            # Return sentinel on failure
+            return {"number_connected_components": -1}
+<<<SOLVER_PY_END>>>

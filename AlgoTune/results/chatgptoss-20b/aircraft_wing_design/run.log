@@ -1,6 +1,9 @@
 Traceback (most recent call last):
   File "/data/zq/evolve/AlgoTune/scripts/gen_all_tasks.py", line 82, in worker
     code = gen.extract_solver_py(txt)
-  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 378, in extract_solver_py
-    raise RuntimeError("MARKER_END not found in model output")
-RuntimeError: MARKER_END not found in model output
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 401, in extract_solver_py
+    raise RuntimeError("MARKER_START not found in model output")
+RuntimeError: MARKER_START not found in model output
+
+=== [2025-10-24T18:33:33.026285] START aircraft_wing_design (GPU 2) ===
+=== END aircraft_wing_design -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/aircraft_wing_design/solver.py

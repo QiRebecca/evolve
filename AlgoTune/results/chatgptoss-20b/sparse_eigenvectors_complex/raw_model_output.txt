@@ -1,0 +1,57 @@
+analysisWe need to produce solver.py that implements solve method. We can use same baseline but maybe optimize. But baseline uses scipy.sparse.linalg.eigs. We can use same. For speed, maybe use numpy.linalg.eig for dense? But matrix is sparse. Use scipy.sparse.linalg.eigsh for symmetric? But matrix may not be symmetric. Use eigs. We can set parameters: ncv maybe 2*k+1 or 20. Use maxiter maybe N*200. That's baseline. We can maybe use 'which'='LM' default. Use deterministic start vector. That should be fine.
+
+We need to import numpy, scipy.sparse.linalg. Also typing.Any. Provide class Solver with solve method. Return list of eigenvectors sorted by descending modulus. The baseline returns list of eigenvectors (numpy arrays). That matches expected.
+
+We need to ensure we use same dtype. Use A = problem["matrix"] which is a sparse matrix. Use v0 = np.ones(N, dtype=A.dtype). But A.dtype may be complex. Use np.ones(N, dtype=A.dtype). Good.
+
+Return solution list.
+
+We need to import numpy as np, scipy.sparse.linalg as sparse. Also maybe import logging? Not needed.
+
+Implement.
+
+Edge: ensure we convert eigenvectors to list of arrays. eigenvectors.T shape (k,N). So eigenvectors.T gives each eigenvector as row? Actually eigenvectors shape (N,k). So eigenvectors.T shape (k,N). So each row is eigenvector. So we can iterate over eigenvectors.T.
+
+Return list of arrays.
+
+Ok.
+
+Let's produce code.
+
+Also ensure we use from typing import Any.
+
+Let's produce final output.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+import scipy.sparse.linalg as sparse
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solve the eigenvalue problem for the given square sparse matrix.
+        The solution returned is a list of the eigenvectors with the largest `k` eigenvalues sorted in descending order by their modulus.
+        """
+        A = problem["matrix"]
+        k = problem["k"]
+        N = A.shape[0]
+        # Deterministic starting vector
+        v0 = np.ones(N, dtype=A.dtype)
+
+        # Compute eigenvalues and eigenvectors using scipy.sparse.linalg.eigs
+        eigenvalues, eigenvectors = sparse.eigs(
+            A,
+            k=k,
+            v0=v0,
+            maxiter=N * 200,
+            ncv=max(2 * k + 1, 20),
+        )
+
+        # Pair eigenvalues with corresponding eigenvectors
+        pairs = list(zip(eigenvalues, eigenvectors.T))
+        # Sort by descending order of eigenvalue modulus
+        pairs.sort(key=lambda pair: -np.abs(pair[0]))
+
+        # Extract sorted eigenvectors
+        solution = [pair[1] for pair in pairs]
+        return solution
+<<<SOLVER_PY_END>>>

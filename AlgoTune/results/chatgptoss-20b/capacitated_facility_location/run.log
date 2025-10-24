@@ -110,3 +110,6 @@ frame #9: on_exit + 0 (0x7f2f1c7d9a60 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #10: __libc_start_main + 0xfa (0x7f2f1c7b708a in /lib/x86_64-linux-gnu/libc.so.6)
 frame #11: <unknown function> + 0x1c434e (0x55a65794634e in /home/zhangqi/.conda/envs/env/bin/python)
 
+
+=== [2025-10-23T20:18:30.584643] START capacitated_facility_location (GPU 2) ===
+=== END capacitated_facility_location -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/capacitated_facility_location/solver.py

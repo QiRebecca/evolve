@@ -66,3 +66,5 @@ CMD: /home/zhangqi/.conda/envs/env/bin/python /data/zq/evolve/AlgoTune/scripts/g
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
 Fetching 41 files:   0%|          | 0/41 [00:00<?, ?it/s][AFetching 41 files: 100%|██████████| 41/41 [00:00<00:00, 7687.37it/s]
 Loading checkpoint shards:  33%|███▎      | 1/3 [00:01<00:03,  1.85s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:03<00:01,  1.63s/it]
+=== [2025-10-23T20:38:52.242218] START correlate_1d (GPU 2) ===
+=== END correlate_1d -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/correlate_1d/solver.py

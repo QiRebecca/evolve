@@ -149,3 +149,8 @@ Rules:
 - The code must contain:
     - `from typing import Any`
     - `class Solver:` with `def solve(self, problem, **kwargs) -> Any:`
+
+CRITICAL:
+- The file must END with the exact sentinel line <<<SOLVER_PY_END>>>.
+- Never print anything after <<<SOLVER_PY_END>>>.
+- Do not include explanations, logs, or markdown fences anywhere.

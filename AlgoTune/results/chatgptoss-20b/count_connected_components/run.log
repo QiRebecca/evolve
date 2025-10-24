@@ -110,3 +110,6 @@ frame #9: on_exit + 0 (0x7f73bbcffa60 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #10: __libc_start_main + 0xfa (0x7f73bbcdd08a in /lib/x86_64-linux-gnu/libc.so.6)
 frame #11: <unknown function> + 0x1c434e (0x564bf69cd34e in /home/zhangqi/.conda/envs/env/bin/python)
 
+
+=== [2025-10-23T20:39:51.679411] START count_connected_components (GPU 2) ===
+=== END count_connected_components -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/count_connected_components/solver.py

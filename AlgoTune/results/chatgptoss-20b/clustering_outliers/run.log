@@ -110,3 +110,6 @@ frame #9: on_exit + 0 (0x7fcd63db7a60 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #10: __libc_start_main + 0xfa (0x7fcd63d9508a in /lib/x86_64-linux-gnu/libc.so.6)
 frame #11: <unknown function> + 0x1c434e (0x55c83f14e34e in /home/zhangqi/.conda/envs/env/bin/python)
 
+
+=== [2025-10-23T20:32:13.861244] START clustering_outliers (GPU 2) ===
+=== END clustering_outliers -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/clustering_outliers/solver.py

@@ -1,0 +1,79 @@
+analysisWe need to implement a fast solver for Markowitz portfolio optimization. Baseline uses CVXPY. We can solve analytically: maximize μ^T w - γ w^T Σ w subject to sum w=1, w>=0. This is a quadratic programming problem with linear constraints. We can use cvxpy but maybe faster to use numpy and solve KKT with active set? But we can use cvxopt? But we have cvxpy available. But we can use scipy.optimize.minimize with method='SLSQP' or 'trust-constr'. But we need to ensure optimal solution within tolerance. We can also use cvxpy but with solver 'OSQP' or 'ECOS' which might be faster. But baseline uses default solver (ECOS?). We can use cvxpy with solver='OSQP' or 'ECOS' and set verbose False. But we need to ensure same solution. Might be fine.
+
+But we can also solve analytically: The unconstrained optimum w* = (1/(2γ)) Σ^{-1} μ. But with constraints sum=1 and w>=0, we need to project onto simplex with positivity. This is a quadratic programming with linear equality and inequality. We can use cvxpy but maybe we can use scipy's 'trust-constr' with bounds. That might be faster.
+
+But we can also use cvxpy with solver='OSQP' which is fast for QP. Let's implement using cvxpy with OSQP. That should be faster.
+
+Also we can use numpy to compute Σ and μ. Use cp.Variable, cp.quad_form. Use cp.psd_wrap(Σ). Use cp.Problem(...).solve(solver=cp.OSQP, verbose=False). That should be fast.
+
+Also we can use cvxpy's 'SCS' or 'ECOS' but OSQP is efficient for QP.
+
+Let's implement.
+
+Also we need to import numpy as np, cp from cvxpy, logging maybe.
+
+We need to return {"w": w.value.tolist()}. Ensure w.value is finite.
+
+Also we need to handle if OSQP fails, fallback to default.
+
+Also we can set solver parameters: max_iter, eps_abs, eps_rel.
+
+But we can just call solve().
+
+Let's implement.
+
+Also we need to import Any from typing.
+
+Let's produce solver.py content.
+
+We need to wrap with sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+import cvxpy as cp
+import logging
+
+class Solver:
+    def solve(self, problem: dict[str, Any], **kwargs) -> Any:
+        """
+        Solve the Markowitz portfolio optimization problem:
+            maximize μ^T w - γ * w^T Σ w
+            subject to 1^T w = 1, w >= 0
+        """
+        # Extract data
+        μ = np.asarray(problem["μ"], dtype=float)
+        Σ = np.asarray(problem["Σ"], dtype=float)
+        γ = float(problem["γ"])
+        n = μ.size
+
+        # Define variable
+        w = cp.Variable(n)
+
+        # Objective: maximize μ^T w - γ * w^T Σ w
+        # cvxpy minimizes, so we use -objective
+        objective = cp.Maximize(μ @ w - γ * cp.quad_form(w, cp.psd_wrap(Σ)))
+
+        # Constraints
+        constraints = [cp.sum(w) == 1, w >= 0]
+
+        # Build problem
+        prob = cp.Problem(objective, constraints)
+
+        # Try OSQP first for speed; fallback to default if fails
+        try:
+            prob.solve(solver=cp.OSQP, verbose=False, eps_abs=1e-8, eps_rel=1e-8)
+        except Exception:
+            try:
+                prob.solve(verbose=False)
+            except Exception as e:
+                logging.error("Solver failed: %s", e)
+                return None
+
+        # Validate solution
+        if w.value is None or not np.isfinite(w.value).all():
+            logging.warning("No finite solution returned.")
+            return None
+
+        return {"w": w.value.tolist()}
+<<<SOLVER_PY_END>>>

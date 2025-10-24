@@ -1,0 +1,147 @@
+analysisWe need to produce a solver that is faster than baseline. Baseline uses CVXPY to solve convex problem with L1 penalty and norm constraints. We can solve analytically? Problem: minimize ||B - X||_F^2 + λ ||X||_1 subject to ||X_i||_2 <= 1. This is separable across columns? Objective sum over columns: sum_i (||B_i - X_i||^2 + λ ||X_i||_1). Constraint per column: ||X_i||_2 <= 1. So each column independent. So we can solve each column separately: minimize f_i(x) = ||b - x||^2 + λ ||x||_1 subject to ||x||_2 <= 1. This is convex. We can solve via proximal operator of L1 with box? Actually constraint is Euclidean norm <=1. Equivalent to projection onto unit ball after soft-thresholding? Let's think: unconstrained minimizer of ||b - x||^2 + λ ||x||_1 is soft-thresholding: x* = S(b, λ/2?) Wait objective: ||b - x||^2 = (x - b)^T(x - b). Minimization of (x - b)^T(x - b) + λ ||x||_1. This is separable: minimize over each coordinate: (x_j - b_j)^2 + λ |x_j|. The solution is soft-thresholding: x_j = sign(b_j) * max(|b_j| - λ/2, 0). Because derivative: 2(x_j - b_j) + λ sign(x_j) = 0 => x_j = b_j - λ/2 sign(x_j). But if |b_j| <= λ/2, then x_j=0. So threshold λ/2. So unconstrained solution x_un = soft(b, λ/2). Then we need to enforce ||x||_2 <= 1. If ||x_un||_2 <= 1, it's optimal. If >1, we need to project onto unit ball: minimize ||x - x_un||^2 subject to ||x||_2 <=1. That projection is scaling: x = x_un / ||x_un||_2. But does that preserve optimality? We need to solve constrained problem: minimize f(x) = ||b - x||^2 + λ ||x||_1 subject to ||x||_2 <=1. This is convex but not separable due to constraint. However we can use Lagrangian: minimize over x: ||b - x||^2 + λ ||x||_1 + μ (||x||_2^2 -1) with μ>=0. For μ>0, solution is soft-thresholding of b/(1+μ). Wait: derivative: 2(x - b) + λ sign(x) + 2 μ x = 0 => (2+2μ)x + λ sign(x) = 2b => x = (b - (λ/2) sign(x))/(1+μ). But sign(x) depends on x. This is similar to soft-thresholding with shrinkage factor 1/(1+μ). So solution is x = S(b/(1+μ), λ/(2(1+μ))). Then we need to find μ such that ||x||_2 =1 if unconstrained solution violates. This is similar to projected soft-thresholding. We can solve for μ via root finding. But maybe simpler: compute unconstrained x_un. If its norm <=1, return x_un. Else, we need to find μ>0 such that ||S(b/(1+μ), λ/(2(1+μ)))||_2 =1. This can be solved via binary search on μ. Since dimension n up to maybe 100? We can do per column.
+
+Alternatively, we can use cvxpy but that is slow. So implement this algorithm.
+
+Implementation steps:
+
+- For each column i:
+    - b = B[:, i]
+    - Compute soft-thresholding with threshold λ/2: x_un = np.sign(b) * np.maximum(np.abs(b) - λ/2, 0)
+    - If np.linalg.norm(x_un) <= 1: set X[:, i] = x_un
+    - Else:
+        - Need to find μ such that norm of x(μ) =1.
+        - Define function g(μ) = ||S(b/(1+μ), λ/(2(1+μ)))||_2 - 1
+        - g(0) = ||x_un||_2 -1 >0
+        - As μ→∞, b/(1+μ)→0, threshold λ/(2(1+μ))→0, so S→0, norm→0-1 negative. So root exists.
+        - Use binary search on μ in [0, high] where high large enough. We can double high until g(high)<0.
+        - Then binary search to tolerance 1e-8.
+
+- After obtaining X, compute explained_variance: for each component, var = X[:,i].T @ A @ X[:,i].
+
+Return components as list of lists.
+
+Need to import numpy, typing.Any.
+
+Edge cases: n_components may be > number of eigenvectors? B has shape (n, k). But we need X shape (n, n_components). In baseline, they set B to k columns, but constraints for all n_components. If n_components > k, B has fewer columns. In objective, they use B - X, but B has fewer columns? Actually B shape (n, k). X shape (n, n_components). In cp, they use B - X, but shapes mismatch? But maybe they rely on broadcasting? In cp, B - X will broadcast B to (n, n_components) by repeating columns? Not sure. But we can mimic: if n_components > k, we can pad B with zeros for remaining columns. So B_padded = np.hstack([B, np.zeros((n, n_components - k))]) if n_components > k else B[:, :n_components]. That ensures shape matches.
+
+Also if k=0 (no positive eigenvalues), B zeros.
+
+Implement accordingly.
+
+Complexities: O(n * n_components * log(1/eps)). Should be fast.
+
+Let's code.
+
+Also need to handle case where λ is zero: then soft-thresholding threshold 0, so x_un = b. If norm >1, we need to project onto unit ball: x = b / ||b||. That is same as μ>0 solution with λ=0. Our algorithm will handle.
+
+Implement function soft_threshold(b, thresh): np.sign(b)*np.maximum(np.abs(b)-thresh,0).
+
+Implement g(μ): compute x = soft_threshold(b/(1+μ), λ/(2*(1+μ))) ; return np.linalg.norm(x) -1.
+
+Binary search: low=0, high=1. While g(high)>0: high*=2. Then while high-low > tol: mid=(low+high)/2; if g(mid)>0: low=mid else high=mid. After loop, μ=high. Compute x.
+
+Return X.
+
+Edge: if λ very large, x_un may be zero vector, norm 0 <=1, so return zero.
+
+Return components as list of lists: X.tolist().
+
+Return explained_variance list.
+
+Let's code.
+
+Also need to import numpy as np.
+
+Return type Any.
+
+Let's produce solver.py content.
+
+assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solve the sparse PCA problem using a fast per-component algorithm.
+        """
+        A = np.array(problem["covariance"])
+        n_components = int(problem["n_components"])
+        sparsity_param = float(problem["sparsity_param"])
+
+        n = A.shape[0]
+
+        # Eigendecomposition of covariance matrix
+        eigvals, eigvecs = np.linalg.eigh(A)
+
+        # Keep only positive eigenvalues
+        pos_mask = eigvals > 0
+        eigvals = eigvals[pos_mask]
+        eigvecs = eigvecs[:, pos_mask]
+
+        # Sort in descending order
+        idx = np.argsort(eigvals)[::-1]
+        eigvals = eigvals[idx]
+        eigvecs = eigvecs[:, idx]
+
+        k = min(len(eigvals), n_components)
+        B = eigvecs[:, :k] * np.sqrt(eigvals[:k])
+
+        # Pad B if necessary to match n_components
+        if n_components > k:
+            B = np.hstack([B, np.zeros((n, n_components - k))])
+        elif n_components < k:
+            B = B[:, :n_components]
+
+        # Helper: soft-thresholding
+        def soft_threshold(b, thresh):
+            return np.sign(b) * np.maximum(np.abs(b) - thresh, 0.0)
+
+        X = np.zeros((n, n_components))
+
+        for i in range(n_components):
+            b = B[:, i]
+            # Unconstrained solution
+            x_un = soft_threshold(b, sparsity_param / 2.0)
+            norm_un = np.linalg.norm(x_un)
+
+            if norm_un <= 1.0:
+                X[:, i] = x_un
+                continue
+
+            # Need to solve constrained problem via root finding on μ
+            def g(mu):
+                denom = 1.0 + mu
+                thresh = sparsity_param / (2.0 * denom)
+                x_mu = soft_threshold(b / denom, thresh)
+                return np.linalg.norm(x_mu) - 1.0
+
+            # Find upper bound
+            low = 0.0
+            high = 1.0
+            while g(high) > 0.0:
+                high *= 2.0
+
+            # Binary search
+            tol = 1e-8
+            while high - low > tol:
+                mid = (low + high) / 2.0
+                if g(mid) > 0.0:
+                    low = mid
+                else:
+                    high = mid
+
+            mu_opt = high
+            denom = 1.0 + mu_opt
+            thresh = sparsity_param / (2.0 * denom)
+            X[:, i] = soft_threshold(b / denom, thresh)
+
+        # Compute explained variance
+        explained_variance = []
+        for i in range(n_components):
+            comp = X[:, i]
+            var = comp.T @ A @ comp
+            explained_variance.append(float(var))
+
+        return {"components": X.tolist(), "explained_variance": explained_variance}
+<<<SOLVER_PY_END>>>

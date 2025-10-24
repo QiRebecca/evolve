@@ -1,3 +1,6 @@
 
 === 2025-10-23T19:28:08.071161 | GPU 2 | attempt 1 ===
 CMD: /home/zhangqi/.conda/envs/env/bin/python /data/zq/evolve/AlgoTune/scripts/gen_solver.py --task count_riemann_zeta_zeros --model-path /data/zq/models/gpt-oss-20b --tasks-root /data/zq/evolve/AlgoTune/AlgoTuneTasks --out-root /data/zq/evolve/AlgoTune/results/chatgptoss-20b --max-new-tokens 1600
+
+=== [2025-10-23T20:40:32.267378] START count_riemann_zeta_zeros (GPU 2) ===
+=== END count_riemann_zeta_zeros -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/count_riemann_zeta_zeros/solver.py

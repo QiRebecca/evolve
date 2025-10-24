@@ -1,0 +1,143 @@
+analysisWe need to produce solver.py that solves robust Kalman filter faster than baseline. Baseline uses CVXPY with Huber. We can solve analytically? The problem is convex but not trivial. However we can use cvxpy but maybe use a faster solver like OSQP or ECOS? But baseline uses default solver. We can use cvxpy with solver='OSQP' or 'ECOS' which might be faster. But we need to ensure same solution. We can also use cvxpy with 'SCS' maybe. But we can also use direct linear algebra? The problem is quadratic with Huber penalty. Huber is piecewise quadratic. We could solve via convex optimization but maybe we can use cvxpy with 'ECOS' which is efficient for QP with linear constraints. But Huber introduces piecewise linear constraints? Actually cvxpy's huber is a convex function but not quadratic. But we can transform to second-order cone constraints? But easier: use cvxpy with 'ECOS' or 'OSQP' which may be faster. But we need to ensure same objective within 1%. Might be fine.
+
+Alternatively, we can use cvxpy with 'SCS' or 'ECOS' but baseline uses default solver (SCS?). We can set solver='OSQP' but OSQP handles QP with linear constraints but not Huber. But Huber is convex but not quadratic; OSQP cannot handle it. So we need a solver that handles Huber. ECOS can handle conic problems including Huber? I think ECOS can handle second-order cone constraints but Huber is not a standard cone. But cvxpy's huber is implemented as a convex function that can be represented as a conic form. So ECOS should handle it.
+
+Thus we can just call prob.solve(solver=cp.ECOS). That might be faster.
+
+Also we can use cvxpy's 'SCS' with 'max_iters' small? But baseline uses default.
+
+We can also use cvxpy's 'OSQP' with 'quad_form' but not Huber.
+
+Thus we can just set solver=cp.ECOS, maybe with verbose=False.
+
+Also we can pre-allocate variables and constraints.
+
+Also we can use numpy arrays for constraints.
+
+But the main overhead is solving. We can also use cvxpy's 'SCS' with 'max_iters' maybe 1000.
+
+But we can also use cvxpy's 'ECOS' which is efficient.
+
+Let's implement solve method that uses cvxpy with ECOS.
+
+Also we can use cp.huber with M.
+
+We can also use cp.sum_squares(w) and cp.sum([cp.huber(cp.norm(v[t,:]), M) for t in range(N)]) as baseline.
+
+We can also use cp.sum(cp.huber(cp.norm(v, axis=1), M))? But cp.huber expects scalar. We can vectorize: cp.huber(cp.norm(v, axis=1), M) returns vector of huber values? Actually cp.huber expects a scalar or array? According to cvxpy docs, cp.huber(x, M) returns elementwise huber of x. If x is vector, returns vector. So we can do cp.sum(cp.huber(cp.norm(v, axis=1), M)). That might be more efficient.
+
+Thus objective: cp.Minimize(cp.sum_squares(w) + tau * cp.sum(cp.huber(cp.norm(v, axis=1), M)))
+
+Constraints: x[0]==x0, dynamics, measurement.
+
+We can also use cp.vstack? But loops fine.
+
+We can also use cp.Parameter for constants.
+
+We need to import cvxpy as cp, numpy as np.
+
+Also we need to handle solver errors.
+
+We can also set solver options: solver=cp.ECOS, verbose=False, max_iter=1000? But default.
+
+We can also set cp.ECOS with 'abstol', 'reltol', 'feastol'.
+
+But we can just call prob.solve(solver=cp.ECOS, verbose=False).
+
+Also we can set 'max_iters' maybe 1000.
+
+We need to ensure we return lists.
+
+Also we need to handle if prob.status not optimal.
+
+We can also use cp.ECOS as default.
+
+Also we can use cp.ECOS_BB? But not.
+
+Thus implement.
+
+Also we can use cp.Parameter for A, B, C, y, x0, tau, M.
+
+But we can just use numpy arrays.
+
+Also we can use cp.Variable for x, w, v.
+
+We can also use cp.Parameter for tau, M.
+
+But not necessary.
+
+Thus final code.
+
+Also we need to import typing.Any.
+
+Also we need to include __all__? Not necessary.
+
+Thus produce solver.py.
+
+We need to wrap with sentinel lines.
+
+Let's produce final code.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+import cvxpy as cp
+
+class Solver:
+    def solve(self, problem: dict[str, Any], **kwargs) -> Any:
+        """
+        Solve the robust Kalman filtering problem using the Huber loss function.
+        This implementation uses CVXPY with the ECOS solver for improved speed.
+        """
+        # Extract problem data
+        A = np.array(problem["A"])
+        B = np.array(problem["B"])
+        C = np.array(problem["C"])
+        y = np.array(problem["y"])
+        x0 = np.array(problem["x_initial"])
+        tau = float(problem["tau"])
+        M = float(problem["M"])
+
+        N, m = y.shape
+        n = A.shape[1]
+        p = B.shape[1]
+
+        # Variables: x[0]...x[N], w[0]...w[N-1], v[0]...v[N-1]
+        x = cp.Variable((N + 1, n), name="x")
+        w = cp.Variable((N, p), name="w")
+        v = cp.Variable((N, m), name="v")
+
+        # Objective: minimize sum_{t=0}^{N-1}(||w_t||_2^2 + tau * phi(v_t))
+        process_noise_term = cp.sum_squares(w)
+        # Use vectorized Huber on the norms of v rows
+        measurement_noise_term = tau * cp.sum(cp.huber(cp.norm(v, axis=1), M))
+        obj = cp.Minimize(process_noise_term + measurement_noise_term)
+
+        # Constraints
+        constraints = [x[0] == x0]  # Initial state
+
+        # Add dynamics and measurement constraints
+        for t in range(N):
+            constraints.append(x[t + 1] == A @ x[t] + B @ w[t])  # Dynamics
+            constraints.append(y[t] == C @ x[t] + v[t])          # Measurement
+
+        # Solve the problem using ECOS solver
+        prob = cp.Problem(obj, constraints)
+        try:
+            prob.solve(solver=cp.ECOS, verbose=False, max_iters=1000)
+        except cp.SolverError as e:
+            # If ECOS fails, fall back to default solver
+            try:
+                prob.solve()
+            except Exception:
+                return {"x_hat": [], "w_hat": [], "v_hat": []}
+        except Exception:
+            return {"x_hat": [], "w_hat": [], "v_hat": []}
+
+        if prob.status not in {cp.OPTIMAL, cp.OPTIMAL_INACCURATE} or x.value is None:
+            return {"x_hat": [], "w_hat": [], "v_hat": []}
+
+        return {
+            "x_hat": x.value.tolist(),
+            "w_hat": w.value.tolist(),
+            "v_hat": v.value.tolist(),
+        }
+<<<SOLVER_PY_END>>>

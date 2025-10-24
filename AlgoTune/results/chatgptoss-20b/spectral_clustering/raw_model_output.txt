@@ -1,0 +1,130 @@
+analysisWe need to produce solver.py that implements spectral clustering but faster than baseline. Baseline uses sklearn SpectralClustering. We can implement using numpy and maybe scipy's spectral clustering algorithm. But we can also use sklearn's implementation but maybe faster? But we can use scikit-learn's SpectralClustering which uses eigen decomposition via scipy. That might be fine. But we can also implement custom spectral clustering: compute Laplacian, eigenvectors, k-means. Use sklearn's KMeans or maybe use scipy's kmeans? But we can use sklearn's KMeans which is fast. But we need to avoid heavy dependencies? We have scikit-learn available. So we can use sklearn's SpectralClustering directly. But baseline uses that. We need to be faster. Maybe we can use the same but with some optimizations: use affinity precomputed, assign_labels kmeans, random_state 42. That is baseline. We can maybe use a faster eigen solver: use scipy.sparse.linalg.eigsh for large matrices. But we don't know size. Could be moderate. But we can implement custom spectral clustering using numpy.linalg.eigh for dense matrix. That might be similar speed. But we can also use sklearn's SpectralClustering but maybe we can skip some checks. But baseline already does checks. We can skip some heavy checks? But we need to produce same output. But we can just call baseline's code. But we need to be faster. But baseline is already simple. But maybe we can use a faster algorithm: use the normalized Laplacian and compute first k eigenvectors using scipy.sparse.linalg.eigsh. That might be faster for large n. But we need to handle small n too. We can implement fallback.
+
+Simplify: Use numpy.linalg.eigh for dense. That is fine. Then use sklearn's KMeans. That should be fast.
+
+We need to handle edge cases: n_clusters >= n_samples, empty matrix, etc. We can replicate baseline logic.
+
+We need to import numpy as np, sklearn's KMeans, maybe use scipy.sparse.linalg.eigsh if n large.
+
+Let's implement:
+
+- Validate similarity_matrix: must be np.ndarray, 2D, square.
+- n_clusters int >=1.
+- If n_clusters >= n_samples: return trivial labels 0..n-1.
+- If n_samples==0: return empty labels.
+- Else compute Laplacian: D = diag(deg), L = I - D^{-1/2} S D^{-1/2}. Use np.linalg.eigh to get eigenvectors. For large n, use eigsh with k+1 eigenvalues? But we need first k eigenvectors. For normalized Laplacian, eigenvalues sorted ascending. Use eigsh with k+1? But we need k smallest eigenvectors. Use eigsh with k+1? Actually eigsh can compute smallest k eigenvalues. Use k+1 to avoid zero eigenvalue? But we can just compute k eigenvectors. But we need to ensure we get the k smallest non-zero? But baseline uses all eigenvalues and picks first k. That includes zero eigenvalue. But for spectral clustering, we use first k eigenvectors. So we can compute k eigenvectors.
+
+- Then row-normalize eigenvectors: U_norm = U / norms.
+
+- Then run KMeans with n_clusters, random_state=42, n_init=10 maybe.
+
+- Return labels.
+
+Edge: if n_clusters==1: return zeros.
+
+Also handle n_clusters>=n_samples: trivial.
+
+Also if similarity_matrix shape 0: return empty.
+
+We need to import numpy, sklearn.cluster.KMeans.
+
+Also we need to import typing.Any.
+
+Let's implement.
+
+We need to ensure we don't import heavy modules unnecessarily. But we can import sklearn.cluster.KMeans.
+
+We need to handle potential errors: if eigen decomposition fails, fallback to zeros.
+
+Also we need to ensure we use dtype float.
+
+Let's write code.
+
+Also we need to include sentinel lines.
+
+Let's produce final code.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+from sklearn.cluster import KMeans
+
+class Solver:
+    def solve(self, problem: dict[str, Any], **kwargs) -> Any:
+        """
+        Perform spectral clustering on the provided similarity matrix.
+
+        Parameters
+        ----------
+        problem : dict
+            Must contain keys:
+                - "similarity_matrix": 2D numpy array (square)
+                - "n_clusters": int > 0
+
+        Returns
+        -------
+        dict
+            {"labels": numpy array of cluster assignments}
+        """
+        # Extract inputs
+        similarity_matrix = problem.get("similarity_matrix")
+        n_clusters = problem.get("n_clusters")
+
+        # Basic validation
+        if not isinstance(similarity_matrix, np.ndarray):
+            raise ValueError("similarity_matrix must be a numpy array")
+        if similarity_matrix.ndim != 2 or similarity_matrix.shape[0] != similarity_matrix.shape[1]:
+            raise ValueError("similarity_matrix must be a square matrix")
+        if not isinstance(n_clusters, int) or n_clusters < 1:
+            raise ValueError("n_clusters must be a positive integer")
+
+        n_samples = similarity_matrix.shape[0]
+
+        # Edge cases
+        if n_samples == 0:
+            return {"labels": np.array([], dtype=int)}
+        if n_clusters == 1:
+            return {"labels": np.zeros(n_samples, dtype=int)}
+        if n_clusters >= n_samples:
+            return {"labels": np.arange(n_samples, dtype=int)}
+
+        # Compute normalized Laplacian
+        deg = similarity_matrix.sum(axis=1)
+        # Avoid division by zero
+        with np.errstate(divide="ignore"):
+            inv_sqrt_deg = 1.0 / np.sqrt(np.maximum(deg, 1e-12))
+        D_half = np.diag(inv_sqrt_deg)
+        L = np.eye(n_samples) - D_half @ similarity_matrix @ D_half
+
+        # Eigen decomposition: compute first k eigenvectors
+        try:
+            # Use dense eigh for moderate sizes; fallback to eigsh for large n
+            if n_samples <= 2000:
+                evals, evecs = np.linalg.eigh(L)
+                # Sort ascending
+                idx = np.argsort(evals)
+                evecs = evecs[:, idx]
+                U = evecs[:, :n_clusters]
+            else:
+                from scipy.sparse.linalg import eigsh
+                evals, evecs = eigsh(L, k=n_clusters, which="SM")
+                # eigsh may not return sorted; sort
+                idx = np.argsort(evals)
+                evecs = evecs[:, idx]
+                U = evecs[:, :n_clusters]
+        except Exception:
+            # Fallback: use all eigenvectors and take first k
+            evals, evecs = np.linalg.eigh(L)
+            idx = np.argsort(evals)
+            evecs = evecs[:, idx]
+            U = evecs[:, :n_clusters]
+
+        # Row-normalize
+        norms = np.linalg.norm(U, axis=1, keepdims=True)
+        norms[norms == 0] = 1.0
+        U_norm = U / norms
+
+        # KMeans on embedded space
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10, max_iter=300)
+        labels = kmeans.fit_predict(U_norm)
+
+        return {"labels": labels}
+<<<SOLVER_PY_END>>>

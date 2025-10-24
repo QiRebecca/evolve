@@ -1,0 +1,75 @@
+analysisWe need to produce solver.py content. The baseline uses cryptography.hazmat.primitives.ciphers.aead.ChaCha20Poly1305. We can just replicate that but maybe optimize? The baseline already uses that. We can maybe avoid repeated key size check? But it's fine. We can just implement same logic. Use constants CHACHA_KEY_SIZE=32, POLY1305_TAG_SIZE=16. Use logging? Not necessary. But we need to import logging? Not required. But is_solution uses self.solve, so our solve must produce same output. So we need to import ChaCha20Poly1305. Use from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305. Also import Any. Provide class Solver with solve method. Use same logic. We can skip error handling? But is_solution will call self.solve again to get reference. So our solve must produce same output. So we can just implement straightforward.
+
+We need to ensure that if associated_data is None, we pass None? The cryptography library expects bytes or None. In baseline, they pass associated_data directly. So we can do same.
+
+We need to ensure we return dict with ciphertext and tag. Use same slicing.
+
+We need to import typing.Any.
+
+Also we need to define CHACHA_KEY_SIZE and POLY1305_TAG_SIZE constants.
+
+We can also import logging if we want to log errors. But not necessary.
+
+We need to ensure that the code is minimal but correct.
+
+Let's write:
+
+from typing import Any
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+
+CHACHA_KEY_SIZE = 32
+POLY1305_TAG_SIZE = 16
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        key = problem["key"]
+        nonce = problem["nonce"]
+        plaintext = problem["plaintext"]
+        associated_data = problem.get("associated_data", None)
+
+        if len(key) != CHACHA_KEY_SIZE:
+            raise ValueError(f"Invalid key size: {len(key)}. Must be {CHACHA_KEY_SIZE}.")
+
+        chacha = ChaCha20Poly1305(key)
+        ciphertext = chacha.encrypt(nonce, plaintext, associated_data)
+
+        if len(ciphertext) < POLY1305_TAG_SIZE:
+            raise ValueError("Encrypted output is shorter than the expected tag size.")
+
+        actual_ciphertext = ciphertext[:-POLY1305_TAG_SIZE]
+        tag = ciphertext[-POLY1305_TAG_SIZE:]
+
+        return {"ciphertext": actual_ciphertext, "tag": tag}
+
+That's it.
+
+We need to wrap with sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+
+CHACHA_KEY_SIZE = 32
+POLY1305_TAG_SIZE = 16
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        key = problem["key"]
+        nonce = problem["nonce"]
+        plaintext = problem["plaintext"]
+        associated_data = problem.get("associated_data", None)
+
+        if len(key) != CHACHA_KEY_SIZE:
+            raise ValueError(f"Invalid key size: {len(key)}. Must be {CHACHA_KEY_SIZE}.")
+
+        chacha = ChaCha20Poly1305(key)
+        ciphertext = chacha.encrypt(nonce, plaintext, associated_data)
+
+        if len(ciphertext) < POLY1305_TAG_SIZE:
+            raise ValueError("Encrypted output is shorter than the expected tag size.")
+
+        actual_ciphertext = ciphertext[:-POLY1305_TAG_SIZE]
+        tag = ciphertext[-POLY1305_TAG_SIZE:]
+
+        return {"ciphertext": actual_ciphertext, "tag": tag}
+<<<SOLVER_PY_END>>>

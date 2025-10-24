@@ -1,0 +1,25 @@
+analysisWe need to produce solver.py with a Solver class that implements solve method. We can just use numpy.linalg.cholesky. But we might want to optimize? The baseline uses np.linalg.cholesky. We can maybe use np.linalg.cholesky directly. But we can also use np.linalg.cholesky with dtype float64. The input is a dict with key "matrix" containing a numpy array? The baseline expects problem["matrix"] to be a numpy array. But the example input shows list of lists. But the baseline uses np.linalg.cholesky(A) where A is problem["matrix"]. If A is a list of lists, np.linalg.cholesky will convert to array. So we can just do same.
+
+We need to return solution dict with "Cholesky": {"L": L}. But the is_solution expects L to be list of lists? It converts solution["L"] to np.array. So we can return L as a numpy array or list. The baseline returns L as numpy array. That is fine.
+
+We need to import typing.Any. Also import numpy as np. The solver should be fast. We can just call np.linalg.cholesky. That is efficient.
+
+We need to ensure we don't add any extra prints. Just the code.
+
+We need to wrap with sentinel lines.
+
+Let's produce:
+
+<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute the Cholesky factorization of a symmetric positive definite matrix A.
+        """
+        A = problem["matrix"]
+        L = np.linalg.cholesky(A)
+        return {"Cholesky": {"L": L}}
+<<<SOLVER_PY_END>>>

@@ -1,0 +1,106 @@
+analysisWe need to produce solver.py with a Solver class that solves Multi-Dimensional Knapsack. We can use CP-SAT or maybe use linear programming with pulp? But CP-SAT is fine. But we need to be fast. The baseline uses cp_model.CpModel. We can replicate but maybe use OR-Tools CP-SAT with some heuristics? But baseline is already efficient. We can maybe use a faster solver like pulp with CBC? But CP-SAT is fast. We can also use a greedy heuristic? But must produce optimal solution. So we need exact solver. Use OR-Tools CP-SAT. But we need to import cp_model from ortools.sat.python. The baseline uses cp_model. We can replicate. But we can also use linear programming with pulp? Might be slower. So keep CP-SAT.
+
+We need to parse problem: MultiDimKnapsackInstance or list/tuple. We need to import MultiDimKnapsackInstance? It's not defined. The baseline uses MultiDimKnapsackInstance. We need to import it? The environment likely has it defined. We can just use same logic: if not instance, try to instantiate. So we need to import MultiDimKnapsackInstance? It's probably defined in the harness. So we can just refer to it.
+
+We need to import Any from typing.
+
+We need to implement solve method.
+
+We can also add some speed improvements: use integer variables, add constraints, maximize. Use solver parameters: maybe set time limit? But we want optimal. We can set solver parameters to use search strategy? But baseline is fine.
+
+We can also use cp_model.CpSolver with default. Might be fine.
+
+We need to ensure we return list of indices.
+
+We need to handle if solver fails.
+
+We need to import cp_model.
+
+Let's write code:
+
+from typing import Any
+from ortools.sat.python import cp_model
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        if not isinstance(problem, MultiDimKnapsackInstance):
+            try:
+                problem = MultiDimKnapsackInstance(*problem)
+            except Exception:
+                return []
+        n = len(problem.value)
+        k = len(problem.supply)
+        model = cp_model.CpModel()
+        x = [model.NewBoolVar(f"x_{i}") for i in range(n)]
+        for r in range(k):
+            model.Add(sum(x[i] * problem.demand[i][r] for i in range(n)) <= problem.supply[r])
+        model.Maximize(sum(x[i] * problem.value[i] for i in range(n)))
+        solver = cp_model.CpSolver()
+        status = solver.Solve(model)
+        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            return [i for i in range(n) if solver.Value(x[i])]
+        return []
+
+But we need to import MultiDimKnapsackInstance? We can just refer to it; if not defined, it will error. But baseline uses it. So we can assume it's defined.
+
+We can also add a small optimization: use solver.parameters.max_time_in_seconds = 60? But not needed.
+
+We can also use solver.parameters.num_search_workers = 8 to parallelize.
+
+We can set solver.parameters.num_search_workers = 8.
+
+Also we can set solver.parameters.random_seed = 0.
+
+But baseline may not set. But we can.
+
+We need to ensure we don't exceed time.
+
+Let's implement.
+
+Also we need to import logging? Not necessary.
+
+We need to ensure we don't import anything else.
+
+Let's produce final code.
+
+We need to wrap with sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+from ortools.sat.python import cp_model
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solves a multi-dimensional knapsack problem.
+        Returns a list of selected item indices.
+        """
+        # Ensure problem is a MultiDimKnapsackInstance
+        if not isinstance(problem, MultiDimKnapsackInstance):
+            try:
+                problem = MultiDimKnapsackInstance(*problem)
+            except Exception:
+                return []
+
+        n = len(problem.value)
+        k = len(problem.supply)
+
+        model = cp_model.CpModel()
+        x = [model.NewBoolVar(f"x_{i}") for i in range(n)]
+
+        # Resource constraints
+        for r in range(k):
+            model.Add(sum(x[i] * problem.demand[i][r] for i in range(n)) <= problem.supply[r])
+
+        # Objective: maximize total value
+        model.Maximize(sum(x[i] * problem.value[i] for i in range(n)))
+
+        solver = cp_model.CpSolver()
+        # Optional: enable parallel search workers for speed
+        solver.parameters.num_search_workers = 8
+        status = solver.Solve(model)
+
+        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            return [i for i in range(n) if solver.Value(x[i])]
+        return []
+<<<SOLVER_PY_END>>>

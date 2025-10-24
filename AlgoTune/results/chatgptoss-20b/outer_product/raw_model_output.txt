@@ -1,0 +1,21 @@
+analysisWe need to produce solver.py with a Solver class. The solve method should compute outer product. We can use numpy's outer or broadcasting. For speed, we can use np.multiply.outer or np.einsum. np.outer is fine. But maybe we can use np.multiply.outer for speed? np.outer is implemented in C. We can also use np.multiply.outer. But both are similar. We can also use np.array(vec1)[:,None] * vec2. That uses broadcasting. That might be faster. Let's implement:
+
+def solve(self, problem, **kwargs) -> Any:
+    vec1, vec2 = problem
+    return np.array(vec1)[:, None] * np.array(vec2)
+
+But we need to import numpy as np. Also from typing import Any. That's all.
+
+We need to output only the file content between sentinel lines. Ensure no extra whitespace. Provide the code.
+
+Let's produce:
+
+<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        vec1, vec2 = problem
+        return np.array(vec1)[:, None] * np.array(vec2)
+<<<SOLVER_PY_END>>>

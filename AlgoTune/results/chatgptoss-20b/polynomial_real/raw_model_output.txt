@@ -1,0 +1,75 @@
+We need to produce solver.py with class Solver and solve method. We need to be faster than baseline. Baseline uses np.roots which is fine. But we can maybe use numpy's roots. But maybe we can use numpy.polynomial.polynomial.polyroots? But same. We can use numpy.roots. It's fast. But maybe we can use numpy.polynomial.polynomial.polyroots? But same. We can also use numpy.polynomial.polynomial.polyroots? But we need descending order. We can just use np.roots. That is fine. But maybe we can use numpy.polynomial.polynomial.polyroots? That expects ascending order. But we can convert. But overhead. So just use np.roots.
+
+We need to import numpy as np. Also logging? Not necessary. But baseline uses logging. We can skip. But we need to match output exactly. The solver returns list of floats. We need to ensure they are sorted descending. Use np.sort(...)[::-1]. Use np.real_if_close with tol=1e-3. Then np.real. Then convert to list.
+
+We need to import typing.Any. Provide class Solver with solve method.
+
+We need to ensure that the method signature matches: def solve(self, problem, **kwargs) -> Any:
+
+Return list[float].
+
+We can also use np.array to compute. That is fine.
+
+We need to ensure that the code is efficient. Use np.roots. That is fine.
+
+We can also use numpy.polynomial.polynomial.polyroots? But same.
+
+We can also use numpy.polynomial.polynomial.polyroots? But we need to convert coefficients to ascending order: reversed. But overhead.
+
+Thus just use np.roots.
+
+We need to import numpy as np.
+
+Also we need to import typing.Any.
+
+We can also import logging if we want to debug. But not necessary.
+
+We need to ensure that the code is minimal.
+
+Thus:
+
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        coeffs = problem
+        roots = np.roots(coeffs)
+        roots = np.real_if_close(roots, tol=1e-3)
+        roots = np.real(roots)
+        roots = np.sort(roots)[::-1]
+        return roots.tolist()
+
+That's it.
+
+We need to output file content between sentinel lines.
+
+Let's produce that.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute all real roots of a polynomial with real coefficients.
+
+        Parameters
+        ----------
+        problem : list[float]
+            Polynomial coefficients in descending order [a_n, a_{n-1}, ..., a_0].
+
+        Returns
+        -------
+        list[float]
+            Real roots sorted in decreasing order.
+        """
+        coeffs = problem
+        # Compute all roots (complex in general)
+        roots = np.roots(coeffs)
+        # Convert near‑real roots to real numbers
+        roots = np.real_if_close(roots, tol=1e-3)
+        roots = np.real(roots)
+        # Sort in decreasing order
+        roots = np.sort(roots)[::-1]
+        return roots.tolist()
+<<<SOLVER_PY_END>>>

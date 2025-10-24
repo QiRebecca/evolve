@@ -110,3 +110,6 @@ frame #9: on_exit + 0 (0x7f22de358a60 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #10: __libc_start_main + 0xfa (0x7f22de33608a in /lib/x86_64-linux-gnu/libc.so.6)
 frame #11: <unknown function> + 0x1c434e (0x558582a2234e in /home/zhangqi/.conda/envs/env/bin/python)
 
+
+=== [2025-10-23T20:29:44.845074] START cholesky_factorization (GPU 2) ===
+=== END cholesky_factorization -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/cholesky_factorization/solver.py

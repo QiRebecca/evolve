@@ -1,0 +1,108 @@
+analysisWe need to write a solver for MST. Baseline uses networkx. We can implement faster MST using Kruskal with union-find. Complexity O(E log E). Use Python's built-in sort. Use union-find with path compression. Return sorted edges by (u,v). Ensure weight is float. Input edges list of [u,v,w]. We need to output same as baseline: edges sorted by (u,v). The MST edges must be sorted by (u,v). The baseline ensures u<v. We should also ensure that. Implementation: read problem dict, get num_nodes, edges. Build list of edges. Sort by weight. Union-find arrays parent, rank. For each edge, if find(u)!=find(v), union, add to mst. After loop, we have mst edges. Then for each edge, ensure u<v. Then sort by (u,v). Return dict. Complexity fine.
+
+Edge case: graph may not be connected? MST defined only for connected graphs. Assume connected.
+
+We need to import typing.Any. Use list of list[float] for output. Provide type hints.
+
+Let's write code.
+
+Also we can use numpy? Not needed.
+
+We need to ensure that the output matches baseline exactly. Baseline uses networkx minimum_spanning_edges which returns edges in arbitrary order but we sort. Our algorithm should produce same MST edges set. For graphs with equal weight edges, MST may not be unique. But baseline's algorithm may choose a particular MST. We need to match that. But baseline uses networkx's algorithm which is Kruskal by default? networkx.minimum_spanning_edges uses Kruskal by default. It chooses edges in order of weight, ties broken by edge order? It uses sorted edges by weight, then by edge key. Our algorithm must produce same MST as networkx. To guarantee same, we need to replicate tie-breaking. networkx's algorithm: It sorts edges by weight, then by edge key (u,v). For undirected graph, edge key is (min(u,v), max(u,v)). So we need to sort edges by (weight, min(u,v), max(u,v)). Then Kruskal. That will produce same MST as networkx. Let's implement that.
+
+Implementation steps:
+
+- edges_input = problem["edges"]
+- edges = []
+- for u,v,w in edges_input:
+    edges.append((w, min(u,v), max(u,v), u, v))  # store original u,v for output
+- sort edges by (w, min(u,v), max(u,v))
+- union-find
+- for each sorted edge: if find(u)!=find(v): union, add [min(u,v), max(u,v), w] to mst
+- After loop, sort mst by (u,v)
+- return {"mst_edges": mst}
+
+Edge weights are floats; sorting fine.
+
+Union-find functions:
+
+def find(x):
+    while parent[x]!=x:
+        parent[x]=parent[parent[x]]
+        x=parent[x]
+    return x
+
+def union(x,y):
+    rx,ry=find(x),find(y)
+    if rx==ry: return False
+    if rank[rx]<rank[ry]: parent[rx]=ry
+    elif rank[rx]>rank[ry]: parent[ry]=rx
+    else: parent[ry]=rx; rank[rx]+=1
+    return True
+
+Return.
+
+Let's write code accordingly.
+
+Also we need to import typing.Any.
+
+Let's produce final code.
+
+assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute the Minimum Spanning Tree (MST) of an undirected weighted graph
+        using Kruskal's algorithm with deterministic tie-breaking to match
+        networkx's default behavior.
+
+        :param problem: dict with 'num_nodes' and 'edges' keys
+        :return: dict with 'mst_edges' key containing the MST edges
+        """
+        num_nodes = problem["num_nodes"]
+        edges_input = problem["edges"]
+
+        # Prepare edges with deterministic ordering: (weight, min(u,v), max(u,v))
+        edges = []
+        for u, v, w in edges_input:
+            u_min, v_max = (u, v) if u <= v else (v, u)
+            edges.append((w, u_min, v_max, u, v))
+
+        # Sort edges by weight, then by node order to match networkx's tie-breaking
+        edges.sort(key=lambda x: (x[0], x[1], x[2]))
+
+        # Union-Find data structures
+        parent = list(range(num_nodes))
+        rank = [0] * num_nodes
+
+        def find(x: int) -> int:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def union(x: int, y: int) -> bool:
+            rx, ry = find(x), find(y)
+            if rx == ry:
+                return False
+            if rank[rx] < rank[ry]:
+                parent[rx] = ry
+            elif rank[rx] > rank[ry]:
+                parent[ry] = rx
+            else:
+                parent[ry] = rx
+                rank[rx] += 1
+            return True
+
+        mst_edges = []
+        for w, u_min, v_max, u_orig, v_orig in edges:
+            if union(u_orig, v_orig):
+                mst_edges.append([u_min, v_max, w])
+
+        # Sort the resulting MST edges by (u, v) for consistency
+        mst_edges.sort(key=lambda x: (x[0], x[1]))
+
+        return {"mst_edges": mst_edges}
+<<<SOLVER_PY_END>>>

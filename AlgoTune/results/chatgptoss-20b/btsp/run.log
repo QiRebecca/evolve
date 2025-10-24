@@ -112,3 +112,6 @@ frame #11: <unknown function> + 0x1c434e (0x56003433634e in /home/zhangqi/.conda
 
 
 === [2025-10-23T19:54:58.764125] START btsp (GPU 2) ===
+
+=== [2025-10-23T20:14:28.157134] START btsp (GPU 2) ===
+=== END btsp -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/btsp/solver.py

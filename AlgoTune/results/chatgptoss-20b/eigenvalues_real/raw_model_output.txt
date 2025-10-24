@@ -1,0 +1,33 @@
+analysisWe need to produce solver.py with a Solver class that implements solve method. The baseline uses np.linalg.eigh to compute eigenvalues. We can just replicate that. But we can try to optimize: maybe use np.linalg.eigvalsh which is faster? np.linalg.eigh returns eigenvalues and eigenvectors; eigvalsh returns eigenvalues only. So we can use np.linalg.eigvalsh. That might be slightly faster. Also we can skip sorting by using np.sort with kind='mergesort' descending? But sorting n eigenvalues is trivial. Use np.sort(eigvals)[::-1]. That is efficient.
+
+Also we need to import numpy as np. Use typing.Any. Provide solve method signature: def solve(self, problem, **kwargs) -> Any: return list of floats sorted descending.
+
+We need to ensure that the output is a list of floats. np.sort returns numpy array; we can convert to list via .tolist().
+
+Also we need to ensure that the function is fast. Use np.linalg.eigvalsh.
+
+Edge: problem is NDArray. We can import numpy as np. Use np.linalg.eigvalsh.
+
+Return list of floats.
+
+Also we need to include from typing import Any.
+
+We need to output only the file content between sentinel lines.
+
+Thus final output:
+
+<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute eigenvalues of a symmetric matrix efficiently.
+        """
+        # Compute eigenvalues only using eigvalsh for speed.
+        eigvals = np.linalg.eigvalsh(problem)
+        # Sort in descending order.
+        eigvals_desc = np.sort(eigvals)[::-1]
+        return eigvals_desc.tolist()
+<<<SOLVER_PY_END>>>

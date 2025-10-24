@@ -1,0 +1,291 @@
+We need to implement a faster solver than NetworkX VF2. We can use a simple algorithm: since graphs are isomorphic, we can compute canonical labeling via degree sequences and maybe use a simple backtracking with pruning. But we can also use networkx's isomorphism but maybe faster? But we can use a simpler approach: use the fact that graphs are isomorphic, we can compute adjacency matrices and use a permutation search? But n could be large? We need to consider constraints. The baseline uses NetworkX GraphMatcher which is fine but maybe slower for large graphs. We can implement a simple algorithm: compute degree sequence, group nodes by degree, then recursively assign mapping within each group. Use backtracking with pruning: for each node in G1, try mapping to a node in G2 with same degree and check adjacency consistency with already mapped neighbors. This is typical VF2 algorithm but simpler.
+
+We can also use networkx's isomorphism but maybe we can use a faster library like `networkx.algorithms.isomorphism.is_isomorphic`? But we need mapping. We can use `networkx.algorithms.isomorphism.GraphMatcher` but maybe we can use `networkx.algorithms.isomorphism.is_isomorphic` with `node_match`? But we need mapping.
+
+Alternatively, we can use `networkx.algorithms.isomorphism.isomorphism` but we can use `networkx.algorithms.isomorphism.isomorphism`? Actually GraphMatcher is the standard.
+
+But we can implement a custom algorithm using `networkx.algorithms.isomorphism.categorical_node_match`? Not needed.
+
+We can also use `networkx.algorithms.isomorphism.is_isomorphic` with `return_mapping=True`? I think there is `networkx.algorithms.isomorphism.is_isomorphic` but not mapping.
+
+We can use `networkx.algorithms.isomorphism.isomorphism`? Let's check: There's `networkx.algorithms.isomorphism.is_isomorphic` but no mapping. There's `networkx.algorithms.isomorphism.isomorphism`? Actually there is `networkx.algorithms.isomorphism.isomorphism`? I'm not sure.
+
+Better to implement custom backtracking.
+
+We need to handle up to maybe 100 nodes? Not sure. But we can implement a simple algorithm that uses degree sequence and adjacency lists.
+
+We can also use `networkx.algorithms.isomorphism.GraphMatcher` but we can speed up by using `nx.algorithms.isomorphism.is_isomorphic`? But we need mapping.
+
+We can use `networkx.algorithms.isomorphism.isomorphism`? Let's search memory: There's `networkx.algorithms.isomorphism.isomorphism`? Actually there is `networkx.algorithms.isomorphism.isomorphism`? I'm not sure.
+
+Alternatively, we can use `networkx.algorithms.isomorphism.isomorphism`? Not.
+
+Ok, implement custom.
+
+Algorithm:
+
+- Build adjacency lists for G1 and G2.
+- Compute degree of each node.
+- Group nodes by degree: mapping from degree to list of nodes in G1 and G2.
+- For each degree group, we need to find a bijection between the lists that preserves adjacency.
+
+We can use backtracking: choose a node u in G1 that is not yet mapped. For each candidate v in G2 with same degree and not yet used, check consistency: for each neighbor w of u that is already mapped, check that (v, mapping[w]) is an edge in G2. Also for each neighbor w of u that is not yet mapped, we don't check yet. Also check that for each neighbor of v that is already mapped, mapping[w] is neighbor of u? Actually we only need to check that adjacency is preserved for already mapped neighbors. That is enough.
+
+We also need to check that the number of edges is same, but given isomorphic.
+
+We can also use a heuristic: order nodes by degree descending to reduce branching.
+
+We can also use a simple algorithm: compute canonical labeling using `networkx.algorithms.isomorphism.categorical_node_match`? Not.
+
+Ok, implement backtracking.
+
+We need to handle up to maybe 200 nodes? Backtracking might be too slow. But maybe the graphs are small.
+
+Alternatively, we can use `networkx.algorithms.isomorphism.GraphMatcher` but we can speed up by using `nx.algorithms.isomorphism.is_isomorphic`? But we need mapping.
+
+We can use `networkx.algorithms.isomorphism.isomorphism`? Not.
+
+Alternatively, we can use `networkx.algorithms.isomorphism.isomorphism`? Not.
+
+Ok, maybe we can use `networkx.algorithms.isomorphism.isomorphism`? Not.
+
+Let's just implement backtracking with pruning.
+
+We can also use `networkx.algorithms.isomorphism.isomorphism`? Not.
+
+Ok.
+
+Implementation details:
+
+- Build adjacency sets: `adj1 = [set() for _ in range(n)]`, same for adj2.
+- Build degree list: `deg1 = [len(adj1[i]) for i in range(n)]`, same for deg2.
+- Build mapping dict: `mapping = [-1]*n`.
+- Build used set for G2: `used = [False]*n`.
+- Build order of nodes in G1: sort by degree descending, maybe also by number of neighbors with high degree? But simple.
+
+- Backtracking function `dfs(idx)` where idx is index in order list. If idx == n: success.
+
+- For node u = order[idx], iterate over candidates v in candidates[u] where candidates[u] is list of nodes in G2 with same degree and not used. For each candidate, check consistency: for each neighbor w of u that is already mapped, check that mapping[w] is neighbor of v in G2. Also for each neighbor w of u that is not mapped, we don't check. Also we can check that for each neighbor of v that is already mapped, mapping[w] is neighbor of u? Actually if mapping[w] is neighbor of v, then w must be neighbor of u. But we can check both directions: for each neighbor w of v that is already mapped, check that mapping[w] is neighbor of u. But mapping[w] is neighbor of v, so w is neighbor of v. But we need to ensure that mapping[w] is neighbor of u. But mapping[w] is neighbor of v, but we need to check that mapping[w] is neighbor of u. Wait, mapping[w] is a node in G2. We need to check that mapping[w] is neighbor of v? Actually mapping[w] is the image of w in G1. We need to check that if w is neighbor of u in G1, then mapping[w] is neighbor of v in G2. That's the first check. The second check is: if w is neighbor of v in G2, then mapping[w] must be neighbor of u in G1. But mapping[w] is the image of w in G1. So we need to check that if mapping[w] is neighbor of v in G2, then w must be neighbor of u in G1. But mapping[w] is a node in G1. So we need to check that if mapping[w] is neighbor of v in G2, then w is neighbor of u in G1. But mapping[w] is a node in G1, so we need to check that w is neighbor of u in G1. But we can just check that for each neighbor w of v that is already mapped, mapping[w] is neighbor of u in G1. But mapping[w] is a node in G1. So we need to check that mapping[w] is neighbor of u in G1. But mapping[w] is a node in G1. So we need to check that mapping[w] in adj1[u]. That ensures that adjacency is preserved in both directions.
+
+Thus consistency check: for each neighbor w of u that is mapped: mapping[w] in adj2[v]. For each neighbor w of v that is mapped: mapping[w] in adj1[u].
+
+We also need to check that mapping[w] is not used incorrectly.
+
+Ok.
+
+We also need to handle that mapping is a bijection.
+
+We can also use caching: for each node u, precompute candidate list: nodes in G2 with same degree.
+
+We can also use a heuristic: choose node with smallest candidate list first.
+
+We can implement recursion with early exit.
+
+We also need to handle potential large n. But maybe n <= 100.
+
+We can also use `networkx.algorithms.isomorphism.GraphMatcher` but we can use `nx.algorithms.isomorphism.is_isomorphic`? Not.
+
+Ok, implement backtracking.
+
+We also need to import typing.
+
+We need to output mapping as list mapping[u] = v.
+
+We need to ensure mapping is a permutation.
+
+We need to handle potential recursion depth: use iterative or set recursion limit.
+
+We can also use `functools.lru_cache`? Not.
+
+Ok.
+
+Let's implement.
+
+We also need to consider that the graphs are guaranteed isomorphic, so we will find a mapping.
+
+We can also use `networkx.algorithms.isomorphism.isomorphism`? Not.
+
+Ok.
+
+Implementation:
+
+```
+from typing import Any
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        n = problem["num_nodes"]
+        edges_g1 = problem["edges_g1"]
+        edges_g2 = problem["edges_g2"]
+
+        adj1 = [set() for _ in range(n)]
+        adj2 = [set() for _ in range(n)]
+        for u, v in edges_g1:
+            adj1[u].add(v)
+            adj1[v].add(u)
+        for x, y in edges_g2:
+            adj2[x].add(y)
+            adj2[y].add(x)
+
+        deg1 = [len(adj1[i]) for i in range(n)]
+        deg2 = [len(adj2[i]) for i in range(n)]
+
+        # candidate mapping lists
+        candidates = [[] for _ in range(n)]
+        for u in range(n):
+            for v in range(n):
+                if deg1[u] == deg2[v]:
+                    candidates[u].append(v)
+
+        # order nodes by number of candidates ascending
+        order = sorted(range(n), key=lambda u: len(candidates[u]))
+
+        mapping = [-1]*n
+        used = [False]*n
+
+        # recursion
+        def dfs(idx):
+            if idx == n:
+                return True
+            u = order[idx]
+            for v in candidates[u]:
+                if used[v]:
+                    continue
+                # consistency check
+                ok = True
+                for w in adj1[u]:
+                    if mapping[w] != -1:
+                        if mapping[w] not in adj2[v]:
+                            ok = False
+                            break
+                if not ok:
+                    continue
+                for w in adj2[v]:
+                    if mapping[w] != -1:
+                        if w not in adj1[u]:
+                            ok = False
+                            break
+                if not ok:
+                    continue
+                mapping[u] = v
+                used[v] = True
+                if dfs(idx+1):
+                    return True
+                mapping[u] = -1
+                used[v] = False
+            return False
+
+        dfs(0)
+        return {"mapping": mapping}
+```
+
+We need to ensure recursion depth: n <= maybe 200, recursion depth fine.
+
+We also need to import typing.
+
+We also need to handle potential performance: we can use bitsets for adjacency? But sets fine.
+
+We can also use adjacency lists as sets.
+
+We can also use `adj1[u]` as set.
+
+We can also use `adj2[v]` as set.
+
+We can also use `mapping[w]` as int.
+
+Ok.
+
+We also need to ensure mapping is a permutation: we will produce mapping.
+
+We also need to handle if no mapping found: but guaranteed.
+
+We can also add fallback to networkx if fails.
+
+But we can trust.
+
+Ok.
+
+Let's produce final code.
+
+We need to output only file contents between sentinel lines.
+
+Let's produce final.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Find an isomorphism mapping between two isomorphic undirected graphs.
+        The algorithm uses a simple backtracking search with degree-based pruning.
+        """
+        n = problem["num_nodes"]
+        edges_g1 = problem["edges_g1"]
+        edges_g2 = problem["edges_g2"]
+
+        # Build adjacency sets for both graphs
+        adj1 = [set() for _ in range(n)]
+        adj2 = [set() for _ in range(n)]
+        for u, v in edges_g1:
+            adj1[u].add(v)
+            adj1[v].add(u)
+        for x, y in edges_g2:
+            adj2[x].add(y)
+            adj2[y].add(x)
+
+        # Degrees
+        deg1 = [len(adj1[i]) for i in range(n)]
+        deg2 = [len(adj2[i]) for i in range(n)]
+
+        # Candidate lists: nodes in G2 with the same degree as each node in G1
+        candidates = [[] for _ in range(n)]
+        for u in range(n):
+            du = deg1[u]
+            for v in range(n):
+                if du == deg2[v]:
+                    candidates[u].append(v)
+
+        # Order nodes by increasing number of candidates to reduce branching
+        order = sorted(range(n), key=lambda u: len(candidates[u]))
+
+        mapping = [-1] * n
+        used = [False] * n
+
+        # Recursive backtracking search
+        def dfs(idx: int) -> bool:
+            if idx == n:
+                return True
+            u = order[idx]
+            for v in candidates[u]:
+                if used[v]:
+                    continue
+
+                # Check consistency with already mapped neighbors
+                ok = True
+                for w in adj1[u]:
+                    mw = mapping[w]
+                    if mw != -1 and mw not in adj2[v]:
+                        ok = False
+                        break
+                if not ok:
+                    continue
+                for w in adj2[v]:
+                    mw = mapping[w]
+                    if mw != -1 and w not in adj1[u]:
+                        ok = False
+                        break
+                if not ok:
+                    continue
+
+                mapping[u] = v
+                used[v] = True
+                if dfs(idx + 1):
+                    return True
+                mapping[u] = -1
+                used[v] = False
+            return False
+
+        # Start the search
+        dfs(0)
+
+        return {"mapping": mapping}
+<<<SOLVER_PY_END>>>

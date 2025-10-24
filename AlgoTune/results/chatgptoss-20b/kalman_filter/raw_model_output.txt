@@ -1,0 +1,87 @@
+We need to implement a faster solver. Baseline uses cvxpy, which is heavy. We can solve analytically: This is a linear Gaussian MAP estimation, which is equivalent to Kalman smoothing. We can compute via Kalman smoother or via solving linear system. Since objective is quadratic with linear constraints, we can solve via least squares: minimize ||w||^2 + tau||v||^2 subject to constraints. We can eliminate w and v: w_t = B^+ (x_{t+1} - A x_t) if B full column? But B may not be square. Instead we can formulate as linear least squares in x only: objective in terms of x: w_t = (x_{t+1} - A x_t) projected onto column space of B. But easier: Solve full linear system using least squares: variables [x0..xN, w0..w_{N-1}, v0..v_{N-1}]. But we can reduce dimension: we can solve via linear equations: constraints are linear equalities; objective is quadratic. This is a quadratic program with only equality constraints, so solution is given by solving KKT system: minimize 0.5 z^T H z subject to G z = h. Here H is block diag(I_w, tau I_v). z vector concatenates w and v and x? But x appears only in constraints. We can eliminate x via constraints: x_{t+1} = A x_t + B w_t. This is linear recurrence; we can express all x in terms of x0 and w. Similarly measurement constraints: y_t = C x_t + v_t => v_t = y_t - C x_t. So v expressed in terms of x. So objective becomes sum ||w_t||^2 + tau sum ||y_t - C x_t||^2. But x_t depends on w. So we can express x_t as A^t x0 + sum_{k=0}^{t-1} A^{t-1-k} B w_k. Then objective is quadratic in w. We can solve via linear least squares: minimize w^T w + tau sum_t ||y_t - C x_t||^2. This is a standard linear least squares with matrix. We can build design matrix for w: For each t, x_t = A^t x0 + sum_{k=0}^{t-1} A^{t-1-k} B w_k. So y_t - C A^t x0 = C sum_{k=0}^{t-1} A^{t-1-k} B w_k - v_t? Wait v_t = y_t - C x_t. So objective includes tau ||v_t||^2 = tau ||y_t - C x_t||^2. So objective: sum_k ||w_k||^2 + tau sum_t ||y_t - C (A^t x0 + sum_{k=0}^{t-1} A^{t-1-k} B w_k)||^2. This is quadratic in w. We can solve via normal equations: (I + tau * M^T M) w = tau * M^T (y - C A^t x0). Where M is matrix mapping w to C x_t. Let's construct M: For each t, row block of size m, columns for each w_k (k=0..N-1). For t, contribution from w_k if k <= t-1: C A^{t-1-k} B. So M[t, k] = C A^{t-1-k} B. For k>=t, zero. So M shape (N*m, N*p). Then we solve linear system: (I + tau * M^T M) w = tau * M^T (y - C A^t x0). This is symmetric positive definite. Solve via np.linalg.solve or cholesky. Then compute x_t via recurrence, v_t = y_t - C x_t. Complexity O(N^3 p^3) maybe but small. Use numpy.
+
+Implement solve: parse arrays, compute powers of A. Use np.linalg.matrix_power. For each t compute A^t. Precompute A_powers list. Then build M: zeros shape (N*m, N*p). For t in range(N): for k in range(t): M[t*m:(t+1)*m, k*p:(k+1)*p] = C @ A_powers[t-1-k] @ B. After building M, compute rhs: y_vec = y.reshape(-1) shape (N*m). Compute y_minus = y_vec - (C @ A_powers[t] @ x0) for each t. Build vector b = tau * M.T @ y_minus. Compute A_mat = np.eye(N*p) + tau * M.T @ M. Solve w_vec = np.linalg.solve(A_mat, b). Reshape w_hat shape (N,p). Then compute x_hat: x[0] = x0. For t in range(N): x[t+1] = A @ x[t] + B @ w[t]. v[t] = y[t] - C @ x[t]. Return lists.
+
+Edge cases: if N=0? but y shape N,m. If N=0, no w,v. Just return x_hat=[x0], w_hat=[], v_hat=[].
+
+Implement with numpy. Use np.linalg.solve; if singular, fallback to np.linalg.lstsq.
+
+Return lists of lists.
+
+Let's code.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solve the Kalman filtering/smoothing problem formulated as a QP
+        using an analytical least‑squares approach.
+        """
+        # Extract problem data
+        A = np.asarray(problem["A"], dtype=float)
+        B = np.asarray(problem["B"], dtype=float)
+        C = np.asarray(problem["C"], dtype=float)
+        y = np.asarray(problem["y"], dtype=float)
+        x0 = np.asarray(problem["x_initial"], dtype=float)
+        tau = float(problem["tau"])
+
+        N, m = y.shape
+        n = A.shape[1]
+        p = B.shape[1]
+
+        # Handle trivial case
+        if N == 0:
+            return {
+                "x_hat": [x0.tolist()],
+                "w_hat": [],
+                "v_hat": []
+            }
+
+        # Precompute powers of A
+        A_powers = [np.eye(n, dtype=float)]
+        for t in range(1, N + 1):
+            A_powers.append(A_powers[-1] @ A)
+
+        # Build measurement matrix M (size N*m x N*p)
+        M = np.zeros((N * m, N * p), dtype=float)
+        for t in range(N):
+            for k in range(t):
+                # Contribution of w_k to measurement at time t
+                block = C @ A_powers[t - 1 - k] @ B
+                M[t * m:(t + 1) * m, k * p:(k + 1) * p] = block
+
+        # Build RHS vector
+        y_vec = y.reshape(-1)  # shape (N*m,)
+        y_minus = np.empty_like(y_vec)
+        for t in range(N):
+            y_minus[t * m:(t + 1) * m] = y[t] - (C @ A_powers[t] @ x0)
+
+        # Solve normal equations: (I + tau M^T M) w = tau M^T (y - C A^t x0)
+        MTM = M.T @ M
+        A_mat = np.eye(N * p, dtype=float) + tau * MTM
+        b_vec = tau * (M.T @ y_minus)
+
+        try:
+            w_vec = np.linalg.solve(A_mat, b_vec)
+        except np.linalg.LinAlgError:
+            # Fallback to least squares if singular
+            w_vec, *_ = np.linalg.lstsq(A_mat, b_vec, rcond=None)
+
+        w_hat = w_vec.reshape(N, p)
+
+        # Reconstruct state and measurement noise sequences
+        x_hat = [x0]
+        v_hat = []
+        for t in range(N):
+            x_next = A @ x_hat[-1] + B @ w_hat[t]
+            x_hat.append(x_next)
+            v_hat.append(y[t] - C @ x_hat[-2])
+
+        # Convert to lists of lists
+        return {
+            "x_hat": [x.tolist() for x in x_hat],
+            "w_hat": [w.tolist() for w in w_hat],
+            "v_hat": [v.tolist() for v in v_hat]
+        }
+<<<SOLVER_PY_END>>>

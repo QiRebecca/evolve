@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 918, in extract_solver_py
+    tree = ast.parse(code)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/ast.py", line 50, in parse
+    return compile(source, filename, mode, flags,
+  File "<unknown>", line 31
+    We have to output solver.py content. The assistant's output is incomplete: missing closing bracket, etc. Also the code has syntax error: "end" at the end. We need to produce correct code. Also we need to consider performance: baseline uses CVXPY with CLARABEL. We can maybe use a faster solver like ECOS or OSQP? But the problem is convex with log-det, so CLARABEL is good. But we can also use cvxpy with SCS? But CLARABEL is fine. The main requirement: return same outputs as baseline but faster. We can use cvxpy with default solver? But baseline uses CLARABEL. We can keep that.
+                                                      ^
+SyntaxError: unterminated string literal (detected at line 31)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_all_tasks.py", line 82, in worker
+    code = gen.extract_solver_py(txt)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 929, in extract_solver_py
+    raise RuntimeError(f"invalid solver.py segment: {e}")
+RuntimeError: invalid solver.py segment: unterminated string literal (detected at line 31) (<unknown>, line 31)

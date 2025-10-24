@@ -1,0 +1,52 @@
+analysisWe need to produce solver.py with efficient implementation. Baseline uses np.linalg.eig. We can use np.linalg.eigh for symmetric matrices, which is faster and more stable. Also we can use np.maximum on eigenvalues. Then reconstruct X via eigvecs @ diag(eigvals) @ eigvecs.T. That is same. Could also use np.dot. Use np.linalg.eigh. Also we can use np.where. Implementation straightforward.
+
+We need to import typing.Any. Also maybe import numpy as np. Provide solve method.
+
+We should also consider that input A may be list of lists; convert to np.array. Use dtype float. Use np.linalg.eigh. Then compute X. Return dict.
+
+We can also use np.maximum(eigvals, 0). Use np.diag. Use @.
+
+Potential optimization: use np.dot(eigvecs, np.diag(eigvals) @ eigvecs.T). But same.
+
+We can also use np.einsum? But fine.
+
+We should ensure symmetry: result will be symmetric.
+
+Return {"X": X}.
+
+Also we can cast to list? The baseline returns numpy array. The is_solution expects np.array. So fine.
+
+Thus code:
+
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        A = np.array(problem["A"], dtype=float)
+        eigvals, eigvecs = np.linalg.eigh(A)
+        eigvals = np.maximum(eigvals, 0)
+        X = eigvecs @ np.diag(eigvals) @ eigvecs.T
+        return {"X": X}
+
+That's it.
+
+Wrap with sentinel lines.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute the projection of a symmetric matrix onto the cone of
+        positive semidefinite matrices using eigen-decomposition.
+        """
+        A = np.array(problem["A"], dtype=float)
+        # Use eigh for symmetric matrices (faster and more stable)
+        eigvals, eigvecs = np.linalg.eigh(A)
+        # Set negative eigenvalues to zero
+        eigvals = np.maximum(eigvals, 0)
+        # Reconstruct the projected matrix
+        X = eigvecs @ np.diag(eigvals) @ eigvecs.T
+        return {"X": X}
+<<<SOLVER_PY_END>>>

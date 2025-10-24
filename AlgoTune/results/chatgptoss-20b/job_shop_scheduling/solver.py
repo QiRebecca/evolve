@@ -1,0 +1,274 @@
+from typing import Any
+import sys
+We must implement a faster solver than CP-SAT baseline. We can use OR-Tools CP-SAT but maybe we can use a heuristic or exact algorithm? JSSP is NP-hard. But we need to match optimal makespan. For small instances, CP-SAT is fine. But we need faster. Maybe use OR-Tools CP-SAT but with some improvements: use linear programming with CP-SAT? Or use a branch and bound with CP-SAT? But CP-SAT is already efficient. But we can use a simpler approach: use OR-Tools CP-SAT but with a time limit? But we need optimal. Maybe we can use a known algorithm: use a disjunctive graph and solve with a CP-SAT but with some heuristics: use the CP-SAT solver but set a time limit? But we need optimal. The baseline uses CP-SAT with no time limit. We can speed up by using a more efficient modeling: use the same but maybe use the "AddNoOverlap2" with intervals? But CP-SAT is already efficient.
+
+Alternatively, we can use a simple algorithm: use a greedy algorithm that is optimal for small instances? But JSSP is NP-hard, so greedy may not be optimal.
+
+But maybe the test cases are small enough that CP-SAT is fine. But we need to be faster. We can use the same CP-SAT but with some improvements: use the "AddNoOverlap" but also use "AddNoOverlap2" with intervals? Not sure.
+
+We could use a different solver: use OR-Tools CP-SAT but with a custom search strategy: set a variable ordering that speeds up. For example, use "model.AddNoOverlap" but also use "model.AddNoOverlap2" for each machine? Actually AddNoOverlap2 is for 2D? Not relevant.
+
+We could use a linear programming relaxation with branch and bound? But that's complex.
+
+Alternatively, we can use a known algorithm: use the "disjunctive graph" and solve with a branch and bound using a custom search. But that's too complex.
+
+Maybe we can use the "ortools.sat.python.cp_model" but set a time limit of 0.1 seconds? But we need optimal.
+
+But maybe the test cases are small enough that CP-SAT baseline is fine. But we need to be faster. We can use the same baseline but with some optimizations: compute horizon as sum of durations, but we can also compute lower bound for makespan: max of sum of durations per machine and per job. Use that as lower bound. We can set the objective to minimize makespan. We can also set a search strategy: use "model.AddHint" or "model.AddDecisionStrategy" to order variables. For example, we can set a decision strategy to assign start times in order of jobs and operations. That might speed up.
+
+Also we can use "solver.parameters.max_time_in_seconds = 30" but we need optimal.
+
+We could also use "solver.parameters.num_search_workers = 8" to parallelize.
+
+We could also use "solver.parameters.cp_model_presolve = True" etc.
+
+But the baseline already uses default CP-SAT. We can add some parameters to speed up.
+
+Also we can use "solver.parameters.search_branching = cp_model.SearchBranching.CHOOSE_FIRST" or "CHOOSE_MIN_DOMAIN_SIZE".
+
+We could also use "solver.parameters.cp_model_probing_level = 0" to reduce overhead.
+
+But maybe the baseline is already fast enough. But we need to be faster. We can add "solver.parameters.num_search_workers = 8" to use multiple threads.
+
+Also we can use "solver.parameters.cp_model_presolve = True".
+
+Also we can use "solver.parameters.cp_model_probing_level = 0".
+
+Also we can use "solver.parameters.cp_model_use_sat = True".
+
+But we need to import cp_model from ortools.sat.python.
+
+We also need to handle the case where no solution found.
+
+We also need to return solution as list of lists of ints.
+
+We also need to ensure we import logging? Not necessary.
+
+We also need to handle the case where solver status is not optimal: maybe we can fallback to heuristic.
+
+But the validator will call solve and then is_solution, which will call solve again to compute optimal makespan. So if our solve returns a suboptimal schedule, is_solution will compute optimal again and compare makespan. So we must return optimal schedule.
+
+Thus we need to guarantee optimality. So we must use CP-SAT to find optimal solution.
+
+Thus we can just use CP-SAT but with some speed improvements.
+
+We also need to ensure we don't exceed time limit. But we don't know the time limit. But we can set a time limit of maybe 30 seconds. But if the instance is small, CP-SAT will finish quickly.
+
+Thus we can implement solve as:
+
+- import cp_model
+- compute horizon
+- create model
+- create interval vars
+- add precedence constraints
+- add no-overlap constraints
+- add makespan objective
+- set solver parameters: num_search_workers = 8, cp_model_presolve = True, cp_model_probing_level = 0, cp_model_use_sat = True, cp_model_max_time_in_seconds = 30
+- solve
+- if status is OPTIMAL or FEASIBLE, return solution
+- else return empty list
+
+We also need to import cp_model.
+
+We also need to handle the case where solver returns FEASIBLE but not OPTIMAL: we can still return solution but may not be optimal. But we need optimal. But if we set a time limit, we might not get optimal. But we can set no time limit. But we can set a small time limit but still get optimal for small instances. But we can't guarantee.
+
+Better to not set time limit, just rely on CP-SAT default. But we can set some parameters to speed up.
+
+Thus we can implement as baseline but with some parameters.
+
+Also we can use "model.AddNoOverlap" but we can also use "model.AddNoOverlap2" but not needed.
+
+We also can use "model.AddNoOverlap" with intervals.
+
+We also can use "model.AddNoOverlap" but we can also use "model.AddNoOverlap" with "intervals" list.
+
+We also can use "model.AddNoOverlap" but we can also use "model.AddNoOverlap" with "intervals" list.
+
+We also can use "model.AddNoOverlap" but we can also use "model.AddNoOverlap" with "intervals" list.
+
+Ok.
+
+We also need to import cp_model.
+
+We also need to import logging? Not necessary.
+
+We also need to import typing.Any.
+
+We also need to define class Solver with solve method.
+
+We also need to handle **kwargs but ignore.
+
+We also need to ensure we return list of lists of ints.
+
+We also need to ensure we convert solver.Value to int.
+
+We also need to handle the case where solver status is not optimal: we can raise error or return empty list.
+
+But the validator will call solve again to compute optimal makespan. So if we return empty list, is_solution will compute optimal again and compare makespan. But if we return empty list, the validator will see solution length mismatch and return False. So we must return a valid solution.
+
+Thus we must guarantee we find a solution.
+
+Thus we must use CP-SAT with no time limit.
+
+Thus we can just copy baseline but with some parameters.
+
+We also need to import cp_model.
+
+Thus final code:
+
+```
+from typing import Any
+from ortools.sat.python import cp_model
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        M = problem["num_machines"]
+        jobs_data = problem["jobs"]
+        horizon = sum(d for job in jobs_data for _, d in job)
+        model = cp_model.CpModel()
+        all_tasks = {}
+        machine_to_intervals = {m: [] for m in range(M)}
+        for j, job in enumerate(jobs_data):
+            for k, (m, p) in enumerate(job):
+                suffix = f"_{j}_{k}"
+                start = model.NewIntVar(0, horizon, f"start{suffix}")
+                end = model.NewIntVar(0, horizon, f"end{suffix}")
+                interval = model.NewIntervalVar(start, p, end, f"interval{suffix}")
+                all_tasks[(j, k)] = (start, end, p)
+                machine_to_intervals[m].append(interval)
+                if k > 0:
+                    prev_end = all_tasks[(j, k - 1)][1]
+                    model.Add(start >= prev_end)
+        for m in range(M):
+            model.AddNoOverlap(machine_to_intervals[m])
+        makespan = model.NewIntVar(0, horizon, "makespan")
+        last_ends = []
+        for job_id, job in enumerate(jobs_data):
+            _, end_var, _ = all_tasks[(job_id, len(job) - 1)]
+            last_ends.append(end_var)
+        model.AddMaxEquality(makespan, last_ends)
+        model.Minimize(makespan)
+        solver = cp_model.CpSolver()
+        solver.parameters.num_search_workers = 8
+        solver.parameters.cp_model_presolve = True
+        solver.parameters.cp_model_probing_level = 0
+        solver.parameters.cp_model_use_sat = True
+        status = solver.Solve(model)
+        if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+            solution = []
+            for j, job in enumerate(jobs_data):
+                starts = []
+                for k, _ in enumerate(job):
+                    starts.append(int(solver.Value(all_tasks[(j, k)][0])))
+                solution.append(starts)
+            return solution
+        else:
+            return []
+```
+
+We also need to import logging? Not necessary.
+
+We also need to handle the case where solver returns FEASIBLE but not OPTIMAL: we can still return solution but may not be optimal. But we can check if status is OPTIMAL. But if not, we can still return solution but maybe not optimal. But the validator will compute optimal again and compare makespan. If our solution is not optimal, the validator will return False. So we must ensure we get optimal. So we should only return solution if status is OPTIMAL. If not, we can raise error or return empty list. But we can also try to call solver.Solve with a time limit to get optimal. But we can't guarantee.
+
+Thus we should only return solution if status == cp_model.OPTIMAL. If not, we can return empty list. But the validator will then fail. But maybe the solver will always find optimal for given instances. So we can just check for OPTIMAL.
+
+Thus we can implement:
+
+```
+if status == cp_model.OPTIMAL:
+    ...
+else:
+    return []
+```
+
+Ok.
+
+We also need to import cp_model.
+
+Thus final code.
+
+We also need to ensure we import typing.Any.
+
+We also need to ensure we import cp_model.
+
+We also need to ensure we import sys? Not needed.
+
+We also need to ensure we import logging? Not needed.
+
+Thus final code.
+
+We also need to ensure we include sentinel lines.
+
+from typing import Any
+from ortools.sat.python import cp_model
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solve the Job Shop Scheduling Problem (JSSP) using OR-Tools CP-SAT solver.
+        The solver constructs interval variables for each operation, enforces
+        precedence constraints within jobs, no-overlap constraints on machines,
+        and minimizes the makespan.  The solution is returned as a list of
+        start times for each operation in each job.
+        """
+        M = problem["num_machines"]
+        jobs_data = problem["jobs"]
+
+        # Compute a safe horizon: sum of all durations
+        horizon = sum(d for job in jobs_data for _, d in job)
+
+        model = cp_model.CpModel()
+
+        # Store interval variables and map machine to its intervals
+        all_tasks = {}  # (job_id, op_id) -> (start, end, duration)
+        machine_to_intervals = {m: [] for m in range(M)}
+
+        for j, job in enumerate(jobs_data):
+            for k, (m, p) in enumerate(job):
+                suffix = f"_{j}_{k}"
+                start = model.NewIntVar(0, horizon, f"start{suffix}")
+                end = model.NewIntVar(0, horizon, f"end{suffix}")
+                interval = model.NewIntervalVar(start, p, end, f"interval{suffix}")
+                all_tasks[(j, k)] = (start, end, p)
+                machine_to_intervals[m].append(interval)
+
+                # Precedence constraint within the same job
+                if k > 0:
+                    prev_end = all_tasks[(j, k - 1)][1]
+                    model.Add(start >= prev_end)
+
+        # No-overlap constraints on each machine
+        for m in range(M):
+            model.AddNoOverlap(machine_to_intervals[m])
+
+        # Makespan objective
+        makespan = model.NewIntVar(0, horizon, "makespan")
+        last_ends = []
+        for job_id, job in enumerate(jobs_data):
+            _, end_var, _ = all_tasks[(job_id, len(job) - 1)]
+            last_ends.append(end_var)
+        model.AddMaxEquality(makespan, last_ends)
+        model.Minimize(makespan)
+
+        # Solver configuration for speed
+        solver = cp_model.CpSolver()
+        solver.parameters.num_search_workers = 8
+        solver.parameters.cp_model_presolve = True
+        solver.parameters.cp_model_probing_level = 0
+        solver.parameters.cp_model_use_sat = True
+
+        status = solver.Solve(model)
+
+        if status == cp_model.OPTIMAL:
+            solution = []
+            for j, job in enumerate(jobs_data):
+                starts = []
+                for k, _ in enumerate(job):
+                    starts.append(int(solver.Value(all_tasks[(j, k)][0])))
+                solution.append(starts)
+            return solution
+        else:
+            # In the unlikely event that no optimal solution is found,
+            # return an empty list to indicate failure.
+            return []
+<<<SOLVER_PY_END>>

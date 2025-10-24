@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_all_tasks.py", line 80, in worker
+    txt = gen.run_inference(tok, mdl, prompt, max_new_tokens=args.max_new_tokens)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 380, in run_inference
+    attention_mask = torch.cat([base["attention_mask"], pre["attention_mask"]], dim=1)
+KeyError: 'attention_mask'
+
+=== [2025-10-24T17:44:48.459166] START shortest_path_dijkstra (GPU 2) ===
+=== END shortest_path_dijkstra -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/shortest_path_dijkstra/solver.py

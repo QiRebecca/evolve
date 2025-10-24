@@ -1,0 +1,61 @@
+analysisWe need to produce solver.py with a Solver class. The baseline uses np.roots. We can use numpy's roots. But we can maybe speed up by using numpy's polynomial roots algorithm. But baseline already uses np.roots. We can maybe use numpy's roots directly. But we can also use numpy.polynomial.polynomial.polyroots? But np.roots is fine. We can also use numpy.polynomial.polynomial.polyroots which might be faster? But likely similar.
+
+We need to sort roots descending by real then imag. Use sorted with key lambda z: (z.real, z.imag), reverse=True.
+
+We need to import numpy as np, logging maybe. But not required. But baseline uses logging.debug. We can skip logging. But we need to import Any from typing.
+
+We need to ensure that the output is sorted correctly. We can just replicate baseline.
+
+We can also consider using numpy.polynomial.polynomial.polyroots which expects coefficients in ascending order. But we can just use np.roots.
+
+We need to ensure that the function returns list[complex]. We can return list of complex numbers.
+
+We can also convert to list of complex: sorted_roots.tolist() maybe. But sorted_roots is a numpy array. We can convert to list: sorted_roots.tolist().
+
+But baseline returns sorted_roots which is a numpy array? Actually sorted_roots is a list of complex numbers? Wait: sorted_roots = sorted(computed_roots, key=..., reverse=True). computed_roots is a numpy array. sorted returns a list. So sorted_roots is a list of complex numbers. So we can return that.
+
+Thus implement solve accordingly.
+
+We can also add optional kwargs but ignore.
+
+We need to import numpy as np.
+
+We need to include from typing import Any.
+
+We need to define class Solver: def solve(self, problem, **kwargs) -> Any: ... return sorted_roots.
+
+We can also add docstring.
+
+We need to ensure no extra output.
+
+Thus final content:
+
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solve the polynomial problem by finding all roots of the polynomial.
+        """
+        coefficients = problem
+        computed_roots = np.roots(coefficients)
+        sorted_roots = sorted(computed_roots, key=lambda z: (z.real, z.imag), reverse=True)
+        return sorted_roots
+
+That's it.
+
+Wrap with sentinel lines.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solve the polynomial problem by finding all roots of the polynomial.
+        """
+        coefficients = problem
+        computed_roots = np.roots(coefficients)
+        sorted_roots = sorted(computed_roots, key=lambda z: (z.real, z.imag), reverse=True)
+        return sorted_roots
+<<<SOLVER_PY_END>>>

@@ -1,0 +1,34 @@
+analysisWe need to write solver.py that implements solve method computing edge expansion efficiently. We can avoid networkx. Just compute number of edges from S to V-S. Use adjacency list. Complexity O(|E|). Implementation: get n, nodes_S set. If empty or all nodes: return 0.0. Count edges: for each u in nodes_S, for each v in adjacency_list[u], if v not in nodes_S: count++. Then expansion = count / len(nodes_S). Return dict. Use typing Any. Should be fast. Use math.isfinite? Not needed. Just compute. Ensure float division. Edge cases: n==0? adjacency_list empty. Then return 0.0. Also if nodes_S empty or len==n. Return 0.0. Implementation straightforward.
+
+We need to output only solver.py content between sentinel lines. Ensure no extra whitespace. Provide code. Let's craft.
+
+Also need to import Any. Use typing.Any. No other imports needed. Use math? Not needed. But maybe for division by zero? Already handled. Use float(count)/len(nodes_S). Return dict.
+
+Let's produce final.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Calculates the edge expansion for the given subset S in the graph.
+        This implementation avoids external libraries for speed.
+        """
+        adj_list = problem.get("adjacency_list", [])
+        nodes_S_list = problem.get("nodes_S", [])
+        n = len(adj_list)
+        nodes_S = set(nodes_S_list)
+
+        # Edge cases: empty graph, empty S, or S contains all nodes
+        if n == 0 or not nodes_S or len(nodes_S) == n:
+            return {"edge_expansion": 0.0}
+
+        # Count edges from S to V \ S
+        out_edges = 0
+        for u in nodes_S:
+            for v in adj_list[u]:
+                if v not in nodes_S:
+                    out_edges += 1
+
+        expansion = float(out_edges) / len(nodes_S)
+        return {"edge_expansion": expansion}
+<<<SOLVER_PY_END>>>

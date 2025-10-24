@@ -1,0 +1,196 @@
+analysisWe need to implement a solver for robust LP with ellipsoidal uncertainty. Baseline uses CVXPY with SOC constraints. We can use cvxpy but maybe faster? We can use cvxpy with OSQP? But SOC requires SCS or ECOS. We can use cvxpy with ECOS_BB? Actually ECOS supports SOC. We can use cvxpy with ECOS solver. But baseline uses CLARABEL. We can use cvxpy with ECOS or SCS. Might be faster.
+
+But we can also solve analytically? The problem is a SOCP: minimize c^T x subject to q_i^T x + ||P_i^T x||_2 <= b_i. This is convex. We can use cvxpy.
+
+We can also use cvxpy with the "SCS" solver which is fast for large problems. But we need to ensure solution is optimal within tolerance.
+
+We can also use cvxpy with "ECOS" solver. Might be fine.
+
+We can also use cvxpy with "OSQP" but OSQP is QP not SOCP. So not.
+
+We can also use cvxpy with "SCS" or "ECOS". Let's choose "ECOS" as it's efficient for SOCP.
+
+We need to import cvxpy as cp. Use cp.Variable, cp.SOC.
+
+We need to parse problem dict: c, b, P, q. They are lists of arrays. Convert to numpy arrays.
+
+We need to handle unbounded? The solver will return inf if unbounded. We can just return that.
+
+We need to return objective_value and x.
+
+We need to ensure we use solver=cp.ECOS, verbose=False.
+
+We need to catch exceptions.
+
+We need to import numpy as np.
+
+We need to import typing.Any.
+
+We need to implement class Solver with solve method.
+
+We need to ensure we don't use logging? Not required.
+
+We can just implement straightforward.
+
+We need to ensure we convert to numpy arrays.
+
+We need to handle shape: P is m x n x n? Actually P is list of m matrices each n x n. So np.array(P) shape (m,n,n). q shape (m,n). b shape (m,). c shape (n,).
+
+We need to create constraints: for each i: cp.SOC(b[i] - q[i].T @ x, P[i].T @ x). Note that P[i].T @ x is vector of length n. So SOC expects first argument scalar, second vector. Good.
+
+We need to solve.
+
+Return {"objective_value": problem.value, "x": x.value}.
+
+We need to handle if problem.status not optimal: return inf and nan.
+
+We need to catch exceptions.
+
+We need to ensure we import cvxpy.
+
+We need to ensure we use cp.Problem.
+
+We need to ensure we use cp.SOC.
+
+We need to ensure we use cp.Variable.
+
+We need to ensure we use cp.Minimize.
+
+We need to ensure we use cp.ECOS.
+
+We need to ensure we use cp.ECOS_BB? No.
+
+We need to ensure we use cp.ECOS.
+
+We need to ensure we set solver=cp.ECOS.
+
+We need to ensure we set verbose=False.
+
+We need to ensure we set max_iters? Not necessary.
+
+We need to ensure we set eps? Not necessary.
+
+We need to ensure we handle unbounded: if problem.status in ["unbounded", "unbounded_inaccurate"] return inf.
+
+We need to ensure we handle infeasible: if problem.status in ["infeasible", "infeasible_inaccurate"] return inf? But baseline returns inf only if not optimal. But we can just return inf.
+
+But is_solution expects that if reference_solution is inf, then proposed must also be inf. So we need to match that.
+
+Thus if status not optimal, we return inf and nan.
+
+Ok.
+
+We need to import numpy as np.
+
+We need to import cvxpy as cp.
+
+We need to import typing.Any.
+
+We need to define class Solver.
+
+We need to define solve method.
+
+We need to accept **kwargs but ignore.
+
+We need to return Any.
+
+Ok.
+
+We need to ensure we don't use logging.
+
+We need to ensure we don't print anything.
+
+We need to ensure we don't use any other packages.
+
+Ok.
+
+We need to produce solver.py content.
+
+We need to wrap with sentinel lines.
+
+Let's produce final code.
+
+Potential improvement: Use cvxpy with ECOS solver. Might be faster than CLARABEL.
+
+We can also use cvxpy with SCS. But ECOS is good.
+
+We can also use cvxpy with "SCS" and use max_iters=1000. But ECOS is fine.
+
+Ok.
+
+Let's produce code.
+
+We need to ensure we convert to numpy arrays.
+
+We need to ensure we handle shape.
+
+We need to ensure we use cp.SOC.
+
+Ok.
+
+Let's produce final code.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+import cvxpy as cp
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solves a robust linear program with ellipsoidal uncertainty using CVXPY.
+
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing problem data:
+                - "c": list or array of shape (n,)
+                - "b": list or array of shape (m,)
+                - "P": list of m matrices, each of shape (n, n)
+                - "q": list or array of shape (m, n)
+
+        Returns
+        -------
+        dict
+            Dictionary with keys:
+                - "objective_value": float, optimal objective value
+                - "x": list of floats, optimal solution vector
+        """
+        # Convert inputs to numpy arrays
+        c = np.array(problem["c"], dtype=float)
+        b = np.array(problem["b"], dtype=float)
+        P = np.array(problem["P"], dtype=float)
+        q = np.array(problem["q"], dtype=float)
+
+        m = P.shape[0]
+        n = c.shape[0]
+
+        # Decision variable
+        x = cp.Variable(n)
+
+        # Build SOC constraints
+        constraints = []
+        for i in range(m):
+            # Compute P[i].T @ x
+            PiT_x = P[i].T @ x
+            # SOC: ||PiT_x||_2 <= b[i] - q[i].T @ x
+            constraints.append(cp.SOC(b[i] - q[i].T @ x, PiT_x))
+
+        # Objective
+        objective = cp.Minimize(c.T @ x)
+
+        # Problem definition
+        prob = cp.Problem(objective, constraints)
+
+        try:
+            # Solve using ECOS solver (supports SOCP)
+            prob.solve(solver=cp.ECOS, verbose=False)
+
+            # Check status
+            if prob.status not in ["optimal", "optimal_inaccurate"]:
+                # Return inf and NaNs if not optimal
+                return {"objective_value": float("inf"), "x": [float("nan")] * n}
+
+            return {"objective_value": prob.value, "x": x.value.tolist()}
+        except Exception:
+            # In case of any error, return inf and NaNs
+            return {"objective_value": float("inf"), "x": [float("nan")] * n}
+<<<SOLVER_PY_END>>>

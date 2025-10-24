@@ -1,0 +1,86 @@
+analysisWe need to implement a solver that uses randomized SVD. The baseline uses sklearn's randomized_svd. We can use sklearn? Not listed. But we have numpy, scipy. We can implement randomized SVD ourselves or use scipy.sparse.linalg.svds? But that is for sparse matrices. We can implement a simple randomized SVD: generate random Gaussian matrix Omega of size m x (k+p), compute Y = A @ Omega, orthonormalize Y via QR, compute B = Q^T @ A, compute SVD of B (small), then U = Q @ U_small, V = V_small. Use power iterations n_iter. That should be efficient.
+
+We need to match output shapes: U shape (n,k), S shape (k,), V shape (m,k). We need to ensure orthonormal columns. Use numpy.linalg.svd on small B.
+
+We need to handle matrix_type to set n_iter: 10 if ill_conditioned else 5. Problem dict includes matrix_type. Also matrix is given as list of lists? In baseline, they pass A = problem["matrix"] which is likely a numpy array? In is_solution, they convert solution arrays to np.asarray. For A, they use A = problem["matrix"] and then A.shape. So problem["matrix"] must be a numpy array. In input example, matrix is list of lists. But harness likely converts to numpy array. We'll assume A is numpy array.
+
+Implement solve: read A, n_components, matrix_type. Determine n_iter. Use random_state=42 for reproducibility. Use numpy.random.default_rng(42). Use oversampling p=5 or 10? Standard uses p=5. We'll set p = min(5, n_components). Actually oversample to k+5. Use p=5. So l = k + p. Ensure l <= min(n,m). If l > min(n,m), set l = min(n,m). Then generate Omega shape (m, l). Compute Y = A @ Omega. Then power iterations: for i in range(n_iter): Y = A @ (A.T @ Y). Then QR: Q, _ = np.linalg.qr(Y, mode='reduced'). Then B = Q.T @ A. Compute small SVD: U_small, s, Vt_small = np.linalg.svd(B, full_matrices=False). Then U = Q @ U_small. V = Vt_small.T. Return dict.
+
+Need to ensure shapes: U (n,k), V (m,k). s shape (k,). Ensure s sorted descending. SVD returns descending. Good.
+
+Edge cases: if k > min(n,m), set k = min(n,m). But problem likely ensures k <= min(n,m). We'll guard.
+
+Implement.
+
+Also need to import numpy as np, from typing import Any.
+
+Return dict with lists? The baseline returns numpy arrays. is_solution converts to np.asarray. So we can return numpy arrays. Good.
+
+Implement.
+
+Let's write solver.py accordingly.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute an approximate randomized SVD of matrix A.
+
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing:
+                - "matrix": numpy array of shape (n, m)
+                - "n_components": int, number of singular values/vectors to compute
+                - "matrix_type": str, used to determine number of power iterations
+
+        Returns
+        -------
+        dict
+            Dictionary with keys:
+                - "U": (n, k) array of left singular vectors
+                - "S": (k,) array of singular values
+                - "V": (m, k) array of right singular vectors
+        """
+        A = problem["matrix"]
+        n_components = problem["n_components"]
+        matrix_type = problem.get("matrix_type", "")
+
+        # Determine number of power iterations
+        n_iter = 10 if matrix_type == "ill_conditioned" else 5
+
+        n, m = A.shape
+        k = min(n_components, min(n, m))
+
+        # Oversampling parameter
+        p = 5
+        l = min(k + p, min(n, m))
+
+        rng = np.random.default_rng(42)
+        # Random Gaussian test matrix
+        Omega = rng.standard_normal((m, l))
+
+        # Sample the range of A
+        Y = A @ Omega
+
+        # Power iterations to improve accuracy
+        for _ in range(n_iter):
+            Y = A @ (A.T @ Y)
+
+        # Orthonormalize Y
+        Q, _ = np.linalg.qr(Y, mode="reduced")
+
+        # Project A onto the subspace
+        B = Q.T @ A
+
+        # Compute SVD of the small matrix B
+        U_small, s, Vt_small = np.linalg.svd(B, full_matrices=False)
+
+        # Form the approximate left singular vectors
+        U = Q @ U_small[:, :k]
+        V = Vt_small.T[:, :k]
+        s = s[:k]
+
+        return {"U": U, "S": s, "V": V}
+<<<SOLVER_PY_END>>>

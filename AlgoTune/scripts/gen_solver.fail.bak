@@ -1,0 +1,981 @@
+# #!/usr/bin/env python3
+# # -*- coding: utf-8 -*-
+
+# import argparse
+# import ast
+# import json
+# import os
+# import re
+# import textwrap
+# from pathlib import Path
+# from typing import Dict, Tuple, Optional
+
+# import torch
+# from transformers import AutoTokenizer, AutoModelForCausalLM, StoppingCriteria, StoppingCriteriaList
+# from transformers import GPT2Tokenizer  # 用于 slow 回退（BPE）
+
+# # ==================== Sentinels ====================
+# MARKER_START = "<<<SOLVER_PY_START>>>"
+# MARKER_END = "<<<SOLVER_PY_END>>>"
+
+# # --- Safety switches (env) ---
+# os.environ.setdefault("FLASH_ATTENTION_SKIP_IMPORT", "1")
+# os.environ.setdefault("XFORMERS_DISABLED", "1")
+# os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+# os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
+
+# # ==================== Stopping on END ====================
+# class StopOnSentinel(StoppingCriteria):
+#     def __init__(self, tokenizer, sentinel: str):
+#         super().__init__()
+#         self.sentinel = sentinel
+#         self.tokenizer = tokenizer
+#         self.buf = ""
+
+#     def __call__(self, input_ids, scores, **kwargs) -> bool:
+#         last_token_id = int(input_ids[0, -1])
+#         self.buf += self.tokenizer.decode([last_token_id], skip_special_tokens=True)
+#         return self.sentinel in self.buf
+
+
+# # ==================== IO helpers ====================
+# def read_text(path: Path) -> str:
+#     if not path.exists():
+#         raise FileNotFoundError(f"File not found: {path}")
+#     return path.read_text(encoding="utf-8")
+
+
+# def _get_source_segment(src: str, node: ast.AST) -> str:
+#     try:
+#         seg = ast.get_source_segment(src, node)
+#         if seg:
+#             return seg
+#     except Exception:
+#         pass
+#     lines = src.splitlines(True)
+#     s = getattr(node, "lineno", 1) - 1
+#     e = getattr(node, "end_lineno", s + 1)
+#     return "".join(lines[s:e])
+
+
+# def _extract_func_src(src: str, name: str) -> Optional[str]:
+#     try:
+#         tree = ast.parse(src)
+#     except SyntaxError:
+#         tree = None
+#     if tree:
+#         for n in tree.body:
+#             if isinstance(n, ast.FunctionDef) and n.name == name:
+#                 return _get_source_segment(src, n).strip()
+#         for n in tree.body:
+#             if isinstance(n, ast.ClassDef):
+#                 for m in n.body:
+#                     if isinstance(m, ast.FunctionDef) and m.name == name:
+#                         return _get_source_segment(src, m).strip()
+#     m = re.search(rf"(^|\n)\s*def\s+{name}\s*\(.*?\):\s*(?:\n(?:[ \t].*|\n)+)", src, re.DOTALL)
+#     return m.group(0).strip() if m else None
+
+
+# def extract_baseline_funcs(task_py_text: str) -> Tuple[str, str]:
+#     solve_src = _extract_func_src(task_py_text, "solve")
+#     is_solution_src = _extract_func_src(task_py_text, "is_solution")
+#     if not solve_src or not is_solution_src:
+#         raise RuntimeError("Failed to extract solve / is_solution from baseline.")
+#     return solve_src, is_solution_src
+
+
+# # ==================== Prompt build ====================
+# def build_prompt(desc_text: str, solve_src: str, is_solution_src: str) -> str:
+#     header = textwrap.dedent("""\
+#     You’re an autonomous programmer tasked with solving a specific problem.
+#     You are to use the commands defined below to accomplish this task.
+#     Apart from the default Python packages, you have access to the following
+#     additional packages:
+#     - cryptography
+#     - cvxpy
+#     - cython
+#     - dask
+#     - diffrax
+#     - ecos
+#     - faiss-cpu
+#     - hdbscan
+#     - highspy
+#     - jax
+#     - networkx
+#     - numba
+#     - numpy
+#     - ortools
+#     - pandas
+#     - pot
+#     - pulp
+#     - pyomo
+#     - python-sat
+#     - scikit-learn
+#     - scipy
+#     - sympy
+#     - torch
+
+#     YOUR TASK:
+#     Your objective is to define a class named ‘Solver‘ in ‘solver.py‘ with a method:
+
+#     class Solver:
+#         def solve(self, problem, **kwargs) -> Any:
+#             \"\"\"Your implementation goes here.\"\"\"
+#             ...
+
+#     IMPORTANT: Compilation time of your init function will not count towards
+#     your function’s runtime.
+
+#     This ‘solve‘ function will be the entrypoint called by the evaluation harness.
+#     Return exactly the same outputs as the baseline but faster within the time limit.
+#     """)
+
+#     prompt = header
+#     prompt += "\n\nTask description:\n" + desc_text.strip() + "\n"
+#     prompt += "\nBaseline solve:\n" + solve_src + "\n"
+#     prompt += "\nValidator is_solution:\n" + is_solution_src + "\n"
+
+#     prompt += textwrap.dedent(f"""
+#     -----
+#     ABSOLUTE OUTPUT FORMAT (STRICT):
+
+#     You MUST output only the file contents of solver.py between these sentinel lines:
+
+#     {MARKER_START}
+#     <solver.py contents ONLY — no backticks, no explanations>
+#     {MARKER_END}
+
+#     Rules:
+#     - Do NOT use Markdown code fences (no ```).
+#     - Do NOT print anything outside {MARKER_START} … {MARKER_END}.
+#     - Do NOT output any analysis / thoughts / explanations.
+#     - The very first tokens you generate MUST be code lines between the sentinels.
+#     - The code must contain:
+#         - `from typing import Any`
+#         - `class Solver:` with `def solve(self, problem, **kwargs) -> Any:`
+
+#     CRITICAL:
+#     - The output must START immediately after {MARKER_START} with code.
+#     - The file must END with the exact sentinel line {MARKER_END} and NOTHING after it.
+#     """)
+#     return prompt
+
+
+# # ==================== Tokenizer fallback (kept) ====================
+# def _try_build_slow_gpt2_tokenizer_from_json(model_dir: Path):
+#     tj_path = model_dir / "tokenizer.json"
+#     if not tj_path.exists():
+#         return None
+#     try:
+#         with open(tj_path, "r", encoding="utf-8") as f:
+#             tj = json.load(f)
+#     except Exception:
+#         return None
+
+#     model_obj = tj.get("model", {})
+#     if str(model_obj.get("type", "")).lower() != "bpe":
+#         return None
+
+#     vocab = model_obj.get("vocab")
+#     merges = model_obj.get("merges") or tj.get("merges")
+#     if not isinstance(vocab, dict) or not isinstance(merges, list):
+#         return None
+
+#     tmp_vocab = model_dir / "_tmp_vocab_from_json.json"
+#     tmp_merges = model_dir / "_tmp_merges_from_json.txt"
+#     try:
+#         import json as _json
+#         with open(tmp_vocab, "w", encoding="utf-8") as f:
+#             _json.dump(vocab, f, ensure_ascii=False)
+#         with open(tmp_merges, "w", encoding="utf-8") as f:
+#             f.write("\n".join(merges))
+#         tok = GPT2Tokenizer(vocab_file=str(tmp_vocab), merges_file=str(tmp_merges))
+#         if tok.pad_token_id is None and tok.eos_token_id is not None:
+#             tok.pad_token = tok.eos_token
+#         return tok
+#     except Exception:
+#         return None
+
+
+# # ==================== Model load ====================
+# def load_model(model_path: Path):
+#     import importlib, inspect
+#     from transformers import PreTrainedModel, PretrainedConfig
+
+#     # dtype
+#     if torch.cuda.is_available():
+#         dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+#     else:
+#         dtype = torch.float32
+
+#     tok = AutoTokenizer.from_pretrained(
+#         str(model_path),
+#         use_fast=True,
+#         trust_remote_code=True,
+#         local_files_only=True,
+#     )
+#     if tok.pad_token_id is None and getattr(tok, "eos_token_id", None) is not None:
+#         tok.pad_token_id = tok.eos_token_id
+
+#     try:
+#         mdl = AutoModelForCausalLM.from_pretrained(
+#             str(model_path),
+#             dtype=dtype,
+#             device_map="cuda",
+#             trust_remote_code=True,
+#             local_files_only=True,
+#             low_cpu_mem_usage=True,
+#         )
+#         try:
+#             mdl.config.attn_implementation = "eager"
+#         except Exception:
+#             pass
+#         return tok, mdl
+#     except Exception as e:
+#         auto_err = e
+
+#     # fallback: import from submodule
+#     try:
+#         m = importlib.import_module("transformers.models.gpt_oss.modeling_gpt_oss")
+#     except Exception as e:
+#         raise RuntimeError(f"无法导入 transformers.models.gpt_oss.modeling_gpt_oss：{e}\n原始Auto错误：{auto_err!r}")
+
+#     candidate = None
+#     for name, obj in vars(m).items():
+#         if inspect.isclass(obj):
+#             try:
+#                 if issubclass(obj, PreTrainedModel) and obj is not PreTrainedModel and name.endswith("ForCausalLM"):
+#                     candidate = obj
+#                     break
+#             except Exception:
+#                 pass
+#     if candidate is None:
+#         for name, obj in vars(m).items():
+#             if inspect.isclass(obj):
+#                 try:
+#                     if issubclass(obj, PreTrainedModel) and obj is not PreTrainedModel:
+#                         candidate = obj
+#                         break
+#                 except Exception:
+#                     pass
+#     if candidate is None:
+#         raise RuntimeError("未找到 gpt_oss 的 PreTrainedModel 子类。")
+
+#     try:
+#         cfg = PretrainedConfig.from_pretrained(str(model_path), trust_remote_code=True, local_files_only=True)
+#     except Exception:
+#         try:
+#             cm = importlib.import_module("transformers.models.gpt_oss.configuration_gpt_oss")
+#             cfg_cls = None
+#             for name, obj in vars(cm).items():
+#                 if inspect.isclass(obj):
+#                     try:
+#                         if issubclass(obj, PretrainedConfig) and obj is not PretrainedConfig:
+#                             cfg_cls = obj; break
+#                     except Exception:
+#                         pass
+#             if cfg_cls is None:
+#                 raise RuntimeError("未找到 gpt_oss 的 PretrainedConfig 子类")
+#             cfg = cfg_cls.from_pretrained(str(model_path), trust_remote_code=True, local_files_only=True)
+#         except Exception as e:
+#             raise RuntimeError(f"加载 gpt_oss 配置失败：{e}\n原始Auto错误：{auto_err!r}")
+
+#     mdl = candidate.from_pretrained(
+#         str(model_path),
+#         config=cfg,
+#         torch_dtype=dtype,
+#         device_map="cuda",
+#         trust_remote_code=True,
+#         local_files_only=True,
+#         low_cpu_mem_usage=True,
+#     )
+#     try:
+#         mdl.config.attn_implementation = "eager"
+#     except Exception:
+#         pass
+#     return tok, mdl
+
+
+# # ==================== Chat template (always return mask) ====================
+# def apply_chat_template(tokenizer, prompt: str) -> Dict[str, torch.Tensor]:
+#     try:
+#         input_ids = tokenizer.apply_chat_template(
+#             [{"role": "user", "content": prompt}],
+#             tokenize=True,
+#             add_generation_prompt=True,
+#             return_tensors="pt",
+#         )
+#         attn = torch.ones_like(input_ids)
+#         return {"input_ids": input_ids, "attention_mask": attn}
+#     except Exception:
+#         enc = tokenizer(prompt, return_tensors="pt")
+#         if "attention_mask" not in enc:
+#             enc["attention_mask"] = torch.ones_like(enc["input_ids"])
+#         return enc
+
+
+# # ==================== Inference with prefill + stop + retry ====================
+# def run_inference(tokenizer, model, prompt: str, max_new_tokens: int = 2048) -> str:
+#     model.eval()
+#     base = apply_chat_template(tokenizer, prompt)
+#     dev = next(model.parameters()).device
+#     for k in base:
+#         base[k] = base[k].to(dev)
+
+#     # 强制从 MARKER_START 开始写代码（前缀注入）
+#     prefill_text = MARKER_START + "\n"
+#     pre = tokenizer(prefill_text, add_special_tokens=False, return_tensors="pt")
+#     if "attention_mask" not in pre:
+#         pre["attention_mask"] = torch.ones_like(pre["input_ids"])
+#     for k in pre:
+#         pre[k] = pre[k].to(dev)
+
+#     input_ids = torch.cat([base["input_ids"], pre["input_ids"]], dim=1)
+#     attention_mask = torch.cat([base["attention_mask"], pre["attention_mask"]], dim=1)
+#     inputs = {"input_ids": input_ids, "attention_mask": attention_mask}
+#     cut = input_ids.shape[1]
+
+#     stopconds = StoppingCriteriaList([StopOnSentinel(tokenizer, MARKER_END)])
+
+#     def _gen(_inputs, _max_tokens):
+#         with torch.inference_mode():
+#             _ = model.generate(**_inputs, max_new_tokens=1, do_sample=False)
+#             if next(model.parameters()).is_cuda:
+#                 torch.cuda.synchronize()
+#             out = model.generate(
+#                 **_inputs,
+#                 max_new_tokens=_max_tokens,
+#                 do_sample=False,
+#                 repetition_penalty=1.0,
+#                 eos_token_id=getattr(tokenizer, "eos_token_id", None),
+#                 pad_token_id=getattr(tokenizer, "pad_token_id", None),
+#                 use_cache=True,
+#                 stopping_criteria=stopconds,
+#             )
+#         gen_ids = out[:, cut:]
+#         return tokenizer.decode(gen_ids[0], skip_special_tokens=True).strip()
+
+#     txt = _gen(inputs, max_new_tokens)
+
+#     # 若没到 END，放大上限并再次提醒 + 重新前缀
+#     if MARKER_END not in txt:
+#         stricter = prompt + "\n\nRemember: OUTPUT MUST end with the exact line " + MARKER_END + " and nothing after it."
+#         base2 = apply_chat_template(tokenizer, stricter)
+#         for k in base2:
+#             base2[k] = base2[k].to(dev)
+#         input_ids2 = torch.cat([base2["input_ids"], pre["input_ids"]], dim=1)
+#         attention_mask2 = torch.cat([base2["attention_mask"], pre["attention_mask"]], dim=1)
+#         inputs2 = {"input_ids": input_ids2, "attention_mask": attention_mask2}
+#         cut2 = input_ids2.shape[1]
+
+#         def _gen2(_inputs, _max_tokens):
+#             with torch.inference_mode():
+#                 _ = model.generate(**_inputs, max_new_tokens=1, do_sample=False)
+#                 if next(model.parameters()).is_cuda:
+#                     torch.cuda.synchronize()
+#                 out = model.generate(
+#                     **_inputs,
+#                     max_new_tokens=_max_tokens,
+#                     do_sample=False,
+#                     repetition_penalty=1.0,
+#                     eos_token_id=getattr(tokenizer, "eos_token_id", None),
+#                     pad_token_id=getattr(tokenizer, "pad_token_id", None),
+#                     use_cache=True,
+#                     stopping_criteria=stopconds,
+#                 )
+#             gen_ids = out[:, cut2:]
+#             return tokenizer.decode(gen_ids[0], skip_special_tokens=True).strip()
+
+#         txt = _gen2(inputs2, int(max_new_tokens * 1.6))
+
+#     return txt.strip()
+
+
+# # ==================== Extract solver.py ====================
+# def extract_solver_py(text: str) -> str:
+#     t = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\ufeff")
+
+#     start = t.find(MARKER_START)
+#     if start == -1:
+#         raise RuntimeError("MARKER_START not found in model output")
+#     start += len(MARKER_START)
+
+#     end = t.find(MARKER_END, start)
+#     if end == -1:
+#         raise RuntimeError("MARKER_END not found in model output")
+
+#     code = t[start:end].strip()
+
+#     # 去掉误包围的 fenced code
+#     code = re.sub(r"^```(?:python|py)?\s*", "", code, flags=re.IGNORECASE).strip()
+#     code = re.sub(r"\s*```$", "", code).strip()
+
+#     if "from typing import Any" not in code and re.search(r"\bAny\b", code):
+#         code = "from typing import Any\n" + code
+
+#     try:
+#         tree = ast.parse(code)
+#         ok = False
+#         for n in tree.body:
+#             if isinstance(n, ast.ClassDef) and n.name == "Solver":
+#                 for m in n.body:
+#                     if isinstance(m, ast.FunctionDef) and m.name == "solve":
+#                         ok = True
+#                         break
+#         if not ok:
+#             raise RuntimeError("extracted segment does not contain class Solver.solve")
+#     except Exception as e:
+#         raise RuntimeError(f"invalid solver.py segment: {e}")
+
+#     return code
+
+
+# # ==================== Main ====================
+# def main():
+#     p = argparse.ArgumentParser()
+#     p.add_argument("--task", required=True)
+#     p.add_argument("--model-path", default="/data/zq/models/gpt-oss-20b")
+#     p.add_argument("--tasks-root", default="/data/zq/evolve/AlgoTune/AlgoTuneTasks")
+#     p.add_argument("--out-root", default="/data/zq/evolve/AlgoTune/results/chatgptoss-20b")
+#     p.add_argument("--max-new-tokens", type=int, default=2048)
+#     args = p.parse_args()
+
+#     task = args.task
+#     model_path = Path(args.model_path)
+#     tasks_root = Path(args.tasks_root)
+#     out_root = Path(args.out_root)
+
+#     desc_path = tasks_root / task / "description.txt"
+#     task_py_path = tasks_root / task / f"{task}.py"
+
+#     out_dir = out_root / task
+#     out_dir.mkdir(parents=True, exist_ok=True)
+#     solver_out = out_dir / "solver.py"
+#     prompt_out = out_dir / "prompt_used.txt"
+#     raw_out = out_dir / "raw_model_output.txt"
+
+#     print(f"[INFO] Task       : {task}")
+#     print(f"[INFO] Model Path : {model_path}")
+#     print(f"[INFO] Desc Path  : {desc_path}")
+#     print(f"[INFO] Task Py    : {task_py_path}")
+#     print(f"[INFO] Output Dir : {out_dir}")
+
+#     desc_text = read_text(desc_path)
+#     task_py_text = read_text(task_py_path)
+#     solve_src, is_solution_src = extract_baseline_funcs(task_py_text)
+#     prompt = build_prompt(desc_text, solve_src, is_solution_src)
+#     prompt_out.write_text(prompt, encoding="utf-8")
+
+#     tok, mdl = load_model(model_path)
+
+#     gen = run_inference(tok, mdl, prompt, max_new_tokens=args.max_new_tokens)
+#     raw_out.write_text(gen, encoding="utf-8")
+
+#     code = extract_solver_py(gen)
+#     solver_out.write_text(code, encoding="utf-8")
+#     print(f"[OK] solver.py -> {solver_out}")
+
+
+# if __name__ == "__main__":
+#     main()
+
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import argparse
+import ast
+import json
+import os
+import re
+import textwrap
+from pathlib import Path
+from typing import Dict, Tuple, Optional
+
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM, StoppingCriteria, StoppingCriteriaList
+from transformers import GPT2Tokenizer  # 用于 slow 回退（BPE）
+
+# ==================== Sentinels ====================
+MARKER_START = "<<<SOLVER_PY_START>>>"
+MARKER_END = "<<<SOLVER_PY_END>>>"
+
+# --- Safety switches (env) ---
+os.environ.setdefault("FLASH_ATTENTION_SKIP_IMPORT", "1")
+os.environ.setdefault("XFORMERS_DISABLED", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
+
+# ==================== Stopping on END ====================
+class StopOnSentinel(StoppingCriteria):
+    def __init__(self, tokenizer, sentinel: str):
+        super().__init__()
+        self.sentinel = sentinel
+        self.tokenizer = tokenizer
+        self.buf = ""
+
+    def __call__(self, input_ids, scores, **kwargs) -> bool:
+        last_token_id = int(input_ids[0, -1])
+        self.buf += self.tokenizer.decode([last_token_id], skip_special_tokens=True)
+        return self.sentinel in self.buf
+
+
+# ==================== IO helpers ====================
+def read_text(path: Path) -> str:
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {path}")
+    return path.read_text(encoding="utf-8")
+
+
+def _get_source_segment(src: str, node: ast.AST) -> str:
+    try:
+        seg = ast.get_source_segment(src, node)
+        if seg:
+            return seg
+    except Exception:
+        pass
+    lines = src.splitlines(True)
+    s = getattr(node, "lineno", 1) - 1
+    e = getattr(node, "end_lineno", s + 1)
+    return "".join(lines[s:e])
+
+
+def _extract_func_src(src: str, name: str) -> Optional[str]:
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        tree = None
+    if tree:
+        for n in tree.body:
+            if isinstance(n, ast.FunctionDef) and n.name == name:
+                return _get_source_segment(src, n).strip()
+        for n in tree.body:
+            if isinstance(n, ast.ClassDef):
+                for m in n.body:
+                    if isinstance(m, ast.FunctionDef) and m.name == name:
+                        return _get_source_segment(src, m).strip()
+    m = re.search(rf"(^|\n)\s*def\s+{name}\s*\(.*?\):\s*(?:\n(?:[ \t].*|\n)+)", src, re.DOTALL)
+    return m.group(0).strip() if m else None
+
+
+def extract_baseline_funcs(task_py_text: str) -> Tuple[str, str]:
+    solve_src = _extract_func_src(task_py_text, "solve")
+    is_solution_src = _extract_func_src(task_py_text, "is_solution")
+    if not solve_src or not is_solution_src:
+        raise RuntimeError("Failed to extract solve / is_solution from baseline.")
+    return solve_src, is_solution_src
+
+
+# ==================== Prompt build ====================
+def build_prompt(desc_text: str, solve_src: str, is_solution_src: str) -> str:
+    header = textwrap.dedent("""\
+    You’re an autonomous programmer tasked with solving a specific problem.
+    You are to use the commands defined below to accomplish this task.
+    Apart from the default Python packages, you have access to the following
+    additional packages:
+    - cryptography
+    - cvxpy
+    - cython
+    - dask
+    - diffrax
+    - ecos
+    - faiss-cpu
+    - hdbscan
+    - highspy
+    - jax
+    - networkx
+    - numba
+    - numpy
+    - ortools
+    - pandas
+    - pot
+    - pulp
+    - pyomo
+    - python-sat
+    - scikit-learn
+    - scipy
+    - sympy
+    - torch
+
+    YOUR TASK:
+    Your objective is to define a class named ‘Solver‘ in ‘solver.py‘ with a method:
+
+    class Solver:
+        def solve(self, problem, **kwargs) -> Any:
+            \"\"\"Your implementation goes here.\"\"\"
+            ...
+
+    IMPORTANT: Compilation time of your init function will not count towards
+    your function’s runtime.
+
+    This ‘solve‘ function will be the entrypoint called by the evaluation harness.
+    Return exactly the same outputs as the baseline but faster within the time limit.
+    """)
+
+    prompt = header
+    prompt += "\n\nTask description:\n" + desc_text.strip() + "\n"
+    prompt += "\nBaseline solve:\n" + solve_src + "\n"
+    prompt += "\nValidator is_solution:\n" + is_solution_src + "\n"
+
+    prompt += textwrap.dedent(f"""
+    -----
+    ABSOLUTE OUTPUT FORMAT (STRICT):
+
+    You MUST output only the file contents of solver.py between these sentinel lines:
+
+    {MARKER_START}
+    <solver.py contents ONLY — no backticks, no explanations>
+    {MARKER_END}
+
+    Rules:
+    - Do NOT use Markdown code fences (no ```).
+    - Do NOT print anything outside {MARKER_START} … {MARKER_END}.
+    - Do NOT output any analysis / thoughts / explanations.
+    - The very first tokens you generate MUST be code lines between the sentinels.
+    - The code must contain:
+        - `from typing import Any`
+        - `class Solver:` with `def solve(self, problem, **kwargs) -> Any:`
+
+    CRITICAL:
+    - The output must START immediately after {MARKER_START} with code.
+    - The file must END with the exact sentinel line {MARKER_END} and NOTHING after it.
+    """)
+    return prompt
+
+
+# ==================== Tokenizer fallback (kept) ====================
+def _try_build_slow_gpt2_tokenizer_from_json(model_dir: Path):
+    tj_path = model_dir / "tokenizer.json"
+    if not tj_path.exists():
+        return None
+    try:
+        with open(tj_path, "r", encoding="utf-8") as f:
+            tj = json.load(f)
+    except Exception:
+        return None
+
+    model_obj = tj.get("model", {})
+    if str(model_obj.get("type", "")).lower() != "bpe":
+        return None
+
+    vocab = model_obj.get("vocab")
+    merges = model_obj.get("merges") or tj.get("merges")
+    if not isinstance(vocab, dict) or not isinstance(merges, list):
+        return None
+
+    tmp_vocab = model_dir / "_tmp_vocab_from_json.json"
+    tmp_merges = model_dir / "_tmp_merges_from_json.txt"
+    try:
+        import json as _json
+        with open(tmp_vocab, "w", encoding="utf-8") as f:
+            _json.dump(vocab, f, ensure_ascii=False)
+        with open(tmp_merges, "w", encoding="utf-8") as f:
+            f.write("\n".join(merges))
+        tok = GPT2Tokenizer(vocab_file=str(tmp_vocab), merges_file=str(tmp_merges))
+        if tok.pad_token_id is None and tok.eos_token_id is not None:
+            tok.pad_token = tok.eos_token
+        return tok
+    except Exception:
+        return None
+
+
+# ==================== Model load ====================
+def load_model(model_path: Path):
+    import importlib, inspect
+    from transformers import PreTrainedModel, PretrainedConfig
+
+    # dtype
+    if torch.cuda.is_available():
+        dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    else:
+        dtype = torch.float32
+
+    tok = AutoTokenizer.from_pretrained(
+        str(model_path),
+        use_fast=True,
+        trust_remote_code=True,
+        local_files_only=True,
+    )
+    if tok.pad_token_id is None and getattr(tok, "eos_token_id", None) is not None:
+        tok.pad_token_id = tok.eos_token_id
+
+    try:
+        mdl = AutoModelForCausalLM.from_pretrained(
+            str(model_path),
+            dtype=dtype,
+            device_map="cuda",
+            trust_remote_code=True,
+            local_files_only=True,
+            low_cpu_mem_usage=True,
+        )
+        try:
+            mdl.config.attn_implementation = "eager"
+        except Exception:
+            pass
+        return tok, mdl
+    except Exception as e:
+        auto_err = e
+
+    # fallback: import from submodule
+    try:
+        m = importlib.import_module("transformers.models.gpt_oss.modeling_gpt_oss")
+    except Exception as e:
+        raise RuntimeError(f"无法导入 transformers.models.gpt_oss.modeling_gpt_oss：{e}\n原始Auto错误：{auto_err!r}")
+
+    candidate = None
+    for name, obj in vars(m).items():
+        if inspect.isclass(obj):
+            try:
+                if issubclass(obj, PreTrainedModel) and obj is not PreTrainedModel and name.endswith("ForCausalLM"):
+                    candidate = obj
+                    break
+            except Exception:
+                pass
+    if candidate is None:
+        for name, obj in vars(m).items():
+            if inspect.isclass(obj):
+                try:
+                    if issubclass(obj, PreTrainedModel) and obj is not PreTrainedModel:
+                        candidate = obj
+                        break
+                except Exception:
+                    pass
+    if candidate is None:
+        raise RuntimeError("未找到 gpt_oss 的 PreTrainedModel 子类。")
+
+    try:
+        cfg = PretrainedConfig.from_pretrained(str(model_path), trust_remote_code=True, local_files_only=True)
+    except Exception:
+        try:
+            cm = importlib.import_module("transformers.models.gpt_oss.configuration_gpt_oss")
+            cfg_cls = None
+            for name, obj in vars(cm).items():
+                if inspect.isclass(obj):
+                    try:
+                        if issubclass(obj, PretrainedConfig) and obj is not PretrainedConfig:
+                            cfg_cls = obj; break
+                    except Exception:
+                        pass
+            if cfg_cls is None:
+                raise RuntimeError("未找到 gpt_oss 的 PretrainedConfig 子类")
+            cfg = cfg_cls.from_pretrained(str(model_path), trust_remote_code=True, local_files_only=True)
+        except Exception as e:
+            raise RuntimeError(f"加载 gpt_oss 配置失败：{e}\n原始Auto错误：{auto_err!r}")
+
+    mdl = candidate.from_pretrained(
+        str(model_path),
+        config=cfg,
+        torch_dtype=dtype,
+        device_map="cuda",
+        trust_remote_code=True,
+        local_files_only=True,
+        low_cpu_mem_usage=True,
+    )
+    try:
+        mdl.config.attn_implementation = "eager"
+    except Exception:
+        pass
+    return tok, mdl
+
+
+# ==================== Chat template (always return mask) ====================
+def apply_chat_template(tokenizer, prompt: str) -> Dict[str, torch.Tensor]:
+    try:
+        input_ids = tokenizer.apply_chat_template(
+            [{"role": "user", "content": prompt}],
+            tokenize=True,
+            add_generation_prompt=True,
+            return_tensors="pt",
+        )
+        attn = torch.ones_like(input_ids)
+        return {"input_ids": input_ids, "attention_mask": attn}
+    except Exception:
+        enc = tokenizer(prompt, return_tensors="pt")
+        if "attention_mask" not in enc:
+            enc["attention_mask"] = torch.ones_like(enc["input_ids"])
+        return enc
+
+
+# ==================== Inference with prefill + stop + retry ====================
+def run_inference(tokenizer, model, prompt: str, max_new_tokens: int = 2048) -> str:
+    model.eval()
+    base = apply_chat_template(tokenizer, prompt)
+    dev = next(model.parameters()).device
+    for k in base:
+        base[k] = base[k].to(dev)
+
+    # 关键：强制从合法 Python 开头，避免任何前导垃圾字符/引用符
+    prefill_text = MARKER_START + "\nfrom typing import Any\n"
+    pre = tokenizer(prefill_text, add_special_tokens=False, return_tensors="pt")
+    if "attention_mask" not in pre:
+        pre["attention_mask"] = torch.ones_like(pre["input_ids"])
+    for k in pre:
+        pre[k] = pre[k].to(dev)
+
+    # 拼接前缀
+    input_ids = torch.cat([base["input_ids"], pre["input_ids"]], dim=1)
+    attention_mask = torch.cat([base["attention_mask"], pre["attention_mask"]], dim=1)
+    inputs = {"input_ids": input_ids, "attention_mask": attention_mask}
+    cut = input_ids.shape[1]
+
+    # 禁止“分析口头禅”，压制跑题
+    def _bad_words(tokenizer):
+        phrases = [
+            "analysis", "Analysis", "We need", "We can", "We should",
+            "Let's", "In this", "Firstly", "First,", "首先", "接下来", "说明", "分析", "思考", "讨论", "解释"
+        ]
+        ids = []
+        for ph in phrases:
+            try:
+                enc = tokenizer.encode(ph, add_special_tokens=False)
+                if enc: ids.append(enc)
+            except Exception:
+                pass
+        return ids
+    bad_ids = _bad_words(tokenizer)
+
+    stopconds = StoppingCriteriaList([StopOnSentinel(tokenizer, MARKER_END)])
+
+    def _gen(_inputs, _max_tokens):
+        with torch.inference_mode():
+            _ = model.generate(**_inputs, max_new_tokens=1, do_sample=False)
+            if next(model.parameters()).is_cuda:
+                torch.cuda.synchronize()
+            kw = dict(
+                max_new_tokens=_max_tokens,
+                do_sample=False,
+                repetition_penalty=1.0,
+                eos_token_id=getattr(tokenizer, "eos_token_id", None),
+                pad_token_id=getattr(tokenizer, "pad_token_id", None),
+                use_cache=True,
+                stopping_criteria=stopconds,
+            )
+            if bad_ids:
+                kw["bad_words_ids"] = bad_ids
+            out = model.generate(**_inputs, **kw)
+        gen_ids = out[:, cut:]
+        return tokenizer.decode(gen_ids[0], skip_special_tokens=True).strip()
+
+    txt = _gen(inputs, max_new_tokens)
+
+    # 首次没出 END：放大上限到 1.8× 并加严提醒
+    if MARKER_END not in txt:
+        stricter = prompt + "\n\nRemember: OUTPUT MUST end with the exact line " + MARKER_END + " and nothing after it."
+        base2 = apply_chat_template(tokenizer, stricter)
+        for k in base2:
+            base2[k] = base2[k].to(dev)
+        input_ids2 = torch.cat([base2["input_ids"], pre["input_ids"]], dim=1)
+        attention_mask2 = torch.cat([base2["attention_mask"], pre["attention_mask"]], dim=1)
+        inputs2 = {"input_ids": input_ids2, "attention_mask": attention_mask2}
+        txt = _gen(inputs2, int(max_new_tokens * 1.8))
+
+    # 仍未出 END：最后一轮 2.3×
+    if MARKER_END not in txt:
+        base3 = apply_chat_template(tokenizer, stricter + "\nSTRICT: No analysis, code only.")
+        for k in base3:
+            base3[k] = base3[k].to(dev)
+        input_ids3 = torch.cat([base3["input_ids"], pre["input_ids"]], dim=1)
+        attention_mask3 = torch.cat([base3["attention_mask"], pre["attention_mask"]], dim=1)
+        inputs3 = {"input_ids": input_ids3, "attention_mask": attention_mask3}
+        txt = _gen(inputs3, int(max_new_tokens * 2.3))
+
+    return txt.strip()
+
+
+# ==================== Extract solver.py ====================
+def extract_solver_py(text: str) -> str:
+    t = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\ufeff")
+
+    start = t.find(MARKER_START)
+    if start == -1:
+        raise RuntimeError("MARKER_START not found in model output")
+    start += len(MARKER_START)
+
+    end = t.find(MARKER_END, start)
+    if end == -1:
+        raise RuntimeError("MARKER_END not found in model output")
+
+    code = t[start:end].strip()
+
+    # 去掉误包围的 fenced code
+    code = re.sub(r"^```(?:python|py)?\s*", "", code, flags=re.IGNORECASE).strip()
+    code = re.sub(r"\s*```$", "", code).strip()
+
+    # 额外保险：如果第一行不是代码（比如以 '>' 开头），剥离前导非代码行
+    lines = code.splitlines()
+    def looks_like_code(l: str) -> bool:
+        return bool(re.match(r'^\s*(from |import |class |def |@|#|$)', l))
+    while lines and not looks_like_code(lines[0]):
+        lines.pop(0)
+    code = "\n".join(lines).lstrip()
+
+    if "from typing import Any" not in code and re.search(r"\bAny\b", code):
+        code = "from typing import Any\n" + code
+
+    try:
+        tree = ast.parse(code)
+        ok = False
+        for n in tree.body:
+            if isinstance(n, ast.ClassDef) and n.name == "Solver":
+                for m in n.body:
+                    if isinstance(m, ast.FunctionDef) and m.name == "solve":
+                        ok = True
+                        break
+        if not ok:
+            raise RuntimeError("extracted segment does not contain class Solver.solve")
+    except Exception as e:
+        raise RuntimeError(f"invalid solver.py segment: {e}")
+
+    return code
+
+
+# ==================== Main ====================
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--task", required=True)
+    p.add_argument("--model-path", default="/data/zq/models/gpt-oss-20b")
+    p.add_argument("--tasks-root", default="/data/zq/evolve/AlgoTune/AlgoTuneTasks")
+    p.add_argument("--out-root", default="/data/zq/evolve/AlgoTune/results/chatgptoss-20b")
+    p.add_argument("--max-new-tokens", type=int, default=2048)
+    args = p.parse_args()
+
+    task = args.task
+    model_path = Path(args.model_path)
+    tasks_root = Path(args.tasks_root)
+    out_root = Path(args.out_root)
+
+    desc_path = tasks_root / task / "description.txt"
+    task_py_path = tasks_root / task / f"{task}.py"
+
+    out_dir = out_root / task
+    out_dir.mkdir(parents=True, exist_ok=True)
+    solver_out = out_dir / "solver.py"
+    prompt_out = out_dir / "prompt_used.txt"
+    raw_out = out_dir / "raw_model_output.txt"
+
+    print(f"[INFO] Task       : {task}")
+    print(f"[INFO] Model Path : {model_path}")
+    print(f"[INFO] Desc Path  : {desc_path}")
+    print(f"[INFO] Task Py    : {task_py_path}")
+    print(f"[INFO] Output Dir : {out_dir}")
+
+    desc_text = read_text(desc_path)
+    task_py_text = read_text(task_py_path)
+    solve_src, is_solution_src = extract_baseline_funcs(task_py_text)
+    prompt = build_prompt(desc_text, solve_src, is_solution_src)
+    prompt_out.write_text(prompt, encoding="utf-8")
+
+    tok, mdl = load_model(model_path)
+
+    gen = run_inference(tok, mdl, prompt, max_new_tokens=args.max_new_tokens)
+    raw_out.write_text(gen, encoding="utf-8")
+
+    code = extract_solver_py(gen)
+    solver_out.write_text(code, encoding="utf-8")
+    print(f"[OK] solver.py -> {solver_out}")
+
+
+if __name__ == "__main__":
+    main()

@@ -110,3 +110,6 @@ frame #9: on_exit + 0 (0x7ffa34689a60 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #10: __libc_start_main + 0xfa (0x7ffa3466708a in /lib/x86_64-linux-gnu/libc.so.6)
 frame #11: <unknown function> + 0x1c434e (0x55adaa8a634e in /home/zhangqi/.conda/envs/env/bin/python)
 
+
+=== [2025-10-23T20:37:29.484005] START correlate2d_full_fill (GPU 2) ===
+=== END correlate2d_full_fill -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/correlate2d_full_fill/solver.py

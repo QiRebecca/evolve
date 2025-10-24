@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_all_tasks.py", line 80, in worker
+    txt = gen.run_inference(tok, mdl, prompt, max_new_tokens=args.max_new_tokens)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 380, in run_inference
+    attention_mask = torch.cat([base["attention_mask"], pre["attention_mask"]], dim=1)
+KeyError: 'attention_mask'
+
+=== [2025-10-24T17:48:19.599762] START toeplitz_solver (GPU 2) ===
+=== END toeplitz_solver -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/toeplitz_solver/solver.py

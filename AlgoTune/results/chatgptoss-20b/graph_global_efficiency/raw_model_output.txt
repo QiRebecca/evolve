@@ -1,0 +1,75 @@
+analysisWe need to implement efficient global efficiency calculation. We can use Floyd-Warshall or BFS from each node. For undirected unweighted graph, BFS from each node gives shortest path lengths. Complexity O(n*(n+m)). For large graphs, maybe use networkx? But we need faster than baseline. Baseline uses networkx.global_efficiency which uses all_pairs_shortest_path_length. That is similar. We can implement BFS ourselves.
+
+We need to handle disconnected pairs: contribution 0. So we sum 1/d for each pair where d finite. For each source, BFS gives distances to all reachable nodes. For each target > source, if distance finite, add 1/d. Then after all, divide by n*(n-1). For n <=1 return 0.
+
+We need to be careful with large graphs: adjacency list is list of lists. BFS using deque. Use local variables for speed.
+
+Implement solve returning dict.
+
+We need to import Any, typing.
+
+Also we can use numpy? But BFS loops fine.
+
+Edge case: adjacency list may contain duplicates? Assume sorted unique.
+
+Implement.
+
+Also we can precompute n*(n-1) as denom.
+
+Return float.
+
+Let's write code.
+
+Also we can use math.isfinite? Not needed.
+
+Implement.
+
+We need to ensure we don't import networkx.
+
+Let's produce solver.py content.
+
+assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+from collections import deque
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Calculate the global efficiency of an undirected graph given its adjacency list.
+        This implementation uses BFS from each node to compute shortest path lengths,
+        avoiding the overhead of NetworkX and providing faster execution for large graphs.
+        """
+        adj_list = problem.get("adjacency_list", [])
+        n = len(adj_list)
+
+        # Edge cases: 0 or 1 node -> efficiency 0
+        if n <= 1:
+            return {"global_efficiency": 0.0}
+
+        total_pairs = n * (n - 1)
+        sum_inv_dist = 0.0
+
+        # For each source node, perform BFS
+        for src in range(n):
+            # distances initialized to -1 (unvisited)
+            dist = [-1] * n
+            dist[src] = 0
+            q = deque([src])
+
+            while q:
+                u = q.popleft()
+                du = dist[u]
+                for v in adj_list[u]:
+                    if dist[v] == -1:
+                        dist[v] = du + 1
+                        q.append(v)
+
+            # Accumulate contributions for pairs (src, v) where v > src
+            for dst in range(src + 1, n):
+                d = dist[dst]
+                if d > 0:  # reachable and not same node
+                    sum_inv_dist += 1.0 / d
+
+        efficiency = sum_inv_dist / total_pairs
+        return {"global_efficiency": float(efficiency)}
+<<<SOLVER_PY_END>>>

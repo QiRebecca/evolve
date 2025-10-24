@@ -1,0 +1,154 @@
+analysisWe need to implement a fast solver for the LP centering problem: maximize c^T x - sum log x_i subject to Ax = b, x > 0. Equivalent to minimize c^T x - sum log x_i. This is convex. We can solve via KKT conditions: gradient: c - 1/x + A^T λ = 0 => 1/x = c + A^T λ => x = 1/(c + A^T λ). Then constraint: A x = b => A * (1/(c + A^T λ)) = b. This is a nonlinear equation in λ. We can solve via Newton or use cvxpy? But we want faster. We can use scipy.optimize.root or fsolve. But we need to handle general m, n. We can use Newton with Jacobian: derivative of f(λ) = A * diag(-1/(c + A^T λ)^2) * A^T. Actually f(λ) = A * x - b = A * (1/(c + A^T λ)) - b. Jacobian J = -A * diag(1/(c + A^T λ)^2) * A^T. Solve J Δλ = -f. Use linear solve. Use numpy.linalg.solve. Need initial λ guess: zeros. Ensure positivity of x: c + A^T λ > 0. Might need to adjust. Use Newton with damping. For small sizes, this is fine. Use scipy.optimize.newton_krylov? But we can implement simple Newton.
+
+Alternatively, we can use cvxpy with solver=CLARABEL but that might be slower. We can use cvxpy with OSQP? But we need to solve convex problem with log barrier. Could use cvxpy with SCS? Might be slower.
+
+Better: use cvxpy with ECOS_BB? But we want faster.
+
+Implement Newton method: while not converged, compute f, J, solve for Δλ, update λ. Use line search to ensure positivity of x. Use backtracking: step size α=1, reduce by 0.5 until x positive. Convergence tolerance 1e-8.
+
+Edge cases: if A is not full rank? But problem likely well-posed.
+
+Implement solve: parse problem, convert to numpy arrays. Use dtype float64. Compute n, m. Use initial λ = np.zeros(m). For iteration up to 50. Compute w = c + A.T @ λ. If any w <= 0, adjust λ? But we can start with λ=0, w=c. If any c <=0, then initial x negative? But problem may have c positive? Not guaranteed. But we can shift λ to make w positive: λ = -c / (A.T @ ones?) Hard.
+
+We can use Newton with damping to ensure positivity. In each iteration, compute w, if any w <= 0, we can set w = max(w, eps). But that breaks KKT. Instead, we can use barrier method: start with λ=0, compute w=c. If any w <=0, we can add small positive to λ: λ += eps * ones. But we need to find λ such that w>0. We can use simple approach: use scipy.optimize.root with method='hybr' or 'lm' which handles constraints? But we need positivity.
+
+Simpler: use cvxpy but with solver=ECOS? Might be okay.
+
+But we want faster than baseline. Baseline uses CLARABEL, which is efficient. But we can use cvxpy with OSQP? But OSQP solves QP, not log barrier.
+
+We can use cvxpy with SCS? Might be slower.
+
+Better: use cvxpy with ECOS_BB? Not.
+
+Maybe we can use cvxpy with 'SCS' and 'max_iters' small? But not.
+
+Alternatively, we can use cvxpy with 'CLARABEL' but that is baseline.
+
+We can implement Newton method.
+
+Let's implement:
+
+def solve(self, problem, **kwargs):
+    c = np.array(problem["c"], dtype=np.float64)
+    A = np.array(problem["A"], dtype=np.float64)
+    b = np.array(problem["b"], dtype=np.float64)
+    m, n = A.shape
+    λ = np.zeros(m)
+    eps = 1e-12
+    for _ in range(50):
+        w = c + A.T @ λ
+        if np.any(w <= 0):
+            # adjust λ to make w positive
+            # add small positive to λ
+            λ += eps
+            w = c + A.T @ λ
+        x = 1.0 / w
+        f = A @ x - b
+        if np.linalg.norm(f, ord=np.inf) < 1e-8:
+            break
+        # Jacobian: J = -A * diag(1/w^2) * A.T
+        # compute diag(1/w^2) * A.T efficiently
+        # compute M = A * diag(1/w^2) * A.T
+        # Use A * (A.T * (1/w^2))? Actually diag(1/w^2) * A.T = (A.T * (1/w^2))? No, diag multiplies columns of A.T.
+        # So compute v = 1.0 / (w**2)
+        v = 1.0 / (w**2)
+        # compute A * (A.T * v)?? Wait: A * diag(v) * A.T = (A * diag(v)) @ A.T
+        # Compute B = A * diag(v) => each column j of A multiplied by v[j]
+        B = A * v  # broadcasting: A shape (m,n), v shape (n,) -> each column scaled
+        J = -B @ A.T
+        # Solve J Δλ = -f
+        try:
+            Δλ = np.linalg.solve(J, -f)
+        except np.linalg.LinAlgError:
+            # use least squares
+            Δλ = np.linalg.lstsq(J, -f, rcond=None)[0]
+        # line search
+        α = 1.0
+        for _ in range(20):
+            λ_new = λ + α * Δλ
+            w_new = c + A.T @ λ_new
+            if np.all(w_new > 0):
+                λ = λ_new
+                break
+            α *= 0.5
+        else:
+            # if cannot find positive, break
+            break
+    x = 1.0 / (c + A.T @ λ)
+    return {"solution": x.tolist()}
+
+Need to import numpy as np, from typing import Any.
+
+Test with example: c=[1,2], A=[[0,2],[1,0],[3,4]], b=[2,1,7]. Let's test mentally: n=2,m=3. Solve? Might produce x=[1,1]. Good.
+
+Edge: if A not full rank, J may be singular. But we can use least squares.
+
+We need to ensure we return solution as list of floats.
+
+We also need to import numpy.
+
+Let's produce solver.py accordingly.
+
+We need to include sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solve the LP centering problem:
+            minimize   c^T x - sum(log x_i)
+            subject to Ax = b, x > 0
+        using a Newton method on the KKT conditions.
+        """
+        c = np.array(problem["c"], dtype=np.float64)
+        A = np.array(problem["A"], dtype=np.float64)
+        b = np.array(problem["b"], dtype=np.float64)
+
+        m, n = A.shape
+        # Initial dual variable
+        lam = np.zeros(m, dtype=np.float64)
+        eps = 1e-12
+        max_iter = 50
+        tol = 1e-8
+
+        for _ in range(max_iter):
+            w = c + A.T @ lam
+            # Ensure positivity of w
+            if np.any(w <= 0):
+                # Shift lam slightly to keep w positive
+                lam += eps
+                w = c + A.T @ lam
+            x = 1.0 / w
+            f = A @ x - b
+            if np.linalg.norm(f, ord=np.inf) < tol:
+                break
+
+            # Jacobian: J = -A * diag(1/w^2) * A^T
+            v = 1.0 / (w ** 2)
+            B = A * v  # each column of A scaled by v
+            J = -B @ A.T
+
+            try:
+                delta_lam = np.linalg.solve(J, -f)
+            except np.linalg.LinAlgError:
+                delta_lam = np.linalg.lstsq(J, -f, rcond=None)[0]
+
+            # Backtracking line search to maintain positivity of w
+            alpha = 1.0
+            for _ in range(20):
+                lam_new = lam + alpha * delta_lam
+                w_new = c + A.T @ lam_new
+                if np.all(w_new > 0):
+                    lam = lam_new
+                    break
+                alpha *= 0.5
+            else:
+                # If no feasible step found, exit
+                break
+
+        x = 1.0 / (c + A.T @ lam)
+        return {"solution": x.tolist()}
+<<<SOLVER_PY_END>>>

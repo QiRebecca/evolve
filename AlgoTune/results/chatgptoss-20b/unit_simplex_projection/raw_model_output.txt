@@ -1,0 +1,68 @@
+analysisWe need to produce solver.py with efficient algorithm. Baseline uses sorting descending, cumulative sum, find rho. We can implement same but maybe use numpy vectorized. Could also use np.argsort. But baseline is fine. We can micro-opt: use np.sort(y)[::-1] is fine. Use np.where. Might be okay. We can also use np.maximum. Should be fine.
+
+We need to import typing.Any, numpy. Provide class Solver with solve method. Return dict with "solution": x. Ensure x is numpy array. The baseline returns numpy array. The is_solution compares with np.allclose. So we need to return numpy array.
+
+We can also use np.maximum(y - theta, 0). Good.
+
+We can also use np.cumsum(sorted_y) - 1. Good.
+
+We need to ensure we handle empty? Not needed.
+
+We can also use np.where sorted_y > cumsum_y / np.arange(1, n+1). That is fine.
+
+We can also use np.argmax? But we need last index where condition holds. Use np.where returns array, take last element.
+
+Edge cases: if no element satisfies? But for simplex projection, there will be at least one. But if y all negative? Then sorted_y > cumsum_y/(i) might be false for all? Let's test: y = [-1,-2]. sorted_y = [-1,-2]. cumsum_y = [-1,-3] -1 => [-2,-4]. cumsum_y/(i) = [-2,-2]. sorted_y > [-2,-2] => [-1>-2 True, -2>-2 False] => [True, False] => rho=0. Works.
+
+Ok.
+
+We can also use np.maximum. Good.
+
+We need to import numpy as np.
+
+Return dict.
+
+We need to ensure we don't use any other packages.
+
+Let's produce code.
+
+We need to wrap between sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute the Euclidean projection of a point y onto the probability simplex.
+        This implementation follows the algorithm described in
+        https://arxiv.org/pdf/1309.1541 and runs in O(n log n) time.
+        """
+        y = np.array(problem.get("y", []), dtype=float)
+        # Ensure y is a 1-D array
+        y = y.flatten()
+        n = y.size
+        if n == 0:
+            return {"solution": np.array([])}
+
+        # Sort y in descending order
+        sorted_y = np.sort(y)[::-1]
+
+        # Compute cumulative sum of sorted_y minus 1
+        cumsum_y = np.cumsum(sorted_y) - 1.0
+
+        # Find the largest index rho such that sorted_y > cumsum_y / (rho+1)
+        # Using vectorized operations for speed
+        div = cumsum_y / (np.arange(1, n + 1))
+        mask = sorted_y > div
+        # mask is a boolean array; find last True index
+        rho = np.where(mask)[0][-1]
+
+        theta = cumsum_y[rho] / (rho + 1.0)
+
+        # Project onto the simplex
+        x = np.maximum(y - theta, 0.0)
+
+        return {"solution": x}
+<<<SOLVER_PY_END>>>

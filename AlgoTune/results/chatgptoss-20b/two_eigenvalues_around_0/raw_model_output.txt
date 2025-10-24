@@ -1,0 +1,61 @@
+analysisWe need to produce solver.py with a Solver class. The baseline uses np.linalg.eigvalsh. We can optimize by using numpy's efficient eigenvalue routine. For symmetric matrix, eigvalsh is efficient. But we can maybe use np.linalg.eigvals? But eigvalsh is already efficient. We can maybe use np.linalg.eigvalsh and then use np.partition to get two smallest abs values. That might be faster than sorting entire array. For large matrices, sorting all eigenvalues is O(n log n). Partition is O(n). So we can use np.partition on abs(eigenvalues) to get two smallest. But we need the actual eigenvalues, not just abs. Approach: compute eigenvalues, then use np.argpartition on abs(eigenvalues) to get indices of two smallest abs. Then get those eigenvalues, sort by abs. That avoids full sort. That should be faster.
+
+Also we can use np.linalg.eigvalsh which returns sorted eigenvalues by default? Actually eigvalsh returns sorted ascending. But we need by absolute value. So we still need to find two with smallest abs. We can compute abs array, then use np.argpartition.
+
+Implementation:
+
+def solve(self, problem, **kwargs) -> Any:
+    matrix = np.array(problem["matrix"], dtype=float)
+    eigs = np.linalg.eigvalsh(matrix)
+    # find indices of two smallest abs
+    idx = np.argpartition(np.abs(eigs), 2)[:2]
+    # get those eigenvalues
+    selected = eigs[idx]
+    # sort by abs
+    selected_sorted = sorted(selected, key=abs)
+    return selected_sorted
+
+Edge cases: if matrix size < 2? But baseline expects at least 2. We can handle.
+
+Also we need to import numpy as np, typing.Any.
+
+We should also consider that np.argpartition with k=2 returns 2 smallest indices but not sorted. We then sort.
+
+Time complexity: O(n) for eigenvalues, O(n) for argpartition, O(1) for sorting 2 elements.
+
+We can also use np.linalg.eigvalsh which is efficient.
+
+We can also use np.linalg.eigvals? But eigvalsh is better for symmetric.
+
+Thus final code.
+
+We need to output only solver.py content between sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Find the two eigenvalues of a symmetric matrix that are closest to zero.
+        Uses efficient partial selection to avoid full sorting of all eigenvalues.
+        """
+        # Convert input to NumPy array
+        matrix = np.array(problem["matrix"], dtype=float)
+
+        # Compute all eigenvalues (sorted ascending by value)
+        eigs = np.linalg.eigvalsh(matrix)
+
+        # Find indices of the two eigenvalues with smallest absolute value
+        # np.argpartition gives unsorted indices of the k smallest elements
+        idx = np.argpartition(np.abs(eigs), 2)[:2]
+
+        # Retrieve the selected eigenvalues
+        selected = eigs[idx]
+
+        # Sort the two selected eigenvalues by absolute value
+        selected_sorted = sorted(selected, key=abs)
+
+        return selected_sorted
+<<<SOLVER_PY_END>>>

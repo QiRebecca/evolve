@@ -1,0 +1,113 @@
+analysisWe need to produce solver.py with a Solver class that implements solve method. We need to compute convex hull. We can use scipy.spatial.ConvexHull as baseline, but we can also implement faster algorithm like Graham scan or Andrew's monotone chain. For speed, we can use numpy operations. But we need to output hull_vertices indices and hull_points in counter-clockwise order.
+
+We can implement monotone chain algorithm: sort points by x then y, build lower and upper hulls. Need to keep original indices. So we need to sort with indices. Then produce hull vertices indices in CCW order. The monotone chain returns hull in counter-clockwise order starting from leftmost point, but we need to ensure no duplicate last point. Implementation: after building lower and upper, we combine lower[:-1] + upper[:-1] to get hull in CCW order. That yields hull vertices indices. Then hull_points from problem["points"].
+
+Edge cases: if all points collinear, hull will be two points? But requirement says at least 3 vertices. But maybe input ensures at least 3 non-collinear points. We'll just handle general case.
+
+We need to import numpy. Use np.array. Implementation:
+
+def solve(self, problem, **kwargs):
+    points = np.array(problem["points"])
+    n = len(points)
+    if n <= 1:
+        return {"hull_vertices": list(range(n)), "hull_points": points.tolist()}
+    # create array of indices
+    idx = np.arange(n)
+    # sort by x then y
+    order = np.lexsort((points[:,1], points[:,0]))
+    sorted_points = points[order]
+    sorted_idx = idx[order]
+    # cross product function
+    def cross(o, a, b):
+        return (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0])
+    lower = []
+    lower_idx = []
+    for p, i in zip(sorted_points, sorted_idx):
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+            lower_idx.pop()
+        lower.append(p)
+        lower_idx.append(i)
+    upper = []
+    upper_idx = []
+    for p, i in zip(reversed(sorted_points), reversed(sorted_idx)):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+            upper_idx.pop()
+        upper.append(p)
+        upper_idx.append(i)
+    # Concatenate lower and upper to get full hull, excluding last point of each
+    hull_idx = lower_idx[:-1] + upper_idx[:-1]
+    hull_points = points[hull_idx].tolist()
+    return {"hull_vertices": hull_idx, "hull_points": hull_points}
+
+Need to ensure hull_idx is list of ints. lower_idx and upper_idx are lists of ints. So hull_idx is list. Good.
+
+Edge: if all points collinear, lower and upper will produce same points. The algorithm will produce hull with two points. But requirement expects at least 3. But maybe not needed.
+
+We need to import numpy and typing.Any.
+
+Also we need to ensure we don't use any other packages.
+
+Let's produce final code.
+
+We need to wrap with sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute the convex hull of a set of 2D points using the monotone chain algorithm.
+        Returns hull vertices indices and hull points in counter-clockwise order.
+        """
+        points = np.array(problem["points"])
+        n = len(points)
+        if n == 0:
+            return {"hull_vertices": [], "hull_points": []}
+        if n == 1:
+            return {"hull_vertices": [0], "hull_points": points.tolist()}
+
+        # Create array of original indices
+        idx = np.arange(n)
+
+        # Sort points by x, then y
+        order = np.lexsort((points[:, 1], points[:, 0]))
+        sorted_points = points[order]
+        sorted_idx = idx[order]
+
+        def cross(o, a, b):
+            return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+        # Build lower hull
+        lower_idx = []
+        for p, i in zip(sorted_points, sorted_idx):
+            while len(lower_idx) >= 2:
+                o = sorted_points[lower_idx[-2]]
+                a = sorted_points[lower_idx[-1]]
+                if cross(o, a, p) <= 0:
+                    lower_idx.pop()
+                else:
+                    break
+            lower_idx.append(i)
+
+        # Build upper hull
+        upper_idx = []
+        for p, i in zip(reversed(sorted_points), reversed(sorted_idx)):
+            while len(upper_idx) >= 2:
+                o = sorted_points[upper_idx[-2]]
+                a = sorted_points[upper_idx[-1]]
+                if cross(o, a, p) <= 0:
+                    upper_idx.pop()
+                else:
+                    break
+            upper_idx.append(i)
+
+        # Concatenate lower and upper to get full hull, excluding duplicate endpoints
+        hull_idx = lower_idx[:-1] + upper_idx[:-1]
+        hull_points = points[hull_idx].tolist()
+
+        return {"hull_vertices": hull_idx, "hull_points": hull_points}
+<<<SOLVER_PY_END>>>

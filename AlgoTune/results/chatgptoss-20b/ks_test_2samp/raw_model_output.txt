@@ -1,0 +1,85 @@
+analysisWe need to implement a fast KS test. The baseline uses scipy.stats.ks_2samp. We can implement our own efficient algorithm: sort both samples, compute empirical CDF differences. Complexity O(n log n). For pvalue, we need to compute p-value for two-sample KS statistic. For large n, approximate formula: pvalue = Q_{KS}([sqrt(n1*n2/(n1+n2)) + 0.12 + 0.11/sqrt(n1*n2/(n1+n2))] * D). But we need accurate to sqrt(eps). We can use scipy.stats.kstwo.sf? But we cannot import stats? We can import scipy.stats. But baseline uses stats.ks_2samp. We can replicate that but maybe faster? But we can use scipy.stats.kstwo.sf directly. But we need to compute D. Let's implement D as max absolute difference of ECDFs. We can compute using two-pointer merge. Then compute pvalue using scipy.stats.kstwo.sf(D * sqrt(n1*n2/(n1+n2)), n1+n2). Wait kstwo.sf takes statistic and df? Actually kstwo.sf(x, df) where df = n1+n2? Let's check: In scipy.stats, kstwo.sf(x, df) returns survival function of Kolmogorov-Smirnov distribution with df degrees of freedom? Actually kstwo is the distribution of KS statistic for two-sample test with df = n1+n2? Let's check quickly: In scipy.stats, kstwo.sf(x, df) where df is n1+n2? I think yes. But we can also use stats.ks_2samp which uses method auto. But we can implement our own to avoid overhead. But maybe using scipy.stats.ks_2samp is fine. But we need faster. But baseline uses that. We can try to use numpy only. For pvalue, we can use the asymptotic formula: pvalue = 2 * sum_{k=1}^\infty (-1)^{k-1} exp(-2 k^2 lambda^2). But we can use scipy.stats.kstwo.sf. Let's just use that.
+
+Implementation: compute D. Then lambda = D * sqrt(n1*n2/(n1+n2)). Then pvalue = scipy.stats.kstwo.sf(lambda, n1+n2). But we need to import scipy.stats. That is allowed. Let's implement.
+
+Edge cases: if n1==0 or n2==0? Not given.
+
+We need to ensure relative error sqrt(eps). Using scipy's function should be fine.
+
+Let's implement solve accordingly.
+
+We need to import numpy as np, scipy.stats as stats.
+
+Compute D: sort both arrays. Use two pointers i,j. Keep cdf1 = i/n1, cdf2 = j/n2. At each step, compute diff = abs(cdf1 - cdf2). Keep max. Then increment pointer of smaller value. At end, after one array exhausted, we need to consider remaining values: when one array finished, cdf of that array stays at 1, other increases. But we can just loop until i==n1 and j==n2. After loop, we can compute final diff at end: abs(1-1)=0. So fine.
+
+Let's code.
+
+Also we need to handle case where sample1 and sample2 are lists. Convert to np.array.
+
+Return dict.
+
+Let's produce solver.py content.
+
+assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+import scipy.stats as stats
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """Perform two-sample Kolmogorov-Smirnov test to compute statistic and pvalue."""
+        # Convert input lists to numpy arrays
+        a = np.asarray(problem["sample1"], dtype=np.float64)
+        b = np.asarray(problem["sample2"], dtype=np.float64)
+        n1 = a.size
+        n2 = b.size
+
+        # Sort the samples
+        a_sorted = np.sort(a)
+        b_sorted = np.sort(b)
+
+        # Two-pointer merge to compute maximum absolute difference of ECDFs
+        i = j = 0
+        max_diff = 0.0
+        while i < n1 and j < n2:
+            # Current empirical CDF values
+            cdf_a = (i + 1) / n1
+            cdf_b = (j + 1) / n2
+            # Update maximum difference
+            diff = abs(cdf_a - cdf_b)
+            if diff > max_diff:
+                max_diff = diff
+            # Advance the pointer with the smaller value
+            if a_sorted[i] <= b_sorted[j]:
+                i += 1
+            else:
+                j += 1
+
+        # After one array is exhausted, the remaining values in the other array
+        # will only increase its CDF towards 1. The difference can only increase
+        # when the other CDF is still below 1. We handle this by iterating
+        # over the remaining elements.
+        while i < n1:
+            cdf_a = (i + 1) / n1
+            cdf_b = 1.0
+            diff = abs(cdf_a - cdf_b)
+            if diff > max_diff:
+                max_diff = diff
+            i += 1
+        while j < n2:
+            cdf_a = 1.0
+            cdf_b = (j + 1) / n2
+            diff = abs(cdf_a - cdf_b)
+            if diff > max_diff:
+                max_diff = diff
+            j += 1
+
+        # Compute the p-value using the asymptotic Kolmogorov distribution
+        # The effective sample size for the two-sample test
+        neff = n1 * n2 / (n1 + n2)
+        lambda_val = max_diff * np.sqrt(neff)
+        # Use scipy's Kolmogorov-Smirnov distribution for two-sample test
+        pvalue = stats.kstwo.sf(lambda_val, n1 + n2)
+
+        return {"statistic": float(max_diff), "pvalue": float(pvalue)}
+<<<SOLVER_PY_END>>>

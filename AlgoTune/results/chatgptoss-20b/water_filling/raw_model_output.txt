@@ -1,0 +1,201 @@
+analysisWe need to implement a fast solver for water-filling. The baseline uses CVXPY. We can implement analytic solution: water-filling algorithm: allocate power such that x_i = max(0, λ - α_i) where λ chosen so sum x_i = P_total. Equivalent to find λ such that sum(max(0, λ - α_i)) = P_total. Since α_i > 0. We can sort α ascending, compute cumulative sums. Standard algorithm: sort α ascending. For k from 1 to n, compute λ_k = (P_total + sum_{i=1}^k α_i)/k. If λ_k > α_k and (k==n or λ_k <= α_{k+1}), then λ=λ_k. Then x_i = max(0, λ - α_i). Complexity O(n log n). That is fast.
+
+Edge cases: if P_total <= 0 or n==0 or any alpha <=0: return NaNs.
+
+Also need to compute capacity: sum(log(alpha + x)). Use numpy.
+
+Return dict with x list and Capacity float.
+
+Also need to ensure that sum(x) close to P_total. The algorithm ensures that.
+
+We need to implement in solver.py with required imports.
+
+Also need to handle potential numeric issues: if λ computed leads to negative x due to rounding, clip to zero.
+
+Also need to handle case where P_total is huge: λ may be large, but fine.
+
+Also need to handle case where all α_i > λ: then x_i=0 for all, but sum must be zero. If P_total > 0, λ must be > max α. So algorithm will find λ > max α.
+
+Implementation steps:
+
+- Convert alpha to numpy array float64.
+- n = len(alpha)
+- Validate: n>0, P_total>0, all alpha>0. If not, return NaNs.
+
+- Sort alpha ascending: idx = np.argsort(alpha); alpha_sorted = alpha[idx].
+
+- Compute cumulative sum of alpha_sorted: cum_alpha = np.cumsum(alpha_sorted).
+
+- For k in 1..n: compute λ_k = (P_total + cum_alpha[k-1]) / k. Check if λ_k > alpha_sorted[k-1] and (k==n or λ_k <= alpha_sorted[k]): if so, λ=λ_k; break.
+
+- If not found (should not happen), set λ = (P_total + cum_alpha[-1]) / n.
+
+- Compute x_sorted = np.maximum(0, λ - alpha_sorted).
+
+- Reorder to original order: x = np.empty_like(x_sorted); x[idx] = x_sorted.
+
+- Compute capacity: np.sum(np.log(alpha + x)).
+
+- Return dict.
+
+Edge: if P_total is extremely small, λ may be close to some α. But algorithm works.
+
+Also need to ensure that sum(x) close to P_total. Might have small rounding errors; we can adjust scaling: compute sum_x = np.sum(x); if abs(sum_x - P_total) > 1e-9: scale x by P_total / sum_x. But scaling may break optimality slightly. But we can skip scaling; algorithm ensures sum exactly P_total except rounding. But we can add small tolerance.
+
+Also need to ensure that x >= 0. Use np.maximum.
+
+Return x.tolist().
+
+Also need to import numpy as np, typing Any.
+
+Also need to handle case where P_total <= 0: return NaNs.
+
+Also need to handle case where alpha contains non-positive: return NaNs.
+
+Also need to handle case where n==0: return empty list and NaN capacity? baseline returns list of NaNs of length n (0). So return {"x": [], "Capacity": float("nan")}. But baseline returns NaNs for each element. For n=0, list empty. So we can return empty list.
+
+Also need to handle if any alpha <=0: return NaNs.
+
+Also need to handle if P_total <=0: return NaNs.
+
+Also need to handle if n==0: return empty list and NaN.
+
+Also need to handle if any alpha <=0: return NaNs.
+
+Also need to handle if P_total is NaN or inf: treat as invalid.
+
+Also need to handle if alpha contains NaN or inf: invalid.
+
+We can check with np.all(alpha > 0) and np.isfinite(alpha). Also check P_total finite.
+
+Return NaNs: x list of NaNs of length n, capacity NaN.
+
+Also need to import logging? Not necessary.
+
+But baseline uses logging. We can ignore.
+
+Return type: Any.
+
+Implement class Solver with solve method.
+
+Also need to include __init__? Not required.
+
+Also need to include from typing import Any.
+
+Also need to include import numpy as np.
+
+Also need to include import math? Not needed.
+
+Also need to include import numpy as np.
+
+Also need to include import numpy as np.
+
+Also need to include import numpy as np.
+
+Ok.
+
+Let's write code.
+
+Potential pitfalls: For large n, sorting O(n log n) fine.
+
+Edge: if P_total is extremely large, λ may be huge, but fine.
+
+Edge: if P_total is extremely small, λ may be close to some α. But algorithm will find k where λ_k > α_k and λ_k <= α_{k+1}. If P_total is 0, λ_k = cum_alpha[k-1]/k. For k=1, λ_1 = α_1. λ_1 > α_1? No, equal. So condition fails. For k=2, λ_2 = (α_1+α_2)/2. λ_2 > α_2? No, equal. So fails. So no λ found. Then we set λ = (P_total + cum_alpha[-1]) / n = cum_alpha[-1]/n = mean of α. That may be > α_n? Actually mean <= max. So λ <= α_n. So x_i = max(0, λ - α_i) will be zero for all i. Sum zero. Good. So algorithm works.
+
+But we need to handle case where P_total is zero: we can just return zeros. But algorithm will produce zeros anyway.
+
+But we need to ensure that if P_total is zero, we return zeros. Our algorithm will produce zeros.
+
+But we need to check if P_total <= 0: baseline returns NaNs. But maybe we should follow baseline: if P_total <= 0, return NaNs. But baseline: if n==0 or P_total <= 0 or not np.all(alpha > 0): return NaNs. So we should follow that.
+
+Thus if P_total <= 0: return NaNs.
+
+Ok.
+
+Also need to handle if alpha contains non-positive: return NaNs.
+
+Ok.
+
+Now implement.
+
+Also need to ensure that we use np.log for natural log.
+
+Return capacity as float.
+
+Ok.
+
+Let's write code.
+
+Also need to ensure that we use np.maximum for x.
+
+Also need to ensure that we convert x to list.
+
+Ok.
+
+Let's produce final code.
+
+Also need to ensure that we don't import any heavy packages.
+
+Ok.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem: dict[str, Any], **kwargs) -> Any:
+        """
+        Solve the water-filling problem analytically.
+
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing:
+                - "alpha": list of positive floats
+                - "P_total": positive float
+
+        Returns
+        -------
+        dict
+            Dictionary with keys:
+                - "x": list of optimal power allocations
+                - "Capacity": maximized total capacity
+        """
+        # Extract and validate inputs
+        alpha = np.asarray(problem.get("alpha", []), dtype=float)
+        P_total = float(problem.get("P_total", 0.0))
+        n = alpha.size
+
+        # Check for invalid data
+        if n == 0 or P_total <= 0 or not np.all(alpha > 0) or not np.isfinite(P_total) or not np.all(np.isfinite(alpha)):
+            return {"x": [float("nan")] * n, "Capacity": float("nan")}
+
+        # Sort alpha ascending
+        idx = np.argsort(alpha)
+        alpha_sorted = alpha[idx]
+        cum_alpha = np.cumsum(alpha_sorted)
+
+        # Find water level λ
+        lambda_val = None
+        for k in range(1, n + 1):
+            lambda_k = (P_total + cum_alpha[k - 1]) / k
+            if lambda_k > alpha_sorted[k - 1] and (k == n or lambda_k <= alpha_sorted[k]):
+                lambda_val = lambda_k
+                break
+
+        if lambda_val is None:
+            # Fallback: use mean of alpha plus P_total/n
+            lambda_val = (P_total + cum_alpha[-1]) / n
+
+        # Compute allocations in sorted order
+        x_sorted = np.maximum(0.0, lambda_val - alpha_sorted)
+
+        # Reorder to original order
+        x = np.empty_like(x_sorted)
+        x[idx] = x_sorted
+
+        # Compute capacity
+        capacity = float(np.sum(np.log(alpha + x)))
+
+        return {"x": x.tolist(), "Capacity": capacity}
+<<<SOLVER_PY_END>>>

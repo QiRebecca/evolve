@@ -16,6 +16,23 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import GPT2Tokenizer  # 用于 slow 回退（BPE）
 
+from transformers import StoppingCriteria, StoppingCriteriaList
+
+class StopOnSentinel(StoppingCriteria):
+    def __init__(self, tokenizer, sentinel: str):
+        super().__init__()
+        self.sentinel = sentinel
+        self.tokenizer = tokenizer
+        self.buf = ""
+
+    def __call__(self, input_ids, scores, **kwargs) -> bool:
+        # 仅增量解码新增 token（避免全量解码开销）
+        # 取最后一条序列的最后一个 token
+        last_token_id = int(input_ids[0, -1])
+        self.buf += self.tokenizer.decode([last_token_id], skip_special_tokens=True)
+        return self.sentinel in self.buf
+
+
 MARKER_START = "<<<SOLVER_PY_START>>>"
 MARKER_END = "<<<SOLVER_PY_END>>>"
 
@@ -168,6 +185,11 @@ def build_prompt(desc_text: str, solve_src: str, is_solution_src: str) -> str:
     - The code must contain:
         - `from typing import Any`
         - `class Solver:` with `def solve(self, problem, **kwargs) -> Any:`
+
+    CRITICAL:
+    - The file must END with the exact sentinel line <<<SOLVER_PY_END>>>.
+    - Never print anything after <<<SOLVER_PY_END>>>.
+    - Do not include explanations, logs, or markdown fences anywhere.
     """)
     return prompt
 
@@ -341,22 +363,39 @@ def run_inference(tokenizer, model, prompt: str, max_new_tokens: int = 2048) -> 
     for k in inputs:
         inputs[k] = inputs[k].to(dev)
 
-    # 预热：触发 Triton kernel 首编译，降低首次卡顿/碎片
-    with torch.inference_mode():
-        _ = model.generate(**inputs, max_new_tokens=1, do_sample=False)
-        if next(model.parameters()).is_cuda:
-            torch.cuda.synchronize()
-        out = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=False,             # 保持可复现
-            repetition_penalty=1.05,
-            eos_token_id=getattr(tokenizer, "eos_token_id", None),
-            pad_token_id=getattr(tokenizer, "pad_token_id", None),
-        )
-    gen_ids = out[:, inputs["input_ids"].shape[1]:]
-    txt = tokenizer.decode(gen_ids[0], skip_special_tokens=True)
+    stopconds = StoppingCriteriaList([StopOnSentinel(tokenizer, MARKER_END)])
+
+    def _gen(_prompt_inputs, _max_tokens):
+        with torch.inference_mode():
+            # 预热 1 token：避免首编译抖动
+            _ = model.generate(**_prompt_inputs, max_new_tokens=1, do_sample=False)
+            if next(model.parameters()).is_cuda:
+                torch.cuda.synchronize()
+            out = model.generate(
+                **_prompt_inputs,
+                max_new_tokens=_max_tokens,
+                do_sample=False,           # 关闭采样，保证确定性
+                repetition_penalty=1.0,    # 不额外惩罚，避免误伤
+                eos_token_id=getattr(tokenizer, "eos_token_id", None),
+                pad_token_id=getattr(tokenizer, "pad_token_id", None),
+                use_cache=True,
+                stopping_criteria=stopconds,  # ⬅️ 关键：遇到 MARKER_END 立停
+            )
+        gen_ids = out[:, _prompt_inputs["input_ids"].shape[1]:]
+        return tokenizer.decode(gen_ids[0], skip_special_tokens=True).strip()
+
+    txt = _gen(inputs, max_new_tokens)
+
+    # 如果第一次没产出 END，再加长一次、并在提示末尾再“提醒一次”
+    if MARKER_END not in txt:
+        stricter = prompt + "\n\nRemember: OUTPUT MUST end with the exact line " + MARKER_END + " and nothing after it."
+        inputs2 = apply_chat_template(tokenizer, stricter)
+        for k in inputs2:
+            inputs2[k] = inputs2[k].to(dev)
+        txt = _gen(inputs2, int(max_new_tokens * 1.5))
+
     return txt.strip()
+
 
 
 def extract_solver_py(text: str) -> str:

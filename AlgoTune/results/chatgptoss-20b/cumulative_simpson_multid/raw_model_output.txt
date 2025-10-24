@@ -1,0 +1,42 @@
+analysisWe need to implement efficient cumulative Simpson integration along last axis for 3D array shape (100,100,1000). Use numpy vectorized operations. Simpson's rule cumulative: For array y of length N, cumulative integral at index i: sum_{k=0}^{i} f_k * w_k where weights depend on Simpson's rule: For even indices (starting 0) weight 1, for odd weight 4, for even >0 weight 2, except last? Actually Simpson's rule for integral over [0, x_i] with step h: integral ≈ h/3 * [f0 + fn + 4*sum_{odd} f + 2*sum_{even} f]. For cumulative, we need partial sums. We can precompute cumulative sums of f, 4*odd, 2*even. Approach: For each 1D vector y, compute cumulative sum of y, odd indices, even indices. Then for each i, compute integral using formula: h/3 * (y0 + y_i + 4*sum_odd up to i + 2*sum_even up to i). But careful: Simpson's rule requires even number of intervals (N-1 even). For cumulative, we can apply for each i: if i is even, use Simpson formula; if i is odd, we can approximate using trapezoidal? But baseline uses scipy's cumulative_simpson which handles odd lengths by using trapezoidal for last interval. Let's check SciPy's implementation: cumulative_simpson(y, dx=1, axis=-1, even=False). It uses Simpson's rule for even number of intervals; for odd, it uses trapezoidal for last interval. Implementation: For each segment, compute cumulative sum of Simpson weights. We can replicate SciPy's algorithm.
+
+Simpler: Use scipy.integrate.cumulative_simpson? But we cannot import SciPy? We have scipy. We can just call scipy.integrate.cumulative_simpson directly. That would be simplest and fastest? But baseline uses cumulative_simpson from scipy. So we can just call that. But we need to import from scipy.integrate import cumulative_simpson. That will be fast enough. But maybe they want custom implementation? But using SciPy is fine. But we need to ensure we don't import heavy modules? SciPy is available. So implement:
+
+from scipy.integrate import cumulative_simpson
+
+def solve(self, problem, **kwargs):
+    y2 = problem["y2"]
+    dx = problem["dx"]
+    return cumulative_simpson(y2, dx=dx, axis=-1)
+
+But baseline uses cumulative_simpson(y2, dx=dx) default axis -1. So same.
+
+But maybe they want to avoid SciPy overhead? But SciPy is compiled C, so it's fast. So just call it.
+
+But we need to ensure we import numpy? Not needed.
+
+Let's implement.
+
+Also we need to import Any from typing.
+
+Return type Any.
+
+Implement class Solver with solve method.
+
+Let's produce solver.py content.
+
+We need to wrap between sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+from scipy.integrate import cumulative_simpson
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute the cumulative integral along the last axis of the multi-dimensional array using Simpson's rule.
+        """
+        y2 = problem["y2"]
+        dx = problem["dx"]
+        return cumulative_simpson(y2, dx=dx)
+<<<SOLVER_PY_END>>>

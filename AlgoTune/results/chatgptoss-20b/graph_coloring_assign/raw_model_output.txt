@@ -1,0 +1,133 @@
+analysisWe need to produce solver.py that implements solve method faster than baseline. We can use networkx? But we can use other packages. We need to produce optimal coloring. We can use python-sat or OR-Tools CP-SAT. Baseline uses CP-SAT with clique seeding and symmetry breaking. We can try to implement a faster solver using DSATUR algorithm (branch and bound) or use OR-Tools CP-SAT but maybe simpler: use networkx's greedy_color with largest_first? But that may not be optimal. We need optimal solution. We could use python-sat to encode graph coloring as SAT with incremental search for k. Use incremental SAT solving: for k from lower bound to upper bound, encode constraints and solve. Use pycosat? But we have python-sat package. Use pysat.solvers.Solver. That might be faster.
+
+We need to compute lower bound: size of maximum clique. We can approximate clique size using networkx's find_cliques or approximate. For small graphs, we can compute exact maximum clique via networkx.algorithms.clique.find_cliques and take max size. For moderate size maybe okay. But we need to be efficient.
+
+Alternatively, use OR-Tools CP-SAT but with fewer variables: use integer variables for colors per vertex with domain 1..k and constraints that adjacent vertices differ. Use CP-SAT's AddAllDifferent? Actually we can use AddAllDifferent on each color? Not straightforward. But we can use CP-SAT with integer variables and AddAllDifferent on each color? We can use AddAllDifferent on list of variables? That ensures all values distinct, not what we want.
+
+Better: Use CP-SAT with integer variables color[u] in 1..k, and for each edge (u,v) add constraint color[u] != color[v]. Then objective minimize k. But CP-SAT cannot minimize variable domain? We can use a variable K and add constraints color[u] <= K, and minimize K. That is simpler. This reduces variables: n integer vars + 1 K. Constraints: edges: color[u] != color[v]. That's n + m constraints. This is simpler than binary matrix. Might be faster.
+
+We also need symmetry breaking: we can enforce ordering of colors? Not necessary.
+
+We can also use CP-SAT's AddAllDifferent on color variables? Not needed.
+
+Let's implement:
+
+- Build graph adjacency list.
+- Compute lower bound: maximum clique size. Use networkx's find_cliques to get max size. For n up to maybe 100? Might be okay. For larger, could be slow. But we can use approximate clique: networkx.algorithms.approximation.clique.max_clique. That is fast.
+
+- Compute upper bound: greedy coloring with largest_first gives ub.
+
+- Use CP-SAT: create model, integer vars color[u] in 1..ub. Add K variable in 1..ub. Add constraints color[u] <= K. For each edge, add color[u] != color[v]. Add objective minimize K.
+
+- Solve with cp_model.CpSolver. Use parameters: maybe set time limit? But we need optimal.
+
+- After solving, extract colors, map to 1..k.
+
+- Return list.
+
+This should be faster than baseline because fewer variables.
+
+Let's implement.
+
+Edge constraints: solver.Add(color[u] != color[v]) is allowed.
+
+We need to import networkx, cp_model.
+
+Also we need to handle dominator? Not needed because we don't reduce graph. But we can still use dominator to reduce graph size? Might help but not necessary.
+
+But we can keep simple.
+
+Let's implement solve method accordingly.
+
+Edge case: if graph empty, return []? For n=0, return [].
+
+Return colors list of length n.
+
+Let's code.
+
+We need to import typing.Any.
+
+Let's produce solver.py content.
+
+assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import networkx as nx
+from ortools.sat.python import cp_model
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solves the graph coloring problem using a compact CP‑SAT formulation.
+        The model uses integer variables for vertex colors and a single variable
+        K for the maximum color used.  This approach is typically faster than
+        the binary matrix formulation used in the baseline.
+        """
+        n = len(problem)
+        if n == 0:
+            return []
+
+        # Build graph
+        G = nx.Graph()
+        G.add_nodes_from(range(n))
+        for i in range(n):
+            for j in range(i + 1, n):
+                if problem[i][j]:
+                    G.add_edge(i, j)
+
+        # Upper bound via greedy coloring
+        greedy = nx.greedy_color(G, strategy="largest_first")
+        ub = max(greedy.values()) + 1  # colors are 0-indexed
+
+        # Lower bound via maximum clique (approximate for speed)
+        try:
+            # Exact maximum clique (may be slow for very large graphs)
+            max_clique_size = max(len(c) for c in nx.find_cliques(G))
+        except Exception:
+            # Fallback to approximation
+            max_clique_size = len(nx.algorithms.approximation.clique.max_clique(G))
+        lb = max_clique_size
+
+        # If lower bound equals upper bound, greedy is optimal
+        if lb == ub:
+            return [c + 1 for c in greedy]
+
+        # CP‑SAT model
+        model = cp_model.CpModel()
+
+        # Color variables for each vertex (1..ub)
+        color = {}
+        for v in range(n):
+            color[v] = model.NewIntVar(1, ub, f"c_{v}")
+
+        # K variable: maximum color used
+        K = model.NewIntVar(1, ub, "K")
+
+        # Each color <= K
+        for v in range(n):
+            model.Add(color[v] <= K)
+
+        # Adjacent vertices must have different colors
+        for u, v in G.edges():
+            model.Add(color[u] != color[v])
+
+        # Objective: minimize K
+        model.Minimize(K)
+
+        # Solve
+        solver = cp_model.CpSolver()
+        solver.parameters.max_time_in_seconds = 60.0  # safety limit
+        status = solver.Solve(model)
+
+        if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            return []
+
+        # Extract colors
+        colors = [solver.Value(color[v]) for v in range(n)]
+
+        # Normalize colors to 1..k
+        used = sorted(set(colors))
+        remap = {old: new for new, old in enumerate(used, start=1)}
+        colors = [remap[c] for c in colors]
+
+        return colors
+<<<SOLVER_PY_END>>>

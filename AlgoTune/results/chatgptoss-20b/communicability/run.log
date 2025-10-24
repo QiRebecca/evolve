@@ -110,3 +110,6 @@ frame #9: on_exit + 0 (0x7f7260d21a60 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #10: __libc_start_main + 0xfa (0x7f7260cff08a in /lib/x86_64-linux-gnu/libc.so.6)
 frame #11: <unknown function> + 0x1c434e (0x5579b415c34e in /home/zhangqi/.conda/envs/env/bin/python)
 
+
+=== [2025-10-23T20:33:24.470267] START communicability (GPU 2) ===
+=== END communicability -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/communicability/solver.py

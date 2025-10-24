@@ -1,0 +1,26 @@
+analysisWe need to produce solver.py content. We need to implement solve method that computes QR factorization. Baseline uses np.linalg.qr with mode='reduced'. We can just call that. But we can maybe optimize by using numpy's linalg.qr which is efficient. We can also use np.linalg.qr with mode='reduced' which returns Q shape (m, k) where k = min(m,n). For A shape (n, n+1), m=n, n=n+1, so k=n. So Q shape (n,n), R shape (n,n+1). That's fine.
+
+We need to return dictionary with "QR": {"Q": Q.tolist(), "R": R.tolist()}. That matches baseline.
+
+We need to import numpy as np, typing.Any. Also maybe we can use np.linalg.qr. That's fine.
+
+We need to ensure we don't add extra prints. Just the code.
+
+We need to wrap with sentinel lines.
+
+Let's produce:
+
+<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute the QR factorization of the input matrix A using NumPy's
+        linalg.qr function with mode='reduced'.
+        """
+        A = problem["matrix"]
+        Q, R = np.linalg.qr(A, mode="reduced")
+        return {"QR": {"Q": Q.tolist(), "R": R.tolist()}}
+<<<SOLVER_PY_END>>>

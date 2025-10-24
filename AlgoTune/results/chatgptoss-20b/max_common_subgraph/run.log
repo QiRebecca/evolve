@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_all_tasks.py", line 82, in worker
+    code = gen.extract_solver_py(txt)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 412, in extract_solver_py
+    raise RuntimeError("MARKER_START not found in model output")
+RuntimeError: MARKER_START not found in model output
+
+=== [2025-10-24T12:37:24.120125] START max_common_subgraph (GPU 6) ===
+=== END max_common_subgraph -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/max_common_subgraph/solver.py

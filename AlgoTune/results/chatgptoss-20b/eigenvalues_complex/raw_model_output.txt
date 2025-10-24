@@ -1,0 +1,43 @@
+analysisWe need to produce solver.py with a Solver class, solve method. We need to optimize performance. Baseline uses np.linalg.eig. We can use numpy's eigvals or eig. For speed, np.linalg.eigvals is faster because it only returns eigenvalues. But we need to sort. So we can use np.linalg.eigvals. That returns array of complex. Sorting with key lambda x: (-x.real, -x.imag). That is fine. We can also use numpy's sort with custom key? Not directly. But we can use np.lexsort with negative real and negative imag. That might be faster. Let's implement:
+
+vals = np.linalg.eigvals(problem)
+# sort descending by real then imag
+# Use np.lexsort: keys are columns; last key is primary. So we want primary: -real, secondary: -imag. So keys = (-vals.imag, -vals.real). Wait: lexsort sorts by last key first. So we want primary key -real, secondary -imag. So keys = (-vals.imag, -vals.real). Then indices = np.lexsort(keys). Then sorted_vals = vals[indices[::-1]]? Let's test: Suppose we have keys = (-imag, -real). lexsort sorts by last key first: last key is -real. So primary sort by -real ascending? Actually lexsort sorts ascending. So we want descending by real. So we use -real as key; ascending on -real gives descending real. For secondary, we want descending imag. So we use -imag as key; ascending on -imag gives descending imag. So keys = (-vals.imag, -vals.real). Then indices = np.lexsort(keys). That gives ascending order by -real, then -imag. That is descending real, then descending imag. So sorted_vals = vals[indices]. That should be correct. Let's test mentally: Suppose real parts: 3,2,1. -real: -3,-2,-1. Ascending: -3,-2,-1 => 3,2,1. Good. For equal real, imag: 5,4. -imag: -5,-4 ascending: -5,-4 => 5,4. Good. So sorted_vals = vals[indices]. So we can return sorted_vals.tolist().
+
+We need to import numpy as np. Also typing.Any. The solve signature: def solve(self, problem, **kwargs) -> Any: So we can ignore kwargs.
+
+We need to ensure that the output is a list of complex numbers. np.linalg.eigvals returns numpy array of complex dtype. Converting to list will produce complex numbers. Good.
+
+We need to ensure that the function returns list[complex] sorted. Use list comprehension: [complex(v) for v in sorted_vals] maybe not needed. But to be safe, we can cast to complex.
+
+Also we need to ensure that the function is fast. Use np.linalg.eigvals. Sorting with np.lexsort is efficient.
+
+Edge cases: matrix may be large. But this is fine.
+
+We need to import typing.Any. Also we need to import numpy as np.
+
+We need to define class Solver with solve method.
+
+We need to output only the file content between sentinel lines.
+
+Let's produce:
+
+<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute eigenvalues of a real square matrix and return them sorted
+        in descending order by real part, then by imaginary part.
+        """
+        # Compute eigenvalues efficiently
+        vals = np.linalg.eigvals(problem)
+        # Sort descending by real part, then by imaginary part
+        # Use lexsort on negative values for descending order
+        indices = np.lexsort((-vals.imag, -vals.real))
+        sorted_vals = vals[indices]
+        # Convert to list of complex numbers
+        return [complex(v) for v in sorted_vals]
+<<<SOLVER_PY_END>>>

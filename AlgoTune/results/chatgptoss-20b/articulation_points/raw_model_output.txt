@@ -1,57 +1,38 @@
-analysisWe need to implement efficient articulation point detection. Use DFS algorithm O(V+E). Input: dict with num_nodes and edges list. Output sorted list. Implementation straightforward.
+analysisWe need to implement efficient articulation point detection. Use DFS algorithm (Tarjan). Complexity O(n+m). Use adjacency list. Input: problem dict with num_nodes and edges. Output sorted list.
 
-Edge cases: isolated nodes? They are not articulation points unless graph has >1 node? In standard definition, articulation point is vertex whose removal increases number of connected components. For isolated node, removal doesn't change components? Actually removing isolated node reduces component count by 1, but does it increase? Usually articulation point requires that after removal, number of connected components increases compared to original. Removing isolated node decreases components, so not AP. So algorithm handles.
+Implement solve method. Use recursion or iterative? Recursion depth up to n maybe 1e5? Might risk recursion limit. Use iterative stack? But easier: set recursionlimit high. Use sys.setrecursionlimit(1e6). Use adjacency list list of lists.
 
-Implement iterative recursion? Use recursion depth up to V maybe 1e5? Might exceed recursion limit. Use sys.setrecursionlimit. But we can implement iterative stack.
+Implement DFS: disc[u], low[u], parent, visited. Count children for root. If root has >1 child => articulation. For non-root: if low[v] >= disc[u] => articulation.
 
-Simpler: use recursion with increased limit; typical constraints unknown. We'll set recursionlimit to 1e6.
+Return sorted list.
 
-Implementation:
+Edge cases: no edges, no articulation points.
 
-def solve(self, problem, **kwargs):
-    n=problem["num_nodes"]; edges=problem["edges"]
-    adj=[[] for _ in range(n)]
-    for u,v in edges:
-        adj[u].append(v); adj[v].append(u)
-    disc=[-1]*n; low=[0]*n; parent=[-1]*n; ap=[False]*n
-    time=0
-    def dfs(u):
-        nonlocal time
-        children=0
-        disc[u]=low[u]=time; time+=1
-        for v in adj[u]:
-            if disc[v]==-1:
-                parent[v]=u; children+=1
-                dfs(v)
-                low[u]=min(low[u], low[v])
-                if parent[u]==-1 and children>1:
-                    ap[u]=True
-                if parent[u]!=-1 and low[v]>=disc[u]:
-                    ap[u]=True
-            elif v!=parent[u]:
-                low[u]=min(low[u], disc[v])
-    for i in range(n):
-        if disc[i]==-1:
-            dfs(i)
-    result=[i for i,flag in enumerate(ap) if flag]
-    result.sort()
-    return {"articulation_points": result}
+Implement.
 
-Need imports: typing.Any, maybe sys.
+Also import typing.Any.
 
-Return type Any.
+Return dict.
 
-Add __init__? Not needed.
+Let's produce solver.py content.
 
-Wrap in solver.py.
+Also ensure we import sys.
 
-Let's produce final content.assistantfinal<<<SOLVER_PY_START>>>
+Let's craft code.
+
+Also we can use iterative stack to avoid recursion. But recursion fine with high limit.
+
+Let's produce final code.assistantfinal<<<SOLVER_PY_START>>>
 from typing import Any
 import sys
 
 class Solver:
     def solve(self, problem, **kwargs) -> Any:
-        """Find articulation points in an undirected graph using DFS."""
+        """
+        Find articulation points in an undirected graph using Tarjan's algorithm.
+        """
+        sys.setrecursionlimit(10 ** 6)
+
         n = problem["num_nodes"]
         edges = problem["edges"]
 
@@ -61,12 +42,10 @@ class Solver:
             adj[u].append(v)
             adj[v].append(u)
 
-        sys.setrecursionlimit(max(1000000, n * 2))
-
-        disc = [-1] * n          # discovery times
-        low = [0] * n            # low-link values
+        disc = [-1] * n
+        low = [0] * n
         parent = [-1] * n
-        ap = [False] * n         # articulation point flags
+        ap = [False] * n
         time = 0
 
         def dfs(u: int):
@@ -76,26 +55,24 @@ class Solver:
             children = 0
 
             for v in adj[u]:
-                if disc[v] == -1:
+                if disc[v] == -1:  # Tree edge
                     parent[v] = u
                     children += 1
                     dfs(v)
                     low[u] = min(low[u], low[v])
 
-                    # Case 1: root with more than one child
                     if parent[u] == -1 and children > 1:
                         ap[u] = True
-                    # Case 2: non-root and low value of child >= discovery time of u
                     if parent[u] != -1 and low[v] >= disc[u]:
                         ap[u] = True
-                elif v != parent[u]:
+                elif v != parent[u]:  # Back edge
                     low[u] = min(low[u], disc[v])
 
         for i in range(n):
             if disc[i] == -1:
                 dfs(i)
 
-        articulation_points = [i for i, flag in enumerate(ap) if flag]
+        articulation_points = [i for i, is_ap in enumerate(ap) if is_ap]
         articulation_points.sort()
         return {"articulation_points": articulation_points}
-<<<SOLVER_PY_END>>
+<<<SOLVER_PY_END>>>

@@ -1,0 +1,202 @@
+analysisWe need to produce solver.py with a fast solver for MWIS. Baseline uses CP-SAT. We can use a faster approach: use networkx to find maximum weighted independent set? Not trivial. But we can use ILP with pulp or ortools? CP-SAT is already fast. But we can maybe use a greedy heuristic? But must be optimal. We need to guarantee optimality. Could use branch and bound with bitset representation for small graphs. But unknown graph size. Could use python's ortools CP-SAT but maybe faster? CP-SAT is already efficient. But we can optimize by using bitset and recursion with pruning. But CP-SAT is fine. But we can reduce overhead by using numpy to build constraints? But CP-SAT building constraints is heavy. But we can use OR-Tools CP-SAT but with fewer constraints: we can add constraints only for edges. That's baseline. We can maybe use a faster solver like pulp with CBC? Might be slower.
+
+Maybe we can use a maximum weight independent set algorithm using branch and bound with bitset and memoization. For n up to maybe 50? Not sure. But we can implement a simple algorithm: use recursion with branch and bound, using adjacency bitsets. Use ordering by degree. Use pruning with upper bound: sum of remaining weights. This can be fast for moderate n.
+
+Let's implement a solver that uses bitset representation using Python integers (bitmask). For n <= 64, we can use 64-bit ints. For larger, use Python int arbitrary length. We'll implement recursion with memoization using dictionary mapping mask to best weight. But we need to return set of nodes. We'll store best set.
+
+Algorithm: function dfs(mask, current_set). mask is bitmask of available nodes. We maintain best weight and best set globally. Use upper bound: sum of weights of nodes in mask. If current_weight + upper_bound <= best_weight, prune.
+
+We can also use ordering: pick node with highest degree or weight? We'll pick node with highest weight maybe.
+
+Implementation details: Precompute adjacency bitmask for each node: adj_mask[i] includes node i and its neighbors? For independent set, when we pick node i, we remove i and its neighbors from mask.
+
+We need to compute sum of weights for mask quickly: we can precompute weight array and use loop each time? Might be okay.
+
+We can also use memoization: store best weight for mask. But mask space huge. But we can store only when mask small.
+
+Given unknown constraints, but baseline CP-SAT may handle up to maybe 200 nodes. Our recursion may be slower for large n. But we can add heuristic: if n > 60, fallback to CP-SAT. That ensures correctness.
+
+Thus implement: if n <= 60: use branch and bound; else use CP-SAT baseline.
+
+We need to import cp_model from ortools.sat.python. Use same as baseline.
+
+Return list of indices.
+
+Let's implement.
+
+Edge case: adjacency matrix symmetric.
+
+Implement bitmask: node i corresponds to bit 1 << i.
+
+Compute adj_mask[i] = (1 << i) | sum(1 << j for j in neighbors). Use loops.
+
+Implement recursion:
+
+best_weight = 0
+best_set = []
+
+def dfs(mask, current_weight, current_set):
+    nonlocal best_weight, best_set
+    if mask == 0:
+        if current_weight > best_weight:
+            best_weight = current_weight
+            best_set = current_set.copy()
+        return
+    # upper bound
+    ub = current_weight + sum(weights[i] for i in range(n) if mask & (1 << i))
+    if ub <= best_weight:
+        return
+    # choose node with highest weight maybe
+    # find first set bit
+    # we can iterate over bits
+    # pick node with max weight among mask
+    # compute list of candidates
+    # For speed, we can just pick lowest bit
+    # but better to pick high weight
+    # Let's pick node with max weight
+    best_candidate = None
+    best_candidate_weight = -1
+    m = mask
+    while m:
+        lsb = m & -m
+        i = (lsb.bit_length() - 1)
+        w = weights[i]
+        if w > best_candidate_weight:
+            best_candidate_weight = w
+            best_candidate = i
+        m -= lsb
+    # branch include
+    new_mask = mask & ~adj_mask[best_candidate]
+    dfs(new_mask, current_weight + weights[best_candidate], current_set + [best_candidate])
+    # branch exclude
+    mask_without = mask & ~(1 << best_candidate)
+    dfs(mask_without, current_weight, current_set)
+
+We also need to compute sum of weights for mask quickly. We can precompute weight_sum[mask] using DP? For n <= 60, mask space huge. Instead compute on the fly: sum weights of bits in mask. Use loop over bits each time. Might be okay.
+
+We can also compute upper bound as current_weight + sum of weights of remaining nodes. That sum we compute each recursion. Might be heavy but okay for small n.
+
+We can also use memoization: store best weight for mask. If we revisit same mask, we can prune. Use dict memo: if mask in memo and memo[mask] >= current_weight: prune. else memo[mask] = current_weight.
+
+Implement.
+
+Return best_set sorted.
+
+Edge: if n > 60, use CP-SAT baseline.
+
+Let's code.
+
+Also need to import typing.Any.
+
+Let's produce solver.py content.
+
+assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import logging
+
+try:
+    from ortools.sat.python import cp_model
+except ImportError:
+    cp_model = None
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solves the Maximum Weighted Independent Set (MWIS) problem.
+        For graphs with up to 60 nodes, a branch-and-bound algorithm with
+        bitmask representation is used for speed. For larger graphs,
+        the CP-SAT solver from OR-Tools is employed as a fallback.
+        """
+        adj_matrix = problem["adj_matrix"]
+        weights = problem["weights"]
+        n = len(adj_matrix)
+
+        # If graph is large, use CP-SAT baseline
+        if n > 60 or cp_model is None:
+            return self._solve_with_cp_sat(adj_matrix, weights)
+
+        # Precompute adjacency masks
+        adj_mask = [0] * n
+        for i in range(n):
+            mask = 1 << i
+            for j in range(n):
+                if adj_matrix[i][j]:
+                    mask |= 1 << j
+            adj_mask[i] = mask
+
+        best_weight = 0
+        best_set = []
+
+        memo = {}
+
+        def dfs(mask: int, current_weight: int, current_set: list):
+            nonlocal best_weight, best_set
+
+            if mask == 0:
+                if current_weight > best_weight:
+                    best_weight = current_weight
+                    best_set = current_set.copy()
+                return
+
+            # Memoization prune
+            if mask in memo and memo[mask] >= current_weight:
+                return
+            memo[mask] = current_weight
+
+            # Upper bound: current weight + sum of remaining weights
+            ub = current_weight
+            m = mask
+            while m:
+                lsb = m & -m
+                i = (lsb.bit_length() - 1)
+                ub += weights[i]
+                m -= lsb
+            if ub <= best_weight:
+                return
+
+            # Choose node with maximum weight among remaining
+            best_candidate = None
+            best_candidate_weight = -1
+            m = mask
+            while m:
+                lsb = m & -m
+                i = (lsb.bit_length() - 1)
+                w = weights[i]
+                if w > best_candidate_weight:
+                    best_candidate_weight = w
+                    best_candidate = i
+                m -= lsb
+
+            # Branch: include candidate
+            new_mask = mask & ~adj_mask[best_candidate]
+            dfs(new_mask, current_weight + weights[best_candidate], current_set + [best_candidate])
+
+            # Branch: exclude candidate
+            mask_without = mask & ~(1 << best_candidate)
+            dfs(mask_without, current_weight, current_set)
+
+        full_mask = (1 << n) - 1
+        dfs(full_mask, 0, [])
+
+        return sorted(best_set)
+
+    def _solve_with_cp_sat(self, adj_matrix, weights):
+        n = len(adj_matrix)
+        model = cp_model.CpModel()
+        nodes = [model.NewBoolVar(f"x_{i}") for i in range(n)]
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                if adj_matrix[i][j]:
+                    model.Add(nodes[i] + nodes[j] <= 1)
+
+        model.Maximize(sum(weights[i] * nodes[i] for i in range(n)))
+
+        solver = cp_model.CpSolver()
+        status = solver.Solve(model)
+        if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+            return [i for i in range(n) if solver.Value(nodes[i])]
+        else:
+            logging.error("No solution found.")
+            return []
+<<<SOLVER_PY_END>>>

@@ -110,3 +110,6 @@ frame #9: on_exit + 0 (0x7f63e3fe8a60 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #10: __libc_start_main + 0xfa (0x7f63e3fc608a in /lib/x86_64-linux-gnu/libc.so.6)
 frame #11: <unknown function> + 0x1c434e (0x564f450cc34e in /home/zhangqi/.conda/envs/env/bin/python)
 
+
+=== [2025-10-23T20:36:38.425088] START convolve_1d (GPU 2) ===
+=== END convolve_1d -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/convolve_1d/solver.py

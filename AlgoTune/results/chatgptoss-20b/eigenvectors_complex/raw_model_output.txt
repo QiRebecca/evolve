@@ -1,0 +1,75 @@
+analysisWe need to produce solver.py content. The baseline uses np.linalg.eig. We can optimize by using numpy's linalg.eig directly. But we can also use scipy.linalg.eig? But np.linalg.eig is fine. Sorting and normalization. We can vectorize. But the baseline already efficient. We can maybe use np.linalg.eigvals? But need eigenvectors. Use np.linalg.eig. Sorting: we can use argsort on negative real and imag. Use np.argsort with kind='stable'? We can compute order = np.lexsort((-eigenvalues.imag, -eigenvalues.real)). Actually lexsort sorts by last key first. So order = np.lexsort((-eigenvalues.imag, -eigenvalues.real)). That gives ascending order, so we need descending. But we used negative to get descending. Then reorder eigenvectors accordingly. Then normalize each column. Use np.linalg.norm along axis=0. Then divide. Then convert to list of lists. That should be fast.
+
+Also we need to return list of eigenvectors sorted. The baseline returns list of lists of complex numbers. The is_solution expects that. So we produce same.
+
+We also need to import numpy as np. And typing Any. Provide class Solver with solve method.
+
+We can also optionally use np.asarray to ensure array. Use problem as np.ndarray.
+
+Implementation:
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        A = np.asarray(problem, dtype=float)
+        eigenvalues, eigenvectors = np.linalg.eig(A)
+        # sort
+        order = np.lexsort((-eigenvalues.imag, -eigenvalues.real))
+        eigenvalues = eigenvalues[order]
+        eigenvectors = eigenvectors[:, order]
+        # normalize columns
+        norms = np.linalg.norm(eigenvectors, axis=0)
+        # avoid division by zero
+        norms[norms < 1e-12] = 1.0
+        eigenvectors = eigenvectors / norms
+        # convert to list of lists
+        result = [eigenvectors[:, i].tolist() for i in range(eigenvectors.shape[1])]
+        return result
+
+But we also need to return eigenvalues? The baseline solve returns only eigenvectors. Wait baseline solve returns sorted_evecs only. But is_solution expects solution to be list of eigenvectors. So we just return eigenvectors. Good.
+
+But the problem statement earlier said return tuple of eigenvalues and eigenvectors. But baseline returns only eigenvectors. The harness uses solve to produce solution. is_solution uses only solution. So we follow baseline.
+
+Thus implement as above.
+
+Edge: if eigenvectors columns are zero? Norm zero? Rare. We set norm to 1 to avoid division by zero.
+
+Return list of lists of complex numbers. eigenvectors dtype complex. .tolist() will produce list of complex.
+
+We need to import numpy as np.
+
+Also from typing import Any.
+
+Return type Any.
+
+Ok.
+
+Let's produce final code.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute eigenvalues and eigenvectors of a real square matrix,
+        sort the eigenpairs by descending real part then imaginary part,
+        normalize eigenvectors to unit Euclidean norm, and return the
+        list of eigenvectors in the sorted order.
+        """
+        A = np.asarray(problem, dtype=float)
+        eigenvalues, eigenvectors = np.linalg.eig(A)
+
+        # Sort eigenpairs: descending by real part, then imaginary part
+        order = np.lexsort((-eigenvalues.imag, -eigenvalues.real))
+        eigenvalues = eigenvalues[order]
+        eigenvectors = eigenvectors[:, order]
+
+        # Normalize eigenvectors (columns)
+        norms = np.linalg.norm(eigenvectors, axis=0)
+        # Avoid division by zero for zero-norm columns
+        norms[norms < 1e-12] = 1.0
+        eigenvectors = eigenvectors / norms
+
+        # Convert to list of lists of complex numbers
+        result = [eigenvectors[:, i].tolist() for i in range(eigenvectors.shape[1])]
+        return result
+<<<SOLVER_PY_END>>>

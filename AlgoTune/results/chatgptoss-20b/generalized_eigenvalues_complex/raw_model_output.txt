@@ -1,0 +1,62 @@
+analysisWe need to produce solver.py content. We need to implement solve method that solves generalized eigenvalue problem A x = λ B x. Baseline uses scipy.linalg.eig with scaling. We can use numpy.linalg.eig? For generalized eigenvalue, numpy.linalg.eig doesn't support B. We can use scipy.linalg.eig. But we might not have scipy? The allowed packages include scipy. So we can import scipy.linalg as la. Use same scaling. But we can maybe speed up by using numpy.linalg.eigvals of generalized? There's numpy.linalg.eigvals for standard eigenvalue. For generalized, we can use scipy.linalg.eigvals? There's scipy.linalg.eigvals. But we can use scipy.linalg.eigvals(A, B). That returns eigenvalues only. That might be faster. But baseline uses la.eig. We can use la.eigvals. That might be faster. Also we can skip scaling? But scaling improves stability. But we can keep scaling. Use la.eigvals(A_scaled, B_scaled). That returns eigenvalues. Then sort. That should be fine.
+
+Also we can use numpy.linalg.eigvals for standard but not generalized. So use scipy.linalg.eigvals.
+
+We need to import numpy as np, scipy.linalg as la. Also from typing import Any.
+
+Implement solve method: accept problem tuple (A, B). Compute scale_B = np.sqrt(np.linalg.norm(B)). B_scaled = B / scale_B; A_scaled = A / scale_B. eigenvalues = la.eigvals(A_scaled, B_scaled). Then sort: sorted(eigenvalues, key=lambda x: (-x.real, -x.imag)). Return list.
+
+We need to ensure return type list[complex]. eigenvalues is numpy array of complex. Convert to list.
+
+Also we might want to handle potential warnings. But fine.
+
+We need to include imports. Provide class Solver with solve method.
+
+Also we might want to use numpy.linalg.norm with ord='fro' default. That's fine.
+
+We need to ensure we import numpy as np, scipy.linalg as la.
+
+Also we need to import typing.Any.
+
+We need to ensure no extra prints.
+
+Let's produce code.
+
+Also we might want to use np.linalg.norm(B, ord='fro').
+
+Ok.
+
+Let's produce final content.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+import scipy.linalg as la
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solve the generalized eigenvalue problem for the given matrices A and B.
+
+        The problem is defined as: A · x = λ B · x.
+        For better numerical stability, we first scale B, then solve the problem.
+
+        The solution is a list of eigenvalues sorted in descending order, where the sorting order
+        is defined as: first by the real part (descending), then by the imaginary part (descending).
+
+        :param problem: Tuple (A, B) where A and B are n x n real matrices.
+        :return: List of eigenvalues (complex numbers) sorted in descending order.
+        """
+        A, B = problem
+
+        # Scale matrices for better numerical stability.
+        scale_B = np.sqrt(np.linalg.norm(B))
+        B_scaled = B / scale_B
+        A_scaled = A / scale_B
+
+        # Solve scaled problem using scipy.linalg.eigvals for speed.
+        eigenvalues = la.eigvals(A_scaled, B_scaled)
+
+        # Sort eigenvalues: descending order by real part, then by imaginary part.
+        solution = sorted(eigenvalues, key=lambda x: (-x.real, -x.imag))
+
+        return solution
+<<<SOLVER_PY_END>>>

@@ -1,0 +1,128 @@
+analysisWe need to write solver.py that solves QP quickly. Baseline uses cvxpy OSQP. We can implement direct solver using OSQP via python interface? But we can use cvxpy but maybe faster? We can use cvxopt? But we have cvxpy. We can use OSQP directly via osqp library? Not listed. But we can use cvxpy with OSQP. But baseline uses that. We need faster. Maybe use scipy.optimize.minimize with method='trust-constr' or 'SLSQP'? But QP with linear constraints. Could use cvxopt? Not available. Could use OSQP via osqp library? Not listed. But we can use cvxpy but maybe we can use cvxpy with OSQP but set parameters to speed? But baseline already uses OSQP with high precision. We can use cvxpy but maybe use OSQP with default? Might be slower.
+
+We can implement direct solution using KKT system solving: minimize 0.5 x^T P x + q^T x subject to Gx <= h, Ax = b. This is convex QP with inequality constraints. We could use active set method? Hard.
+
+Maybe we can use cvxpy but with solver=cp.OSQP and set eps_abs=1e-6, eps_rel=1e-6 to speed. But we need same solution within tolerance. We can also use cvxpy with solver=cp.SCS? Might be slower.
+
+Alternatively use scipy.optimize.minimize with method='trust-constr' which handles constraints. That might be faster.
+
+Let's implement using scipy.optimize.minimize with method='trust-constr', specifying Hessian as P. Provide constraints: linear inequality Gx <= h, linear equality Ax = b. Use bounds? Not needed.
+
+Define objective function f(x) = 0.5 x^T P x + q^T x. Gradient: P x + q. Hessian: P.
+
+Set options: 'gtol':1e-8, 'xtol':1e-8, 'maxiter': maybe 1000. Use 'verbose':0.
+
+Return solution.
+
+Need to ensure solution is feasible. trust-constr may produce feasible solution.
+
+Let's implement.
+
+Also we need to compute objective value for is_solution. We can compute objective ourselves.
+
+Return dict with "solution": list, "objective": float.
+
+Implement solve.
+
+Edge: P may not be symmetric; we symmetrize.
+
+Also we need to convert to numpy arrays.
+
+Let's code.
+
+Also we need to import Any.
+
+Let's produce solver.py content.
+
+assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+from scipy.optimize import minimize, LinearConstraint, Bounds
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solve a convex quadratic program in standard form:
+            minimize 0.5 * x^T P x + q^T x
+            subject to Gx <= h
+                       Ax == b
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing keys "P", "q", "G", "h", "A", "b".
+        Returns
+        -------
+        dict
+            Dictionary with keys "solution" (list of floats) and
+            "objective" (float) containing the optimal value.
+        """
+        # Convert inputs to numpy arrays
+        P = np.asarray(problem["P"], dtype=float)
+        q = np.asarray(problem["q"], dtype=float)
+        G = np.asarray(problem["G"], dtype=float)
+        h = np.asarray(problem["h"], dtype=float)
+        A = np.asarray(problem["A"], dtype=float)
+        b = np.asarray(problem["b"], dtype=float)
+
+        # Ensure P is symmetric
+        P = (P + P.T) / 2.0
+
+        n = P.shape[0]
+
+        # Objective function and gradient
+        def fun(x):
+            return 0.5 * x @ P @ x + q @ x
+
+        def grad(x):
+            return P @ x + q
+
+        # Hessian (constant)
+        def hess(x):
+            return P
+
+        # Linear inequality constraints Gx <= h
+        if G.size > 0:
+            lin_ineq = LinearConstraint(G, -np.inf, h)
+        else:
+            lin_ineq = None
+
+        # Linear equality constraints Ax == b
+        if A.size > 0:
+            lin_eq = LinearConstraint(A, b, b)
+        else:
+            lin_eq = None
+
+        # Combine constraints
+        constraints = []
+        if lin_ineq is not None:
+            constraints.append(lin_ineq)
+        if lin_eq is not None:
+            constraints.append(lin_eq)
+
+        # Initial guess: zero vector
+        x0 = np.zeros(n)
+
+        # Run the optimizer
+        res = minimize(
+            fun,
+            x0,
+            method="trust-constr",
+            jac=grad,
+            hess=hess,
+            constraints=constraints,
+            options={
+                "gtol": 1e-8,
+                "xtol": 1e-8,
+                "maxiter": 1000,
+                "verbose": 0,
+            },
+        )
+
+        if not res.success:
+            raise ValueError(f"Solver failed: {res.message}")
+
+        solution = res.x
+        objective = res.fun
+
+        return {"solution": solution.tolist(), "objective": float(objective)}
+<<<SOLVER_PY_END>>>

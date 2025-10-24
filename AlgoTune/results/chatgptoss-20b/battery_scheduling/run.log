@@ -4,3 +4,6 @@ Traceback (most recent call last):
   File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 373, in extract_solver_py
     raise RuntimeError("MARKER_START not found in model output")
 RuntimeError: MARKER_START not found in model output
+
+=== [2025-10-23T20:09:00.318254] START battery_scheduling (GPU 2) ===
+=== END battery_scheduling -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/battery_scheduling/solver.py

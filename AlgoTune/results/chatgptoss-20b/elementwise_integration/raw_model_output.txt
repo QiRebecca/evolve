@@ -1,0 +1,89 @@
+analysisWe need to write solver.py that implements solve method. We can use scipy.special.wright_bessel and integrate. Baseline uses tanhsinh integrator from scipy.integrate. We can try to use vectorized integration or use quad or fixed quadrature. Since we need high accuracy relative error sqrt(eps). We can use scipy.integrate.quad with limit maybe. But baseline uses tanhsinh which is efficient. We can replicate that. But we can also use scipy.integrate.quad or fixed quadrature like Gauss-Legendre with many points. But we need to handle vector of n integrals. We can loop over each. Use scipy.integrate.quad with limit 200 maybe. But we need to ensure accuracy. Use epsabs=0, epsrel=1e-12 maybe. sqrt(eps) ~ 1.5e-8. So we need relative error < 1.5e-8. quad default epsrel=1.49e-8, so okay. But we need to ensure success. Use quad with full integration. Use vectorization? We can use scipy.integrate.quad for each. That might be slower but acceptable? We need to be faster than baseline. Baseline uses tanhsinh which is efficient. But we can use quad which might be slower. But we can use scipy.integrate.quad with limit 200. Might be okay.
+
+Alternatively, we can use scipy.integrate.fixed_quad with high order, but need to ensure accuracy. Might be okay.
+
+We can also use scipy.integrate.quad with weight? Not needed.
+
+We can use scipy.integrate.quad for each integral. Use wright_bessel function from scipy.special. Provide args (a,b). Use lambda x: wright_bessel(a,b,x). Use vectorization? We can use scipy.integrate.quad with vectorized function? It expects scalar. So loop.
+
+We need to import necessary modules: from typing import Any, List, Dict. Use numpy.
+
+We need to return {"result": list_of_integrals}. Use list comprehension.
+
+We need to ensure success: quad returns (value, error). We can ignore error. But we can check error < tolerance? Not necessary.
+
+We can also use scipy.integrate.quad with limit 200. Use epsabs=0, epsrel=1e-12.
+
+Let's implement.
+
+Also we can use scipy.integrate.quad_vec? There is quad_vec in newer SciPy. But we can use quad_vec to integrate vectorized function returning array. That might be faster. But we need to check SciPy version. Might be available. But to be safe, use loop.
+
+We can also use scipy.integrate.quad with weight? Not needed.
+
+Let's implement.
+
+Also we can use numpy to convert lists to arrays.
+
+Implementation:
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        import numpy as np
+        from scipy.special import wright_bessel
+        from scipy.integrate import quad
+
+        a = np.asarray(problem["a"])
+        b = np.asarray(problem["b"])
+        lower = np.asarray(problem["lower"])
+        upper = np.asarray(problem["upper"])
+
+        results = []
+        for ai, bi, li, ui in zip(a, b, lower, upper):
+            val, err = quad(lambda x: wright_bessel(ai, bi, x), li, ui, epsabs=0, epsrel=1e-12, limit=200)
+            results.append(val)
+        return {"result": results}
+
+We need to import typing.Any.
+
+Also we need to ensure we import numpy as np.
+
+We can also use list comprehension.
+
+Return list of floats.
+
+We need to ensure relative error sqrt(eps). Using epsrel=1e-12 ensures high accuracy.
+
+We can also set limit=200.
+
+Let's produce final code.
+
+We need to wrap with sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+from scipy.special import wright_bessel
+from scipy.integrate import quad
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """Integrate Wright's Bessel function over given intervals."""
+        a = np.asarray(problem["a"])
+        b = np.asarray(problem["b"])
+        lower = np.asarray(problem["lower"])
+        upper = np.asarray(problem["upper"])
+
+        results = []
+        for ai, bi, li, ui in zip(a, b, lower, upper):
+            val, _ = quad(
+                lambda x: wright_bessel(ai, bi, x),
+                li,
+                ui,
+                epsabs=0,
+                epsrel=1e-12,
+                limit=200,
+            )
+            results.append(val)
+
+        return {"result": results}
+<<<SOLVER_PY_END>>>

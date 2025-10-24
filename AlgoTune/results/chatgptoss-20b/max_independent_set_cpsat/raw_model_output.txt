@@ -1,0 +1,156 @@
+analysisWe need to produce solver.py with a fast solver for maximum independent set. Baseline uses CP-SAT. We can try to use networkx's maximum independent set? But networkx doesn't have built-in. We can use a greedy algorithm? But must be optimal. For small graphs maybe CP-SAT is fine. But we need faster. We can use a branch and bound with bitset representation. Use Python's bit operations for speed. Use recursion with pruning using upper bound from greedy coloring or maximum clique on complement graph. But we can use a simple algorithm: use maximum clique on complement graph. We can use a library like networkx to find maximum clique? networkx.algorithms.clique.find_cliques returns all maximal cliques; we can find largest. But that may be slow for large graphs. But maybe input sizes are small. But we need to be safe.
+
+Alternatively, use python-sat? But we have cp-sat. But we can use OR-Tools CP-SAT but maybe slower.
+
+We can implement a simple branch and bound with bitset and use a heuristic upper bound: size of maximum clique in complement graph? Actually maximum independent set size equals maximum clique size in complement graph. We can compute complement adjacency bitsets and use a recursive algorithm like Bron–Kerbosch with pivot and bitset. That is efficient for moderate graphs up to maybe 50-60 nodes. But we don't know constraints. But baseline uses CP-SAT, which can handle maybe up to 100 nodes? But we can implement a bitset algorithm.
+
+We can implement a simple algorithm: use recursion with bitset representation of candidate set. Use pivot to reduce branching. Use bit operations for speed. Use Python's integers as bitsets. For n <= 64, we can use 64-bit ints. For larger, we can use Python int arbitrary length.
+
+We need to compute adjacency bitsets: for each node, a bitmask of neighbors. Then complement adjacency: for each node, bitmask of non-neighbors (excluding self). Then we can run Bron–Kerbosch with pivot to find maximum clique in complement graph. That yields maximum independent set.
+
+Implement Bron–Kerbosch with pivot and bitset:
+
+def bronk(R, P, X):
+    if not P and not X:
+        update best
+    else:
+        u = choose pivot from P|X
+        for v in P & ~adj[u]:
+            bronk(R|{v}, P & adj[v], X & adj[v])
+            P -= {v}
+            X |= {v}
+
+But with bitsets: R, P, X are ints. adj[v] is bitmask of neighbors in complement graph. We need to compute complement adjacency: for each node i, comp_adj[i] = ((1<<n)-1) ^ (1<<i) ^ adj[i] (where adj[i] is original adjacency bitmask). Actually original adjacency bitmask includes neighbors. So complement adjacency bitmask includes all nodes except self and neighbors.
+
+We need to maintain best size and best set.
+
+We can also use a simple greedy upper bound: size of P + size of R <= best? Actually we can prune if current size + popcount(P) <= best.
+
+Implement popcount via bit_count() in Python 3.8+.
+
+We need to handle n up to maybe 200? Python int bit operations can handle that.
+
+We need to store best set as bitmask.
+
+Implement recursion with stack to avoid recursion depth? But recursion depth <= n. Might be okay.
+
+We need to convert solution bitmask to list of indices.
+
+We need to import typing.Any.
+
+We need to implement solve method.
+
+We need to consider performance: we can add ordering: choose pivot with max degree in P|X to reduce branching.
+
+We can also use a simple heuristic: sort nodes by degree descending.
+
+But we can implement simple algorithm.
+
+Let's code.
+
+Potential issues: recursion depth for large n. But we can set recursion limit.
+
+We can also implement iterative stack.
+
+But for simplicity, recursion.
+
+We need to ensure we don't exceed time.
+
+Let's implement.
+
+Also we can add a simple fallback: if n <= 20, use brute force enumeration of all subsets. But bitset algorithm works for all.
+
+Let's code.
+
+We need to import typing.Any.
+
+We need to define class Solver.
+
+Let's produce code.
+
+We need to ensure no extra prints.
+
+Let's produce final output.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solves the maximum independent set problem using a bitset-based
+        Bron–Kerbosch algorithm on the complement graph.
+        """
+        n = len(problem)
+        if n == 0:
+            return []
+
+        # Build adjacency bitmask for the original graph
+        adj = [0] * n
+        for i in range(n):
+            mask = 0
+            row = problem[i]
+            for j, val in enumerate(row):
+                if val:
+                    mask |= 1 << j
+            adj[i] = mask
+
+        # Build adjacency bitmask for the complement graph
+        full_mask = (1 << n) - 1
+        comp_adj = [0] * n
+        for i in range(n):
+            # neighbors in complement: all nodes except self and original neighbors
+            comp_adj[i] = full_mask ^ (1 << i) ^ adj[i]
+
+        best_size = 0
+        best_set = 0
+
+        # Precompute popcount for speed
+        popcount = int.bit_count
+
+        def bronk(R: int, P: int, X: int):
+            nonlocal best_size, best_set
+            if P == 0 and X == 0:
+                size = popcount(R)
+                if size > best_size:
+                    best_size = size
+                    best_set = R
+                return
+            # Upper bound pruning
+            if popcount(R) + popcount(P) <= best_size:
+                return
+
+            # Choose pivot u from P|X with maximum degree in P
+            ux = P | X
+            # Find pivot with maximum intersection with P
+            max_deg = -1
+            pivot = -1
+            temp = ux
+            while temp:
+                u = (temp & -temp).bit_length() - 1
+                deg = popcount(P & comp_adj[u])
+                if deg > max_deg:
+                    max_deg = deg
+                    pivot = u
+                temp &= temp - 1
+
+            # Candidates: vertices in P not adjacent to pivot
+            candidates = P & ~comp_adj[pivot]
+            while candidates:
+                v = (candidates & -candidates).bit_length() - 1
+                v_bit = 1 << v
+                bronk(R | v_bit, P & comp_adj[v], X & comp_adj[v])
+                P &= ~v_bit
+                X |= v_bit
+                candidates &= ~v_bit
+
+        # Initial call
+        bronk(0, full_mask, 0)
+
+        # Convert best_set bitmask to list of indices
+        result = []
+        mask = best_set
+        while mask:
+            v = (mask & -mask).bit_length() - 1
+            result.append(v)
+            mask &= mask - 1
+        return result
+<<<SOLVER_PY_END>>>

@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_all_tasks.py", line 82, in worker
+    code = gen.extract_solver_py(txt)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 412, in extract_solver_py
+    raise RuntimeError("MARKER_START not found in model output")
+RuntimeError: MARKER_START not found in model output
+
+=== [2025-10-24T12:35:52.514234] START ks_test_2samp (GPU 6) ===
+=== END ks_test_2samp -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/ks_test_2samp/solver.py

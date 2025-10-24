@@ -1,0 +1,76 @@
+analysisWe need to produce solver.py content. We need to implement solve method that is faster than baseline. Baseline uses Cholesky, inverse, etc. We can use scipy.linalg.eigh with B directly? Actually scipy.linalg.eigh can solve generalized eigenvalue problem directly: eigh(a, b). That returns eigenvalues ascending and eigenvectors B-orthonormal. So we can skip Cholesky and inverse. That will be faster. Implementation: eigenvalues, eigenvectors = np.linalg.eigh(A, B). But numpy.linalg.eigh does not support generalized? Actually numpy.linalg.eigh only for standard. But scipy.linalg.eigh supports generalized. We have scipy available. So use scipy.linalg.eigh(A, B, eigvals_only=False). That returns eigenvalues ascending. Then reverse. Normalize? The eigenvectors returned are B-orthonormal already. But we should verify. According to docs, eigh returns eigenvectors that are orthonormal with respect to B. So we can skip normalization. But to be safe, we can normalize. But normalization cost small. Use np.linalg.norm? We can compute B_norm and divide. But if already normalized, division will be 1. So fine.
+
+Thus implement:
+
+from scipy.linalg import eigh
+
+def solve(self, problem, **kwargs):
+    A, B = problem
+    eigenvalues, eigenvectors = eigh(A, B, eigvals_only=False)
+    # eigenvalues ascending
+    eigenvalues = eigenvalues[::-1]
+    eigenvectors = eigenvectors[:, ::-1]
+    # ensure B-orthonormal: normalize
+    for i in range(eigenvectors.shape[1]):
+        v = eigenvectors[:, i]
+        norm = np.sqrt(v @ B @ v)
+        if norm > 0:
+            eigenvectors[:, i] = v / norm
+    eigenvalues_list = eigenvalues.tolist()
+    eigenvectors_list = [eigenvectors[:, i].tolist() for i in range(eigenvectors.shape[1])]
+    return (eigenvalues_list, eigenvectors_list)
+
+We need imports: numpy as np, scipy.linalg.eigh, typing.Any. Also maybe use np.isfinite? Not needed.
+
+We should also handle potential warnings. But fine.
+
+We need to ensure we don't use heavy operations. The loop for normalization is O(n^2). But baseline also had loop. So similar.
+
+We can also skip normalization if we trust eigh. But to be safe, we can skip to reduce time. But risk of failing is small. But we can trust eigh. Let's skip normalization to save time. But we need to ensure B-orthonormal. According to docs, eigh returns eigenvectors that are orthonormal with respect to B. So we can skip normalization. That will be faster.
+
+Thus:
+
+eigenvalues, eigenvectors = eigh(A, B, eigvals_only=False)
+eigenvalues = eigenvalues[::-1]
+eigenvectors = eigenvectors[:, ::-1]
+eigenvalues_list = eigenvalues.tolist()
+eigenvectors_list = [eigenvectors[:, i].tolist() for i in range(eigenvectors.shape[1])]
+return (eigenvalues_list, eigenvectors_list)
+
+This is simpler.
+
+Edge: eigh may return eigenvectors that are B-orthonormal but not exactly normalized due to numerical errors. But tolerance is 1e-6. Should be fine.
+
+Thus implement.
+
+Also we need to import typing.Any.
+
+Let's produce final code.
+
+assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+from scipy.linalg import eigh
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Solve the generalized eigenvalue problem A x = λ B x using scipy.linalg.eigh
+        which directly handles the generalized case. The returned eigenvalues are
+        sorted in descending order and the eigenvectors are B-orthonormal.
+        """
+        A, B = problem
+
+        # Compute eigenvalues and eigenvectors for the generalized problem.
+        eigenvalues, eigenvectors = eigh(A, B, eigvals_only=False)
+
+        # Reverse to descending order.
+        eigenvalues = eigenvalues[::-1]
+        eigenvectors = eigenvectors[:, ::-1]
+
+        # Convert to lists for the expected output format.
+        eigenvalues_list = eigenvalues.tolist()
+        eigenvectors_list = [eigenvectors[:, i].tolist() for i in range(eigenvectors.shape[1])]
+
+        return (eigenvalues_list, eigenvectors_list)
+<<<SOLVER_PY_END>>>

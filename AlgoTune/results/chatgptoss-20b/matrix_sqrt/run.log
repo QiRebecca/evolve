@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 431, in extract_solver_py
+    tree = ast.parse(code)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/ast.py", line 50, in parse
+    return compile(source, filename, mode, flags,
+  File "<unknown>", line 1
+    <code>
+    ^
+SyntaxError: invalid syntax
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/zq/evolve/AlgoTune/scripts/gen_all_tasks.py", line 82, in worker
+    code = gen.extract_solver_py(txt)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 442, in extract_solver_py
+    raise RuntimeError(f"invalid solver.py segment: {e}")
+RuntimeError: invalid solver.py segment: invalid syntax (<unknown>, line 1)
+
+=== [2025-10-24T12:36:33.049834] START matrix_sqrt (GPU 2) ===
+=== END matrix_sqrt -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/matrix_sqrt/solver.py

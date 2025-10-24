@@ -1,0 +1,94 @@
+analysisWe need to produce solver.py that implements solve method to compute k smallest eigenvalues of a sparse PSD matrix. The baseline uses eigsh from scipy.sparse.linalg. We can replicate that but maybe optimize. We can use scipy.sparse.linalg.eigsh. The input problem dict has "matrix" as a sparse matrix in CSR format? The baseline uses problem["matrix"].asformat("csr") but in our environment we may not have that method. The problem likely passes a scipy.sparse matrix. We need to handle that.
+
+We need to return list of eigenvalues? Wait baseline returns list of floats of eigenvalues. But the description earlier said return eigenvectors. But baseline returns eigenvalues. The is_solution expects list of floats. So we need to return eigenvalues. So implement same logic.
+
+We can just copy baseline but maybe optimize: use eigsh with which='SM', return_eigenvectors=False. Use same parameters. Use try/except.
+
+Also we need to import necessary modules: numpy, scipy.sparse.linalg.eigsh, maybe scipy.sparse.
+
+Also we need to handle case where matrix is dense? But baseline uses mat.toarray() if small.
+
+We need to ensure we convert to CSR if not already.
+
+Also we need to handle k >= n or n < 2*k+1.
+
+Return list of floats sorted ascending.
+
+We need to ensure relative error <=1e-6. So we need to compute eigenvalues with high precision. Use double precision.
+
+Edge: if matrix is complex? But PSD real. But we can handle complex.
+
+Implementation:
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        import numpy as np
+        from scipy.sparse.linalg import eigsh
+        from scipy import sparse
+
+        mat = problem["matrix"]
+        # ensure csr
+        if not sparse.isspmatrix_csr(mat):
+            mat = mat.tocsr()
+        k = int(problem["k"])
+        n = mat.shape[0]
+        if k >= n or n < 2 * k + 1:
+            vals = np.linalg.eigvalsh(mat.toarray())
+            return [float(v) for v in vals[:k]]
+        try:
+            vals = eigsh(mat, k=k, which='SM', return_eigenvectors=False,
+                         maxiter=n*200, ncv=min(n-1, max(2*k+1, 20)))
+        except Exception:
+            vals = np.linalg.eigvalsh(mat.toarray())[:k]
+        return [float(v) for v in np.sort(np.real(vals))]
+
+We need to import typing.Any.
+
+Also we need to ensure we don't import heavy modules unnecessarily. But fine.
+
+We need to output exactly the file content between sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+from scipy.sparse.linalg import eigsh
+from scipy import sparse
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute the k smallest eigenvalues of a sparse positive semi-definite matrix.
+        The input `problem` is expected to be a dictionary with keys:
+            - "matrix": a scipy sparse matrix (CSR or convertible to CSR)
+            - "k": integer number of smallest eigenvalues to return
+        Returns a list of floats containing the k smallest eigenvalues in ascending order.
+        """
+        mat = problem["matrix"]
+        # Ensure matrix is in CSR format for efficient operations
+        if not sparse.isspmatrix_csr(mat):
+            mat = mat.tocsr()
+        k = int(problem["k"])
+        n = mat.shape[0]
+
+        # Dense path for tiny systems or when k is close to n
+        if k >= n or n < 2 * k + 1:
+            vals = np.linalg.eigvalsh(mat.toarray())
+            return [float(v) for v in vals[:k]]
+
+        # Sparse Lanczos method to compute smallest magnitude eigenvalues
+        try:
+            vals = eigsh(
+                mat,
+                k=k,
+                which="SM",  # smallest magnitude eigenvalues
+                return_eigenvectors=False,
+                maxiter=n * 200,
+                ncv=min(n - 1, max(2 * k + 1, 20)),  # ensure k < ncv < n
+            )
+        except Exception:
+            # Fallback to dense computation if sparse method fails
+            vals = np.linalg.eigvalsh(mat.toarray())[:k]
+
+        # Ensure real values and sorted order
+        return [float(v) for v in np.sort(np.real(vals))]
+<<<SOLVER_PY_END>>>

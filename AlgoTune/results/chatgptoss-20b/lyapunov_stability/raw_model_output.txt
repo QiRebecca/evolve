@@ -1,0 +1,52 @@
+analysisWe need to produce solver.py that implements solve method. We can use eigenvalue check for stability: compute eigenvalues of A, if all abs<1 then stable. Then find P by solving discrete Lyapunov equation: A^T P A - P = -Q for some Q positive definite. We can choose Q=I. Solve for P using scipy.linalg.solve_discrete_lyapunov. That returns P. Ensure P symmetric positive definite. Return P as list of lists. If not stable, return is_stable False, P None.
+
+We need to import numpy, scipy.linalg. Use from typing import Any. Implementation should be fast.
+
+Edge: For unstable, we can just return False. No need to solve.
+
+Return dict.
+
+Let's craft code.
+
+Also ensure we convert to list of lists with float.
+
+Ok.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+from scipy.linalg import solve_discrete_lyapunov
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Determines asymptotic stability of a discrete-time LTI system
+        and returns a Lyapunov matrix P if stable.
+
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing the system matrix A under key "A".
+
+        Returns
+        -------
+        dict
+            {"is_stable": bool, "P": list[list[float]] or None}
+        """
+        A = np.array(problem["A"])
+        # Check eigenvalues for stability
+        eigvals = np.linalg.eigvals(A)
+        if np.any(np.abs(eigvals) >= 1):
+            return {"is_stable": False, "P": None}
+
+        # Solve discrete Lyapunov equation A^T P A - P = -I
+        try:
+            P = solve_discrete_lyapunov(A.T, np.eye(A.shape[0]))
+        except Exception:
+            return {"is_stable": False, "P": None}
+
+        # Ensure symmetry (numerical errors)
+        P = (P + P.T) / 2.0
+
+        # Convert to list of lists
+        P_list = P.tolist()
+        return {"is_stable": True, "P": P_list}
+<<<SOLVER_PY_END>>>

@@ -1,0 +1,108 @@
+analysisWe need to produce solver.py that implements solve method. We can use cvxpy. But we want faster. The baseline uses gp=True then fallback. We can try to use cvxpy with gp=True. But maybe we can solve analytically? The problem is convex but maybe we can solve with simple formulas? But easier: use cvxpy with gp=True. That should be fast. But we can also use cvxpy with DCP? But baseline tries gp first. We can just call prob.solve(gp=True). That should be fine. But we need to handle DGPError fallback. We can replicate baseline logic. But we can also use cvxpy's solver 'ECOS' or 'SCS' etc. But baseline uses default. We can set solver='ECOS' maybe faster. But we can just use default.
+
+We need to import numpy, cvxpy, logging. Use same logic. Provide objective and return dict with μ, λ, objective. Ensure shape. Use np.asarray. Use cp.Variable. Use cp.power. Use constraints. Use try/except. Use fallback heuristic if both fail. That is fine.
+
+We need to ensure we import logging. Provide fallback heuristic: λ = λ_min, μ = μ_max/n. Compute objective. Return dict with μ, λ, objective.
+
+Also ensure we convert to numpy arrays. Use .value. Might be None if solve fails. But we handle status.
+
+We need to import Any from typing.
+
+Let's write code.
+
+Also we need to ensure we don't use any other packages. Use cvxpy.
+
+We need to ensure we don't use any heavy imports. But cvxpy is fine.
+
+Let's produce solver.py content.
+
+We need to wrap between sentinel lines.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+import cvxpy as cp
+import logging
+
+class Solver:
+    def solve(self, problem: dict[str, Any], **kwargs) -> Any:
+        """Solve the queuing system optimization problem.
+
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing problem data with keys:
+            - "w_max": list of max waiting times
+            - "d_max": list of max total delays
+            - "q_max": list of max queue occupancies
+            - "λ_min": list of minimum arrival rates
+            - "μ_max": scalar maximum total service rate
+            - "γ": list of objective weights
+
+        Returns
+        -------
+        dict
+            Dictionary with keys:
+            - "μ": optimal service rates (numpy array)
+            - "λ": optimal arrival rates (numpy array)
+            - "objective": optimal objective value (float)
+        """
+        # Convert inputs to numpy arrays
+        w_max = np.asarray(problem["w_max"])
+        d_max = np.asarray(problem["d_max"])
+        q_max = np.asarray(problem["q_max"])
+        λ_min = np.asarray(problem["λ_min"])
+        μ_max = float(problem["μ_max"])
+        γ = np.asarray(problem["γ"])
+        n = γ.size
+
+        # Define variables
+        μ = cp.Variable(n, pos=True)
+        λ = cp.Variable(n, pos=True)
+        ρ = λ / μ  # server load
+
+        # Queue metrics
+        q = cp.power(ρ, 2) / (1 - ρ)
+        w = q / λ + 1 / μ
+        d = 1 / (μ - λ)
+
+        # Constraints
+        constraints = [
+            w <= w_max,
+            d <= d_max,
+            q <= q_max,
+            λ >= λ_min,
+            cp.sum(μ) <= μ_max,
+        ]
+
+        # Objective
+        obj = cp.Minimize(γ @ (μ / λ))
+
+        # Problem
+        prob = cp.Problem(obj, constraints)
+
+        # Solve with geometric programming first
+        try:
+            prob.solve(gp=True, **kwargs)
+        except cp.error.DGPError:
+            logging.warning("QueuingTask: DGP solve failed—trying DCP.")
+            try:
+                prob.solve(**kwargs)
+            except cp.error.DCPError:
+                logging.warning("QueuingTask: DCP solve failed—using heuristic fallback.")
+                # Heuristic fallback: λ = λ_min, μ = μ_max/n
+                λ_val = λ_min
+                μ_val = np.full(n, μ_max / n)
+                obj_val = float(γ @ (μ_val / λ_val))
+                return {"μ": μ_val, "λ": λ_val, "objective": obj_val}
+
+        # Check status
+        if prob.status not in (cp.OPTIMAL, cp.OPTIMAL_INACCURATE):
+            raise ValueError(f"Solver failed with status {prob.status}")
+
+        return {
+            "μ": μ.value,
+            "λ": λ.value,
+            "objective": float(prob.value),
+        }
+<<<SOLVER_PY_END>>>

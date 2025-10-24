@@ -1,0 +1,166 @@
+We need to implement a faster solver for all-pairs shortest paths on undirected weighted sparse graph. Baseline uses scipy.sparse.csgraph.shortest_path which is efficient but maybe we can use Floyd-Warshall? But for sparse graph, Dijkstra from each node is better. We can use networkx or custom Dijkstra. But we need to be fast. We can use scipy.sparse.csgraph.shortest_path with method='D' (Dijkstra). That is baseline. But maybe we can use faster algorithm like using numba to implement Dijkstra for each node. But we need to handle large graphs? The baseline may be fine. But we can optimize by using the built-in function but maybe we can use the 'method' param. The baseline uses self.method and self.directed attributes. But we don't have those defined. In the baseline, they refer to self.method and self.directed. In our Solver class, we need to set defaults. We can set method='D' and directed=False. We can also use scipy.sparse.csgraph.shortest_path. That is likely fast enough. But we can also use networkx's all_pairs_dijkstra_path_length which might be slower. So we can just use the same baseline but with some optimizations: use numpy arrays, avoid converting to list of lists until final. But we need to output list of lists with None for inf. We can convert after computing. That is fine.
+
+We need to import necessary modules: numpy, scipy.sparse, logging. Use typing.Any. Provide solve method.
+
+We need to handle potential errors. Use try/except.
+
+We need to ensure that the output is list of lists with None for inf. Use list comprehension.
+
+We need to ensure that the solver is fast. Use method='D', directed=False. Use dtype float.
+
+We can also use the 'directed' and 'method' as kwargs. So we can accept kwargs to override defaults.
+
+Implement:
+
+class Solver:
+    def __init__(self):
+        self.method = 'D'
+        self.directed = False
+
+    def solve(self, problem, **kwargs) -> Any:
+        self.method = kwargs.get('method', self.method)
+        self.directed = kwargs.get('directed', self.directed)
+        # reconstruct csr
+        try:
+            graph_csr = scipy.sparse.csr_matrix((problem["data"], problem["indices"], problem["indptr"]), shape=problem["shape"])
+        except Exception as e:
+            logging.error(...)
+            return {"distance_matrix": []}
+        try:
+            dist_matrix = scipy.sparse.csgraph.shortest_path(csgraph=graph_csr, method=self.method, directed=self.directed)
+        except Exception as e:
+            logging.error(...)
+            return {"distance_matrix": []}
+        # convert to list of lists
+        n = dist_matrix.shape[0]
+        result = []
+        for i in range(n):
+            row = dist_matrix[i]
+            # row is 1D array
+            # convert to list
+            result.append([None if np.isinf(x) else float(x) for x in row])
+        return {"distance_matrix": result}
+
+We need to import logging. Use numpy as np, scipy.sparse.
+
+We need to ensure that we don't convert to list of lists too slowly. But it's fine.
+
+We can also use .tolist() and then replace inf with None. But .tolist() returns nested lists. Then we can map. But we can do:
+
+dist_list = dist_matrix.tolist()
+for i in range(n):
+    for j in range(n):
+        if dist_list[i][j] == np.inf: dist_list[i][j] = None
+
+But we need to check equality with np.inf. But we can use math.isinf. But we can use np.isinf.
+
+Better: use np.isinf(dist_matrix) mask and set to None.
+
+But we need to convert to list of lists. We can do:
+
+dist_list = dist_matrix.tolist()
+inf_mask = np.isinf(dist_matrix)
+for i in range(n):
+    for j in range(n):
+        if inf_mask[i, j]:
+            dist_list[i][j] = None
+
+But we can also use list comprehension:
+
+result = [[None if np.isinf(x) else float(x) for x in row] for row in dist_matrix.tolist()]
+
+That's fine.
+
+We need to ensure that we import typing.Any.
+
+We need to output only the file contents between sentinels.
+
+Let's produce final code.
+
+Also, we need to ensure that we don't use any other modules not allowed. We can use numpy, scipy.sparse, logging.
+
+We need to import logging.
+
+We need to set logging level? Not necessary.
+
+We need to handle potential errors.
+
+We need to ensure that the solver returns correct type.
+
+Let's produce final code.
+
+Also, we need to ensure that we don't use any heavy imports like networkx.
+
+Ok.
+
+Let's produce final code.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+import numpy as np
+import scipy.sparse
+import logging
+
+class Solver:
+    def __init__(self):
+        # Default parameters for shortest_path
+        self.method = 'D'  # Dijkstra
+        self.directed = False
+
+    def solve(self, problem, **kwargs) -> Any:
+        """
+        Compute all-pairs shortest path distances for an undirected weighted sparse graph
+        represented in CSR format.
+
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing CSR components:
+                - "data": list of edge weights
+                - "indices": list of column indices
+                - "indptr": list of index pointers
+                - "shape": [n, n] number of nodes
+        kwargs : dict
+            Optional overrides for 'method' and 'directed'.
+
+        Returns
+        -------
+        dict
+            {"distance_matrix": list of lists with None for unreachable pairs}
+        """
+        # Update parameters if provided
+        self.method = kwargs.get('method', self.method)
+        self.directed = kwargs.get('directed', self.directed)
+
+        # Reconstruct CSR matrix
+        try:
+            graph_csr = scipy.sparse.csr_matrix(
+                (problem["data"], problem["indices"], problem["indptr"]),
+                shape=problem["shape"]
+            )
+        except Exception as e:
+            logging.error(f"Failed to reconstruct CSR matrix: {e}")
+            return {"distance_matrix": []}
+
+        # Compute all-pairs shortest paths
+        try:
+            dist_matrix = scipy.sparse.csgraph.shortest_path(
+                csgraph=graph_csr,
+                method=self.method,
+                directed=self.directed
+            )
+        except Exception as e:
+            logging.error(f"scipy.sparse.csgraph.shortest_path failed: {e}")
+            return {"distance_matrix": []}
+
+        # Convert to list of lists, replacing np.inf with None
+        try:
+            # Use list comprehension for speed
+            distance_matrix = [
+                [None if np.isinf(x) else float(x) for x in row]
+                for row in dist_matrix.tolist()
+            ]
+        except Exception as e:
+            logging.error(f"Failed to convert distance matrix to list: {e}")
+            return {"distance_matrix": []}
+
+        return {"distance_matrix": distance_matrix}
+<<<SOLVER_PY_END>>>
