@@ -175,14 +175,8 @@ def _simple_baseline_evaluation(jsonl_path, index, task_name, data_dir, num_runs
         baseline_timeout_s = max(60.0, timeout_per_subprocess)
         
         # Use isolated benchmark timing (like dataset generation)
-        # Get the current CODE_DIR at runtime (not cached module-level variable)
-        base_code_dir = os.environ.get("CODE_DIR", data_dir)
-        # For isolated benchmark, use the task-specific directory if it exists
-        task_code_dir = os.path.join(base_code_dir, "AlgoTuneTasks", task_name)
-        if os.path.isdir(task_code_dir):
-            current_code_dir = task_code_dir
-        else:
-            current_code_dir = base_code_dir
+        # For baseline evaluation, use the actual task directory, not CODE_DIR (which is for LLM solvers)
+        current_code_dir = task_obj.get_task_directory()
         
         # Load the dataset to get a different problem for warmup (matching baseline worker behavior)
         from AlgoTuner.utils.dataset_utils import read_jsonl_data
@@ -2388,13 +2382,9 @@ def _evaluate_problem_parent_isolated(
 
     from AlgoTuner.utils.isolated_benchmark import run_isolated_benchmark
 
-    base_code_dir = os.environ.get("CODE_DIR", task_obj.get_task_directory())
-    # For isolated benchmark, use the task-specific directory if it exists
-    task_code_dir = os.path.join(base_code_dir, "AlgoTuneTasks", task_obj.task_name)
-    if os.path.isdir(task_code_dir):
-        code_dir = task_code_dir
-    else:
-        code_dir = base_code_dir
+    # For baseline evaluation, always use the actual task directory
+    # CODE_DIR is for LLM-generated solvers, not for baseline oracle
+    code_dir = task_obj.get_task_directory()
 
     # Debug logging for problem instances
     logging.debug(f"PARENT_ISOLATED: problem_instance type={type(problem_instance)}")

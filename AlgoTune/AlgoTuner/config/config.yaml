@@ -22,8 +22,8 @@ benchmark:
     ttl_seconds: 900      # Time-to-live in seconds (15 min)
 
 dataset:
-  train_size: 100
-  test_size: 100
+  train_size: 30
+  test_size: 30
 
 models:
   o4-mini:

@@ -446,9 +446,19 @@ def _fork_run_worker(
             solver_module = load_solver_module(solver_file.parent, solver_filename=solver_file.name)
         else:
             # 2) Fallback: scan known roots for task directory
+            # Include actual AlgoTuneTasks location for baseline evaluation
+            import sys
+            project_roots = []
+            for path in sys.path:
+                if 'AlgoTune' in path:
+                    potential_root = Path(path) / "AlgoTuneTasks"
+                    if potential_root.is_dir():
+                        project_roots.append(potential_root)
+            
             roots = [
                 code_dir_path / "AlgoTuneTasks",
                 code_dir_path,
+                *project_roots,  # Add discovered AlgoTuneTasks paths
                 Path("/app/AlgoTuneTasks"),
             ]
             task_dir_path = None

@@ -36,45 +36,87 @@ logger = logging.getLogger(__name__)
 
 NUM_EVAL_RUNS = 3
 
-def generate_dataset(task_name: str, target_time_ms: int, data_dir: Path, 
+def generate_dataset(task_name: str, target_time_ms: int, data_dir: Path,
                     override_k: Optional[int] = None) -> bool:
     """
     Generate dataset for a task with specified target time.
-    
+
     Args:
         task_name: Name of the task
         target_time_ms: Target timing in milliseconds
         data_dir: Directory to store dataset
         override_k: Optional override for k parameter
-        
+
     Returns:
         True if generation succeeded, False otherwise
     """
+    task_instance = None
+    train_gen = None
+    test_gen = None
     try:
-        # Import the dataset generation logic
-        sys.path.insert(0, str(Path(__file__).parent.parent))
-        from AlgoTuneTasks.base import generate_and_annotate_main
+        from AlgoTuner.config.loader import load_config
         
-        # Prepare arguments for dataset generation
-        gen_args = [
-            "--task", task_name,
-            "--target-time-ms", str(target_time_ms),
-            "--data-dir", str(data_dir),
-            "--size", "100"  # Default dataset size
-        ]
-        
+        task_instance = load_task(task_name=task_name, data_dir=str(data_dir))
+        if task_instance is None:
+            raise ValueError(f"Task '{task_name}' could not be instantiated")
+
+        # Ensure the task respects the requested target time.
+        if hasattr(task_instance, "target_time_ms"):
+            task_instance.target_time_ms = target_time_ms
+        elif hasattr(task_instance, "_target_time_ms"):
+            task_instance._target_time_ms = target_time_ms
+
         if override_k is not None:
-            gen_args.extend(["--k", str(override_k)])
-            
-        logger.info(f"Generating dataset for {task_name} with target {target_time_ms}ms")
-        
-        success = generate_and_annotate_main(gen_args)
-        return success
-        
+            setattr(task_instance, "k", override_k)
+
+        data_dir.mkdir(parents=True, exist_ok=True)
+        cleanup_wrong_target_datasets(data_dir, task_name, target_time_ms)
+
+        # Load dataset sizes from config
+        cfg = load_config()
+        ds_cfg = cfg.get('dataset', {})
+        train_size = ds_cfg.get('train_size', 100)
+        test_size = ds_cfg.get('test_size', 100)
+
+        logger.info(
+            "Generating dataset for %s with target %sms (train_size=%d, test_size=%d) using Task.load_dataset",
+            task_name,
+            target_time_ms,
+            train_size,
+            test_size,
+        )
+
+        train_gen, test_gen = task_instance.load_dataset(train_size=train_size, test_size=test_size)
+
+        # Ensure dataset files were materialized on disk.
+        train_path = getattr(task_instance, "_cached_train_file_path", None)
+        test_path = getattr(task_instance, "_cached_test_file_path", None)
+        if not train_path or not train_path.exists() or not test_path or not test_path.exists():
+            raise FileNotFoundError(
+                f"Generated dataset files not found for {task_name} (expected train/test JSONL)."
+            )
+
+        logger.info(
+            "Dataset generation complete for %s: train=%s, test=%s",
+            task_name,
+            train_path,
+            test_path,
+        )
+        return True
+
     except Exception as e:
         logger.error(f"Dataset generation failed for {task_name}: {e}")
         logger.debug(traceback.format_exc())
         return False
+    finally:
+        for gen in (train_gen, test_gen):
+            if gen is not None:
+                close_fn = getattr(gen, "close", None)
+                if callable(close_fn):
+                    try:
+                        close_fn()
+                    except Exception:
+                        pass
 
 
 def evaluate_task_timing(task_name: str, target_time_ms: int, data_dir: Path, 

@@ -34,6 +34,47 @@ if CODE_DIR not in sys.path:
     sys.path.insert(0, CODE_DIR)
 
 
+def _ensure_canonical_task_registration(task_name: str) -> None:
+    """Ensure TASK_REGISTRY points at the class object from the canonical module import."""
+    task_cls = TASK_REGISTRY.get(task_name)
+    if task_cls is None:
+        return
+
+    module_name = getattr(task_cls, "__module__", None)
+    class_name = getattr(task_cls, "__name__", None)
+    if not module_name or not class_name:
+        return
+
+    try:
+        module = importlib.import_module(module_name)
+    except Exception as exc:  # pragma: no cover - best effort only
+        logging.debug(
+            "load_task: Failed to import canonical module %s for task %s: %s",
+            module_name,
+            task_name,
+            exc,
+        )
+        return
+
+    canonical_cls = getattr(module, class_name, None)
+    if canonical_cls is None:
+        logging.debug(
+            "load_task: Module %s does not expose class %s while canonicalising %s",
+            module_name,
+            class_name,
+            task_name,
+        )
+        return
+
+    if canonical_cls is not task_cls:
+        TASK_REGISTRY[task_name] = canonical_cls
+        logging.debug(
+            "load_task: Updated TASK_REGISTRY entry for %s to canonical class from %s",
+            task_name,
+            module_name,
+        )
+
+
 def load_task(task_name, data_dir: Optional[str] = None):
     """
     Load a task instance dynamically using TaskFactory.
@@ -41,6 +82,10 @@ def load_task(task_name, data_dir: Optional[str] = None):
     """
     from AlgoTuneTasks.factory import TaskFactory
     try:
+        # If the task was registered via a non-canonical import path (e.g. during
+        # discovery with spec_from_file_location) ensure the registry references
+        # the class object from the standard import machinery before instantiating.
+        _ensure_canonical_task_registration(task_name)
         # TaskFactory handles import, registration, and instantiation
         instance = TaskFactory(task_name, data_dir=data_dir)
         return instance

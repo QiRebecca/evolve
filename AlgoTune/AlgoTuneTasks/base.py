@@ -87,27 +87,41 @@ import traceback
 from AlgoTuner.utils.multiprocessing_utils import _pool_worker_initializer, load_pool_config, RESOURCE_AVAILABLE
 
 
-def _pool_oracle_target(solve_func, problem):
-    """Target function for oracle execution within a Pool worker."""
+def _pool_oracle_target(task_name, problem):
+    """Target function for oracle execution within a Pool worker.
+    
+    Args:
+        task_name: Name of the task to load and execute
+        problem: Problem instance to solve
+        
+    Returns:
+        dict: Result dictionary with 'success' and either 'result' or 'error'
+    """
     pid = os.getpid()
     problem_repr = repr(problem)[:200]
-    logging.info(f"GVP WORKER (PID: {pid}): Starting execution of solve_func for problem: {problem_repr}...")
+    logging.info(f"GVP WORKER (PID: {pid}): Starting execution for task '{task_name}', problem: {problem_repr}...")
     result_dict = {}
     solve_func_returned = False
     try:
-        logging.info(f"GVP WORKER (PID: {pid}): Calling solve_func directly...")
-        result = solve_func(problem)
+        # Import here to avoid pickle issues
+        from AlgoTuneTasks.factory import TaskFactory
+        
+        logging.info(f"GVP WORKER (PID: {pid}): Loading task '{task_name}'...")
+        task = TaskFactory(task_name, data_dir=None)
+        
+        logging.info(f"GVP WORKER (PID: {pid}): Calling task.solve()...")
+        result = task.solve(problem)
         solve_func_returned = True
-        logging.info(f"GVP WORKER (PID: {pid}): solve_func returned. Result type: {type(result)}")
+        logging.info(f"GVP WORKER (PID: {pid}): solve returned. Result type: {type(result)}")
         result_dict = {"success": True, "result": result}
     except Exception as e:
         solve_func_returned = True
         tb_str = traceback.format_exc()
-        logging.error(f"GVP WORKER (PID: {pid}): Exception during solve_func: {e}\n{tb_str}")
+        logging.error(f"GVP WORKER (PID: {pid}): Exception during solve: {e}\n{tb_str}")
         result_dict = {"success": False, "error": str(e), "traceback": tb_str, "error_type": "oracle_exception"}
     finally:
         if not solve_func_returned:
-            logging.error(f"GVP WORKER (PID: {pid}): solve_func appears to have not returned (e.g., hung or crashed hard). This log is from the finally block.")
+            logging.error(f"GVP WORKER (PID: {pid}): solve appears to have not returned (e.g., hung or crashed hard). This log is from the finally block.")
     logging.info(f"GVP WORKER (PID: {pid}): Finished execution. Success: {result_dict.get('success')}")
     return result_dict
 
@@ -619,7 +633,7 @@ class Task:
 
                         current_time_before_apply_async = time.perf_counter()
                         logging.debug(f"GVP SUBMIT_LOOP iter {loop_iter_count}: Submitting to pool.apply_async for validation solve. Seed={seed}, k={k}")
-                        async_result = pool.apply_async(_pool_oracle_target, (self.solve, problem))
+                        async_result = pool.apply_async(_pool_oracle_target, (self.task_name, problem))
                         active_validations[seed] = async_result
                         async_result._problem_ref = problem
                         current_time_after_apply_async = time.perf_counter()
@@ -673,11 +687,8 @@ class Task:
             if not data_dir:
                 raise ValueError("DATA_DIR must be set via env, config, or passed explicitly to create_dataset().")
 
+        # data_dir is already task-specific (caller adds task_name), use it directly
         task_dir = Path(data_dir)
-        subdir_candidate = task_dir / self.task_name
-        if subdir_candidate.is_dir() or not task_dir.exists():
-            task_dir = subdir_candidate
-
         task_dir.mkdir(parents=True, exist_ok=True)
         logging.info("Saving datasets under %s", task_dir)
 
@@ -774,9 +785,14 @@ class Task:
                 data_dir_to_use = "../data"
 
         task_specific_data_dir = Path(data_dir_to_use)
-        subdir_candidate = task_specific_data_dir / self.task_name
-        if subdir_candidate.is_dir():
-            task_specific_data_dir = subdir_candidate
+        # If the path already ends with task_name, use it directly
+        # Otherwise, append task_name as a subdirectory
+        if task_specific_data_dir.name == self.task_name:
+            # Path already points to task-specific directory
+            pass
+        else:
+            # Append task_name subdirectory
+            task_specific_data_dir = task_specific_data_dir / self.task_name
 
         search_task_name_for_filename = self.task_name or self.__class__.__name__
 
