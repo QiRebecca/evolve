@@ -195,6 +195,10 @@ class PromptConfig:
     template_dir: Optional[str] = None
     system_message: str = "system_message"
     evaluator_system_message: str = "evaluator_system_message"
+    task_name: Optional[str] = None
+    task_library_root: Optional[str] = None
+    task_module_filename: Optional[str] = None
+    task_description_filename: str = "description.txt"
 
     # Number of examples to include in the prompt
     num_top_programs: int = 3

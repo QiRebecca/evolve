@@ -27,9 +27,11 @@ import os
 import shutil
 import subprocess
 import sys
+import signal
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 # Import the centralized timing logic
 sys.path.insert(0, str(Path(__file__).parent))
@@ -48,6 +50,84 @@ SUMMARY_NAME   = "generation.json"
 # ---------------------------------------------------------------- utilities --
 def now() -> str:
     return datetime.now().strftime("%F %T")
+
+
+class TimeoutException(Exception):
+    """Exception raised when a task times out."""
+    pass
+
+
+def timeout_handler(signum, frame):
+    """Signal handler for task timeout."""
+    raise TimeoutException("Task execution exceeded time limit")
+
+
+def run_task_with_timeout(
+    task_name: str,
+    target_time_ms: int,
+    data_dir: Path,
+    override_k: Optional[int],
+    timeout_seconds: int = 3600,
+    timeout_log_file: Optional[Path] = None
+) -> Dict:
+    """
+    Run a task with timeout protection.
+    
+    Args:
+        task_name: Name of the task
+        target_time_ms: Target time in milliseconds
+        data_dir: Data directory path
+        override_k: Override k value
+        timeout_seconds: Timeout in seconds (default: 3600 = 1 hour)
+        timeout_log_file: Path to timeout log file
+        
+    Returns:
+        Result dictionary with success/error information
+    """
+    start_time = time.time()
+    
+    # Set up signal handler for timeout
+    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout_seconds)
+    
+    try:
+        result = run_complete_timing_evaluation(
+            task_name=task_name,
+            target_time_ms=target_time_ms,
+            data_dir=data_dir,
+            override_k=override_k
+        )
+        signal.alarm(0)  # Cancel alarm
+        return result
+        
+    except TimeoutException:
+        signal.alarm(0)  # Cancel alarm
+        elapsed = time.time() - start_time
+        error_msg = f"Task timed out after {elapsed:.1f} seconds (limit: {timeout_seconds}s)"
+        
+        # Log timeout
+        if timeout_log_file:
+            try:
+                with open(timeout_log_file, 'a') as f:
+                    f.write(f"[{now()}] {task_name}: {error_msg}\n")
+            except Exception:
+                pass
+        
+        return {
+            "task_name": task_name,
+            "success": False,
+            "error": error_msg,
+            "timeout": True,
+            "elapsed_seconds": elapsed
+        }
+        
+    except Exception as e:
+        signal.alarm(0)  # Cancel alarm
+        raise
+        
+    finally:
+        # Restore original signal handler
+        signal.signal(signal.SIGALRM, old_handler)
 
 
 def cleanup_timing_logs(project_root: Path, target_time_ms: int = None) -> None:
@@ -298,6 +378,10 @@ def run_standalone_mode(target_time_ms: int = None, task_name: str = None,
     summary_file = project_root / REPORT_DIR_REL / SUMMARY_NAME
     summary_file.parent.mkdir(parents=True, exist_ok=True)
     
+    # Initialize timeout log file
+    timeout_log_file = project_root / "logs" / "task_timeouts.log"
+    timeout_log_file.parent.mkdir(parents=True, exist_ok=True)
+    
     # Initialize summary file if missing or empty
     if not summary_file.exists() or summary_file.stat().st_size == 0:
         summary_file.write_text("{}")
@@ -480,11 +564,13 @@ def run_standalone_mode(target_time_ms: int = None, task_name: str = None,
                 task_dataset_dir = data_dir / task
                 cleanup_wrong_target_datasets(task_dataset_dir, task, task_target_time)
                 
-                result = run_complete_timing_evaluation(
+                result = run_task_with_timeout(
                     task_name=task,
                     target_time_ms=task_target_time,
                     data_dir=data_dir,
-                    override_k=override_k
+                    override_k=override_k,
+                    timeout_seconds=3600,  # 1 hour timeout
+                    timeout_log_file=timeout_log_file
                 )
                 
                 # Update summary file immediately
@@ -497,7 +583,9 @@ def run_standalone_mode(target_time_ms: int = None, task_name: str = None,
                 except:
                     pass
                 
-                if result["success"]:
+                if result.get("timeout"):
+                    print(f"{now()}: ⏱️ [{i}/{len(tasks_to_run)}] '{task}' timed out after {result.get('elapsed_seconds', 0):.1f}s - skipping to next task")
+                elif result["success"]:
                     print(f"{now()}: ✅ [{i}/{len(tasks_to_run)}] '{task}' completed successfully")
                 else:
                     print(f"{now()}: ❌ [{i}/{len(tasks_to_run)}] '{task}' failed: {result.get('error', 'Unknown error')}")
@@ -529,17 +617,21 @@ def run_standalone_mode(target_time_ms: int = None, task_name: str = None,
                 task_dataset_dir = data_dir / task
                 cleanup_wrong_target_datasets(task_dataset_dir, task, task_target_time)
                 
-                result = run_complete_timing_evaluation(
+                result = run_task_with_timeout(
                     task_name=task,
                     target_time_ms=task_target_time,
                     data_dir=data_dir,
-                    override_k=override_k
+                    override_k=override_k,
+                    timeout_seconds=3600,  # 1 hour timeout
+                    timeout_log_file=timeout_log_file
                 )
                 
                 # Update summary file
                 update_summary_file(summary_file, result)
                 
-                if result["success"]:
+                if result.get("timeout"):
+                    print(f"{now()}: ⏱️ '{task}' timed out after {result.get('elapsed_seconds', 0):.1f}s - skipping to next task")
+                elif result["success"]:
                     print(f"{now()}: ✅ '{task}' completed successfully")
                 else:
                     print(f"{now()}: ❌ '{task}' failed: {result.get('error', 'Unknown error')}")

@@ -3,10 +3,17 @@ Prompt sampling for OpenEvolve
 """
 
 import logging
+import os
 import random
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from openevolve.config import PromptConfig
+from openevolve.prompt.task_assets import (
+    TaskPromptAssets,
+    apply_task_placeholders,
+    load_task_prompt_assets,
+)
 from openevolve.prompt.templates import TemplateManager
 from openevolve.utils.format_utils import format_metrics_safe
 from openevolve.utils.metrics_utils import (
@@ -28,6 +35,8 @@ class PromptSampler:
         # Store custom template mappings
         self.system_template_override = None
         self.user_template_override = None
+        self._task_assets: Optional[TaskPromptAssets] = None
+        self._task_assets_initialized = False
 
         # Only log once to reduce duplication
         if not hasattr(logger, "_prompt_sampler_logged"):
@@ -148,10 +157,123 @@ class PromptSampler:
             **kwargs,
         )
 
+        system_message = self._apply_task_placeholders(system_message)
+        user_message = self._apply_task_placeholders(user_message)
+
         return {
             "system": system_message,
             "user": user_message,
         }
+
+    def _apply_task_placeholders(self, text: str) -> str:
+        if not text or "<task" not in text:
+            return text
+
+        assets = self._get_task_assets()
+        if not assets:
+            return text
+
+        return apply_task_placeholders(text, assets.replacements)
+
+    def _get_task_assets(self) -> Optional[TaskPromptAssets]:
+        if self._task_assets_initialized:
+            return self._task_assets
+
+        self._task_assets_initialized = True
+
+        task_name = self.config.task_name or os.getenv("ALGO_TUNE_TASK")
+        if not task_name:
+            logger.debug(
+                "Task placeholders present but no task name configured via prompt.task_name or ALGO_TUNE_TASK."
+            )
+            return None
+
+        description_filename = self.config.task_description_filename or "description.txt"
+        module_filename = self.config.task_module_filename
+
+        candidate_roots = []
+
+        if self.config.task_library_root:
+            candidate_roots.append(Path(self.config.task_library_root))
+
+        env_root = os.getenv("ALGO_TUNE_TASKS_ROOT")
+        if env_root:
+            candidate_roots.append(Path(env_root))
+
+        repo_root_env = os.getenv("ALGO_TUNE_REPO_ROOT")
+        if repo_root_env:
+            base = Path(repo_root_env)
+            candidate_roots.extend(
+                [
+                    base,
+                    base / "AlgoTuneTasks",
+                    base / "AlgoTune" / "AlgoTuneTasks",
+                ]
+            )
+
+        repo_root = Path(__file__).resolve().parents[3]
+        candidate_roots.extend(
+            [
+                repo_root,
+                repo_root / "AlgoTune",
+                repo_root / "AlgoTuneTasks",
+                repo_root / "AlgoTune" / "AlgoTuneTasks",
+                Path("/data/zq/evolve/AlgoTune"),
+                Path("/data/zq/evolve/AlgoTune/AlgoTuneTasks"),
+            ]
+        )
+
+        seen_roots = set()
+        candidate_dirs = []
+
+        def _add_dir(path: Path) -> None:
+            if path in seen_roots or not path.exists() or not path.is_dir():
+                return
+            seen_roots.add(path)
+            candidate_dirs.append(path)
+
+        for root in candidate_roots:
+            if root in seen_roots:
+                continue
+            if not isinstance(root, Path):
+                try:
+                    root = Path(root)
+                except TypeError:
+                    continue
+            if root in seen_roots:
+                continue
+            # Add direct root if it already points at the task directory
+            if root.name == task_name:
+                _add_dir(root)
+            _add_dir(root / task_name)
+            _add_dir(root / "AlgoTuneTasks" / task_name)
+            _add_dir(root / "AlgoTune" / "AlgoTuneTasks" / task_name)
+
+        for task_dir in candidate_dirs:
+            try:
+                assets = load_task_prompt_assets(
+                    task_name,
+                    task_dir,
+                    module_filename=module_filename,
+                    description_filename=description_filename,
+                )
+            except FileNotFoundError as exc:
+                logger.debug("Task prompt assets missing from %s: %s", task_dir, exc)
+                continue
+            except RuntimeError as exc:
+                logger.warning("Failed to parse baseline functions in %s: %s", task_dir, exc)
+                continue
+
+            self._task_assets = assets
+            logger.info("Loaded task prompt assets for %s from %s", task_name, task_dir)
+            return assets
+
+        logger.warning(
+            "Unable to resolve task prompt assets for %s (searched %s)",
+            task_name,
+            ", ".join(str(path) for path in candidate_dirs) or "<none>",
+        )
+        return None
 
     def _format_metrics(self, metrics: Dict[str, float]) -> str:
         """Format metrics for the prompt using safe formatting"""

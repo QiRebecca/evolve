@@ -1,0 +1,159 @@
+{
+  "aes_gcm_encryption": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 103.930939,
+        "std_min_ms": 0.024384000000004846
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 103.795529,
+        "std_min_ms": 0.009804000000002588
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 103.682399,
+        "std_min_ms": 0.2662600000000026
+      }
+    },
+    "n": 78234,
+    "dataset_size": 2
+  },
+  "affine_transform_2d": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 107.49085553333333,
+        "std_min_ms": 8.603481901798233
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 107.97360376666667,
+        "std_min_ms": 8.616419092787098
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 107.98762436666667,
+        "std_min_ms": 8.601188484025903
+      }
+    },
+    "n": 1047,
+    "dataset_size": 30
+  },
+  "aircraft_wing_design": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 91.20948700000001,
+        "std_min_ms": 0.28677955439268527
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 91.32755976666668,
+        "std_min_ms": 0.26556114465921504
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 91.29588600000001,
+        "std_min_ms": 0.2951951286743502
+      }
+    },
+    "n": 6,
+    "dataset_size": 30
+  },
+  "articulation_points": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 201.46802513333336,
+        "std_min_ms": 1.092505353762372
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 201.365641,
+        "std_min_ms": 0.8983000884030163
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 201.6225487,
+        "std_min_ms": 0.8913177923762178
+      }
+    },
+    "n": 706,
+    "dataset_size": 30
+  },
+  "base64_encoding": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 99.74644863333333,
+        "std_min_ms": 0.6184729776491174
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 100.12555626666668,
+        "std_min_ms": 0.2171664565461143
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 100.07782623333334,
+        "std_min_ms": 0.31679525363339395
+      }
+    },
+    "n": 23846,
+    "dataset_size": 30
+  },
+  "battery_scheduling": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 79.50200420000002,
+        "std_min_ms": 0.22884087581773127
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 79.39385183333333,
+        "std_min_ms": 0.20883197990267774
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 79.3956989,
+        "std_min_ms": 0.20951706134956383
+      }
+    },
+    "n": 3,
+    "dataset_size": 30
+  },
+  "btsp": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": false,
+        "avg_min_ms": null,
+        "std_min_ms": null,
+        "error": "Evaluation failed: 0"
+      },
+      "1": {
+        "success": false,
+        "avg_min_ms": null,
+        "std_min_ms": null,
+        "error": "Evaluation failed: 0"
+      },
+      "2": {
+        "success": false,
+        "avg_min_ms": null,
+        "std_min_ms": null,
+        "error": "Evaluation failed: 0"
+      }
+    },
+    "n": 17,
+    "dataset_size": 30
+  }
+}

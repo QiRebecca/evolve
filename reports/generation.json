@@ -1,0 +1,185 @@
+{
+  "aes_gcm_encryption": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 98.7965192,
+        "std_min_ms": 0.9893587879994609
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 99.77548850000001,
+        "std_min_ms": 1.615310880315443
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 98.39492960000001,
+        "std_min_ms": 0.3315208609632887
+      }
+    },
+    "n": 76486,
+    "dataset_size": 10
+  },
+  "affine_transform_2d": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 107.14719170000001,
+        "std_min_ms": 8.3844122451018
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 107.1952153,
+        "std_min_ms": 8.425888144093939
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 107.5763112,
+        "std_min_ms": 8.490219197993298
+      }
+    },
+    "n": 1056,
+    "dataset_size": 10
+  },
+  "aircraft_wing_design": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 90.6779946,
+        "std_min_ms": 0.21497246798425285
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 90.6457036,
+        "std_min_ms": 0.20567431042364073
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 90.585769,
+        "std_min_ms": 0.18494503587390554
+      }
+    },
+    "n": 6,
+    "dataset_size": 10
+  },
+  "articulation_points": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 198.39607890000002,
+        "std_min_ms": 3.2002590572685046
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 198.58667390000002,
+        "std_min_ms": 3.6642140374398546
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 198.2167233,
+        "std_min_ms": 1.375335306191984
+      }
+    },
+    "n": 700,
+    "dataset_size": 10
+  },
+  "base64_encoding": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 98.096194,
+        "std_min_ms": 0.4919184001262793
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 98.72046529999999,
+        "std_min_ms": 0.748719111466783
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 98.5117422,
+        "std_min_ms": 0.7195911436435016
+      }
+    },
+    "n": 23608,
+    "dataset_size": 10
+  },
+  "battery_scheduling": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 79.8764655,
+        "std_min_ms": 0.2014250653058106
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 79.99164769999999,
+        "std_min_ms": 0.21683649451651213
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 79.8801622,
+        "std_min_ms": 0.14536616714270142
+      }
+    },
+    "n": 3,
+    "dataset_size": 10
+  },
+  "btsp": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": false,
+        "avg_min_ms": null,
+        "std_min_ms": null,
+        "error": "Evaluation failed: 0"
+      },
+      "1": {
+        "success": false,
+        "avg_min_ms": null,
+        "std_min_ms": null,
+        "error": "Evaluation failed: 0"
+      },
+      "2": {
+        "success": false,
+        "avg_min_ms": null,
+        "std_min_ms": null,
+        "error": "Evaluation failed: 0"
+      }
+    },
+    "n": 17,
+    "dataset_size": 10
+  },
+  "capacitated_facility_location": {
+    "target_time_ms": 100,
+    "baseline_runs": {}
+  },
+  "chacha_encryption": {
+    "target_time_ms": 100,
+    "baseline_runs": {
+      "0": {
+        "success": true,
+        "avg_min_ms": 100.31735019999999,
+        "std_min_ms": 1.9490649881568258
+      },
+      "1": {
+        "success": true,
+        "avg_min_ms": 100.191371,
+        "std_min_ms": 2.284687062839155
+      },
+      "2": {
+        "success": true,
+        "avg_min_ms": 101.9401384,
+        "std_min_ms": 1.7638491347300784
+      }
+    },
+    "n": 66695,
+    "dataset_size": 10
+  }
+}
