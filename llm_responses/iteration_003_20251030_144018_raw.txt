@@ -1,0 +1,81 @@
+The main bottleneck is repeated instantiation of `AESGCM`; by caching the `AESGCM` objects per–key we remove this overhead (especially beneficial when a key is reused across many test-cases).  All other logic stays identical, ensuring byte–exact results.
+
+```python
+from functools import lru_cache
+from typing import Any
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# --- Constants ---------------------------------------------------------------
+AES_KEY_SIZES = (16, 24, 32)  # Valid AES key lengths in bytes
+GCM_TAG_SIZE = 16             # Authentication-tag length (bytes)
+# -----------------------------------------------------------------------------
+
+
+@lru_cache(maxsize=128)
+def _aesgcm_for_key(key: bytes) -> AESGCM:
+    """Return (and cache) an AESGCM object for the given key."""
+    # cryptography will raise if key length is invalid, so no extra checks here
+    return AESGCM(key)
+
+
+class Solver:
+    """
+    AES-GCM encryption solver.
+
+    Expected problem dict structure:
+        {
+            "key": bytes,
+            "nonce": bytes,
+            "plaintext": bytes,
+            "associated_data": bytes | None
+        }
+    Returns:
+        {
+            "ciphertext": bytes,
+            "tag": bytes      # 16-byte GCM authentication tag
+        }
+    """
+
+    # Nothing to set up in __init__; avoid work at import/instantiation time.
+    def __init__(self) -> None:
+        pass
+
+    # -------------------------------------------------------------------------
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        """
+        Encrypt the supplied plaintext with AES-GCM and split out the tag.
+
+        Parameters
+        ----------
+        problem : dict
+            Input dictionary described above.
+
+        Returns
+        -------
+        dict
+            Dictionary having 'ciphertext' (bytes) and 'tag' (bytes)
+        """
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data") or None  # normalise '' → None
+
+        # Fast key-length validation (avoids raising deep inside cryptography)
+        if len(key) not in AES_KEY_SIZES:  # pragma: no cover  (safety guard)
+            raise ValueError(
+                f"Invalid AES key length {len(key)}; "
+                f"must be one of {AES_KEY_SIZES} bytes."
+            )
+
+        # Retrieve (or build) cached AESGCM object
+        aesgcm = _aesgcm_for_key(key)
+
+        # Perform encryption (ciphertext + tag concatenated)
+        ct_and_tag: bytes = aesgcm.encrypt(nonce, plaintext, aad)
+
+        # Split into ciphertext and tag without unnecessary copying
+        ciphertext, tag = ct_and_tag[:-GCM_TAG_SIZE], ct_and_tag[-GCM_TAG_SIZE:]
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

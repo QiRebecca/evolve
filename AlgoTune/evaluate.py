@@ -80,7 +80,7 @@ def _resolve_config(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any
     config: Dict[str, Any] = {
         "task_name": os.environ.get("ALGO_TUNE_TASK"),
         "data_dir": os.environ.get("ALGO_TUNE_DATA_DIR"),
-        "split": os.environ.get("ALGO_TUNE_SPLIT", "test"),
+        "split": os.environ.get("ALGO_TUNE_SPLIT", "train"),  # Changed default to train for OpenEvolve
         "max_samples": _parse_int(os.environ.get("ALGO_TUNE_MAX_SAMPLES")),
         "timeout_multiplier": _parse_float(os.environ.get("ALGO_TUNE_TIMEOUT_MULTIPLIER")),
         "min_timeout_seconds": _parse_float(os.environ.get("ALGO_TUNE_MIN_TIMEOUT")),
@@ -245,7 +245,7 @@ def _prepare_dataset(
     """Load dataset for the given task and split."""
 
     LOGGER.info("Loading dataset for task %s (split=%s)", task_instance.task_name, split)
-    train_iter, test_iter = task_instance.load_dataset()
+    train_iter, test_iter = task_instance.load_dataset(train_size=10, test_size=10)
     dataset_iter: Iterable[Any] = train_iter if split == "train" else test_iter
     dataset_list = list(dataset_iter)
 
@@ -300,7 +300,14 @@ def _load_generation_baseline(task_name: str, generation_file: Optional[Path]) -
 
 
 def _extract_aggregate_metrics(results: Any) -> Dict[str, Any]:
+    # Debug: Log type and content of results
+    LOGGER.info(f"DEBUG_EXTRACT: results type = {type(results)}")
+    LOGGER.info(f"DEBUG_EXTRACT: hasattr aggregate_metrics = {hasattr(results, 'aggregate_metrics')}")
+    
     aggregate = getattr(results, "aggregate_metrics", {}) or {}
+    
+    # Debug: Log extracted aggregate
+    LOGGER.info(f"DEBUG_EXTRACT: aggregate content = {aggregate}")
 
     metrics: Dict[str, Any] = {}
     metrics.update(aggregate)
@@ -312,6 +319,7 @@ def _extract_aggregate_metrics(results: Any) -> Dict[str, Any]:
         metrics["accuracy"] = accuracy
     else:
         # Basic fallback when aggregate metrics are unavailable
+        LOGGER.warning("DEBUG_EXTRACT: aggregate_metrics is empty, using fallback")
         if isinstance(results, Iterable):
             results_list = list(results)
             num_evaluated = len(results_list)
@@ -391,12 +399,14 @@ def evaluate(program_path: str, config: Optional[Dict[str, Any]] = None) -> Eval
 
     # Prepare baseline task (unmodified) for baseline timings
     baseline_task = task_class(data_dir=str(data_dir))
+    baseline_task.task_name = task_name  # Ensure task_name is set for dataset loading
     dataset_list = _prepare_dataset(baseline_task, split=split, max_samples=max_samples)
 
     baseline_manager = BaselineManager(baseline_task)
 
     # Prepare candidate task with patched solve method
     candidate_task = task_class(data_dir=str(data_dir))
+    candidate_task.task_name = task_name  # Ensure task_name is set for dataset loading
     solver_callable = _load_solver_callable(program_path, task_class, candidate_task)
     candidate_task.solve = solver_callable  # type: ignore[attr-defined]
     candidate_task.oracle = solver_callable  # type: ignore[attr-defined]
@@ -458,6 +468,11 @@ def evaluate(program_path: str, config: Optional[Dict[str, Any]] = None) -> Eval
         return EvaluationResult(metrics=metrics, artifacts=artifacts)
 
     aggregate_metrics = _extract_aggregate_metrics(results)
+    
+    # Debug: Log extracted aggregate metrics
+    LOGGER.info(f"DEBUG_METRICS: Extracted aggregate_metrics keys: {list(aggregate_metrics.keys())}")
+    LOGGER.info(f"DEBUG_METRICS: mean_speedup={aggregate_metrics.get('mean_speedup')}, median_speedup={aggregate_metrics.get('median_speedup')}")
+    LOGGER.info(f"DEBUG_METRICS: avg_solver_time_ms={aggregate_metrics.get('avg_solver_time_ms')}, avg_oracle_time_ms={aggregate_metrics.get('avg_oracle_time_ms')}")
 
     mean_speedup = _normalize_metric(aggregate_metrics.get("mean_speedup"))
     median_speedup = _normalize_metric(aggregate_metrics.get("median_speedup"))

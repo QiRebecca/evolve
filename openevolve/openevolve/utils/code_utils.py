@@ -96,20 +96,38 @@ def parse_full_rewrite(llm_response: str, language: str = "python") -> Optional[
     Returns:
         Extracted code or None if not found
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     code_block_pattern = r"```" + language + r"\n(.*?)```"
     matches = re.findall(code_block_pattern, llm_response, re.DOTALL)
 
     if matches:
-        return matches[0].strip()
+        extracted_code = matches[0].strip()
+        logger.info(f"Extracted code from ```{language} block ({len(extracted_code)} chars)")
+        logger.debug(f"First 500 chars of extracted code: {extracted_code[:500]}")
+        return extracted_code
 
     # Fallback to any code block
     code_block_pattern = r"```(.*?)```"
     matches = re.findall(code_block_pattern, llm_response, re.DOTALL)
 
     if matches:
-        return matches[0].strip()
+        # Skip the language identifier if present in the first line
+        code_with_lang = matches[0].strip()
+        lines = code_with_lang.split('\n')
+        if lines and not lines[0].strip().startswith(('def', 'class', 'import', 'from', '#')):
+            # First line might be language identifier, skip it
+            extracted_code = '\n'.join(lines[1:]).strip()
+        else:
+            extracted_code = code_with_lang
+        logger.info(f"Extracted code from generic ``` block ({len(extracted_code)} chars)")
+        logger.debug(f"First 500 chars of extracted code: {extracted_code[:500]}")
+        return extracted_code
 
     # Fallback to plain text
+    logger.warning(f"No code block found, using full response as code ({len(llm_response)} chars)")
+    logger.debug(f"First 500 chars of response: {llm_response[:500]}")
     return llm_response
 
 

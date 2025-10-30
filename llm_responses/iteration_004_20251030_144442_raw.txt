@@ -1,0 +1,62 @@
+The primary overhead stems from repeatedly instantiating AESGCM for identical keys.  
+I'll introduce a small cache so we reuse AESGCM objects, eliminate superfluous
+validation/logging, and keep the implementation minimal.
+
+```python
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Constant for GCM tag length (bytes)
+_GCM_TAG_BYTES = 16
+
+
+class Solver:
+    """
+    Fast AES-GCM encryptor.
+
+    The first call with a new key constructs an AESGCM object and stores it in a
+    tiny in-memory cache so subsequent calls with the same key avoid re-creation
+    overhead.  All other work is delegated to cryptography’s highly-optimised
+    backend, so the Python layer is kept as lean as possible.
+    """
+
+    __slots__ = ("_cache",)
+
+    def __init__(self) -> None:
+        # key->AESGCM object cache (very small, typical benchmarks reuse keys)
+        self._cache: Dict[bytes, AESGCM] = {}
+
+    def _get_cipher(self, key: bytes) -> AESGCM:
+        """Return a cached AESGCM instance for the given key (create if needed)."""
+        cipher = self._cache.get(key)
+        if cipher is None:
+            cipher = AESGCM(key)
+            self._cache[key] = cipher
+        return cipher
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:
+        """
+        Encrypt the provided plaintext with AES-GCM and return ciphertext & tag.
+
+        Expected keys in `problem`:
+            key: bytes
+            nonce: bytes
+            plaintext: bytes
+            associated_data: bytes | None
+        """
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data", None)
+
+        # Perform encryption
+        cipher = self._get_cipher(key)
+        ct_with_tag = cipher.encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag (tag is always the last 16 bytes)
+        return {
+            "ciphertext": ct_with_tag[:-_GCM_TAG_BYTES],
+            "tag": ct_with_tag[-_GCM_TAG_BYTES:],
+        }
+```

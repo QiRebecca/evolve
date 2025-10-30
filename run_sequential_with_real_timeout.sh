@@ -25,19 +25,24 @@ echo "" | tee -a "$MAIN_LOG"
 
 cd /data/zq/evolve/AlgoTune
 
-# 获取所有任务列表
-ALL_TASKS=$(python3 -c "
-import sys
-sys.path.insert(0, '/data/zq/evolve/AlgoTune/scripts')
-from AlgoTuner.task_lists import get_task_list
-tasks = get_task_list('all')
-print(' '.join(tasks))
-" 2>/dev/null)
+# 获取所有任务列表（直接扫描目录，确保获取全部154个任务）
+ALL_TASKS=$(python3 << 'PYEOF'
+import os
+from pathlib import Path
 
-# 如果获取失败，使用硬编码列表
-if [ -z "$ALL_TASKS" ]; then
-    ALL_TASKS="btsp capacitated_facility_location chacha_encryption channel_capacity chebyshev_center cholesky_factorization clustering_outliers communicability convex_hull"
-fi
+tasks_dir = Path("/data/zq/evolve/AlgoTune/AlgoTuneTasks")
+all_tasks = []
+for item in sorted(tasks_dir.iterdir()):
+    if item.is_dir() and not item.name.startswith('_'):
+        if (item / "description.txt").exists() or list(item.glob("*.py")):
+            all_tasks.append(item.name)
+print(' '.join(all_tasks))
+PYEOF
+)
+
+# 验证是否成功获取
+TASK_TOTAL=$(echo "$ALL_TASKS" | wc -w)
+echo "发现 $TASK_TOTAL 个任务" | tee -a "$MAIN_LOG"
 
 TASK_COUNT=0
 SUCCESS_COUNT=0

@@ -95,6 +95,27 @@ async def run_iteration_with_shared_db(
             changes_summary = format_diff_summary(diff_blocks)
         else:
             # Parse full rewrite
+            # Log the LLM response for debugging
+            logger.warning(f"LLM Response (length={len(llm_response)}): {llm_response[:1000]}")
+            
+            # Save raw LLM response to file for inspection
+            import datetime
+            from pathlib import Path
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            # Use log_dir's parent as base output directory
+            if config.log_dir:
+                base_dir = Path(config.log_dir).parent
+            else:
+                base_dir = Path(".")
+            response_dir = base_dir / "llm_responses"
+            response_dir.mkdir(parents=True, exist_ok=True)
+            response_file = response_dir / f"iteration_{iteration:03d}_{timestamp}_raw.txt"
+            try:
+                response_file.write_text(llm_response, encoding='utf-8')
+                logger.info(f"Saved raw LLM response to: {response_file}")
+            except Exception as e:
+                logger.warning(f"Failed to save LLM response: {e}")
+            
             new_code = parse_full_rewrite(llm_response, config.language)
 
             if not new_code:

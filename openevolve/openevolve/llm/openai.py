@@ -34,6 +34,7 @@ class OpenAILLM(LLMInterface):
         self.api_key = model_cfg.api_key
         self.random_seed = getattr(model_cfg, "random_seed", None)
         self.reasoning_effort = getattr(model_cfg, "reasoning_effort", None)
+        self.verbosity = getattr(model_cfg, "verbosity", None)
 
         # Set up API client
         # OpenAI client requires max_retries to be int, not None
@@ -89,10 +90,7 @@ class OpenAILLM(LLMInterface):
 
         # Check if this is an OpenAI reasoning model
         model_lower = str(self.model).lower()
-        is_openai_reasoning_model = (
-            self.api_base == "https://api.openai.com/v1"
-            and model_lower.startswith(OPENAI_REASONING_MODEL_PREFIXES)
-        )
+        is_openai_reasoning_model = model_lower.startswith(OPENAI_REASONING_MODEL_PREFIXES)
 
         if is_openai_reasoning_model:
             # For OpenAI reasoning models
@@ -105,8 +103,9 @@ class OpenAILLM(LLMInterface):
             reasoning_effort = kwargs.get("reasoning_effort", self.reasoning_effort)
             if reasoning_effort is not None:
                 params["reasoning_effort"] = reasoning_effort
-            if "verbosity" in kwargs:
-                params["verbosity"] = kwargs["verbosity"]
+            verbosity = kwargs.get("verbosity", self.verbosity)
+            if verbosity is not None:
+                params["verbosity"] = verbosity
         else:
             # Standard parameters for all other models
             params = {

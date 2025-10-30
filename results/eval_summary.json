@@ -1,0 +1,21 @@
+{
+    "aes_gcm_encryption": {
+        "chatgptoss-20b": {
+            "final_speedup": "0.9172",
+            "accuracy": "1.0000",
+            "mean_speedup": "0.9216",
+            "median_speedup": "0.9377",
+            "num_valid": 10,
+            "num_evaluated": 10,
+            "num_errors": 0,
+            "num_timeouts": 0,
+            "baseline_runtime_ms": "98.9890",
+            "avg_solver_time_ms": "107.92",
+            "total_solver_ms": "1079.22",
+            "total_baseline_ms": "989.89",
+            "improvement_pct": "-8.28",
+            "eval_date": "2025-10-30",
+            "eval_timestamp": "2025-10-30T17:45:28.168628"
+        }
+    }
+}

@@ -91,8 +91,10 @@ class BaselineManager:
         
         # Check for JSONL files first (memory efficient)
         data_dir = self.task_instance.data_dir or self.task_instance.get_task_directory()
+        # Try both direct path and task subdirectory
         jsonl_pattern = os.path.join(data_dir, f"{self.task_instance.task_name}_T*ms_n*_size*_{subset}.jsonl")
-        jsonl_files = glob.glob(jsonl_pattern)
+        jsonl_pattern_subdir = os.path.join(data_dir, self.task_instance.task_name, f"{self.task_instance.task_name}_T*ms_n*_size*_{subset}.jsonl")
+        jsonl_files = glob.glob(jsonl_pattern) + glob.glob(jsonl_pattern_subdir)
         
         # Run baseline evaluation directly and get results in memory
         from AlgoTuner.utils.evaluator.main import evaluate_code_on_dataset, stream_jsonl
@@ -105,7 +107,7 @@ class BaselineManager:
         else:
             # Load dataset and generate baselines
             logging.info(f"Loading dataset for baseline generation")
-            train_iter, test_iter = self.task_instance.load_dataset()
+            train_iter, test_iter = self.task_instance.load_dataset(train_size=10, test_size=10)
             dataset_iter = train_iter if subset == "train" else test_iter
         
         # Convert iterator to list to enable using different problems for warmup

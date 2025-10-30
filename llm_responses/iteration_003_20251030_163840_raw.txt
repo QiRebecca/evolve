@@ -1,0 +1,139 @@
+The current implementation redundantly copies ciphertext to separate the authentication tag, incurring extra memory and time costs—especially for large plaintexts. I’ll switch to the lower-level `Cipher(algorithms.AES, modes.GCM)` API, which yields the ciphertext and tag separately, eliminating the costly slice/copy step and reducing overhead while maintaining identical results.
+
+```python
+from __future__ import annotations
+
+import hmac
+import logging
+from typing import Any
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+# Older versions of `cryptography` require an explicit backend; newer ones ignore it.
+try:
+    from cryptography.hazmat.backends import default_backend
+
+    _BACKEND = default_backend()
+except Exception:  # pragma: no cover
+    _BACKEND = None  # type: ignore
+
+# Constants
+AES_KEY_SIZES: tuple[int, ...] = (16, 24, 32)  # bytes – AES-128/192/256
+GCM_TAG_SIZE: int = 16  # bytes
+
+
+class Solver:
+    """
+    Solver for the AES-GCM encryption task.
+
+    Given a problem dictionary containing:
+        • key (bytes)
+        • nonce (bytes)
+        • plaintext (bytes)
+        • associated_data (bytes | None)
+
+    it returns a dict with:
+        • 'ciphertext': encrypted bytes
+        • 'tag': authentication tag (16 bytes)
+    """
+
+    def _encrypt_gcm(
+        self,
+        key: bytes,
+        nonce: bytes,
+        plaintext: bytes,
+        associated_data: bytes | None,
+    ) -> tuple[bytes, bytes]:
+        """
+        Perform AES-GCM encryption using the low-level Cipher API.
+        Returns (ciphertext, tag) without extra copying.
+        """
+        cipher = (
+            Cipher(algorithms.AES(key), modes.GCM(nonce), backend=_BACKEND)
+            if _BACKEND is not None
+            else Cipher(algorithms.AES(key), modes.GCM(nonce))
+        )
+        encryptor = cipher.encryptor()
+
+        # Ensure associated_data is bytes; treat None as empty bytes.
+        if associated_data:
+            encryptor.authenticate_additional_data(associated_data)
+
+        # Encrypt: update may be called multiple times; we only need once here.
+        ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+        tag = encryptor.tag  # 16-byte GCM tag
+
+        return ciphertext, tag
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        """
+        Encrypt plaintext with AES-GCM and return ciphertext and tag.
+
+        This implementation avoids the extra memory copy introduced by
+        concatenating and then slicing the tag from the ciphertext.
+        """
+        try:
+            key: bytes = problem["key"]
+            nonce: bytes = problem["nonce"]
+            plaintext: bytes = problem["plaintext"]
+            associated_data: bytes | None = problem.get("associated_data", None)
+
+            # Quick validation on key size.
+            if len(key) not in AES_KEY_SIZES:
+                raise ValueError(
+                    f"Invalid AES key size {len(key)} bytes; "
+                    f"allowed sizes are {AES_KEY_SIZES}"
+                )
+
+            ciphertext, tag = self._encrypt_gcm(
+                key, nonce, plaintext, associated_data
+            )
+
+            # Sanity-check tag length (should be 16 bytes for 128-bit GCM tag)
+            if len(tag) != GCM_TAG_SIZE:
+                raise ValueError(
+                    f"Unexpected GCM tag length {len(tag)}; expected {GCM_TAG_SIZE}"
+                )
+
+            return {"ciphertext": ciphertext, "tag": tag}
+
+        except Exception as exc:  # pragma: no cover
+            logging.error("AES-GCM encryption failed in solve: %s", exc, exc_info=True)
+            raise
+
+    # The following helper allows external evaluators to verify correctness
+    # without having to instantiate another object.
+    def is_solution(self, problem: dict[str, Any], solution: dict[str, bytes] | Any) -> bool:
+        """
+        Verify that a proposed solution matches this solver's output.
+        """
+        if (
+            not isinstance(solution, dict)
+            or "ciphertext" not in solution
+            or "tag" not in solution
+        ):
+            logging.error(
+                "Invalid solution format. Expected dict with 'ciphertext' and 'tag'. "
+                f"Got: {type(solution)}"
+            )
+            return False
+
+        try:
+            reference = self.solve(problem)
+        except Exception as exc:
+            logging.error("Reference solve failed in is_solution: %s", exc, exc_info=True)
+            return False
+
+        sol_ct = solution["ciphertext"]
+        sol_tag = solution["tag"]
+
+        if not isinstance(sol_ct, (bytes, bytearray)) or not isinstance(
+            sol_tag, (bytes, bytearray)
+        ):
+            logging.error("Solution 'ciphertext' or 'tag' is not bytes-like.")
+            return False
+
+        ct_match = hmac.compare_digest(reference["ciphertext"], sol_ct)
+        tag_match = hmac.compare_digest(reference["tag"], sol_tag)
+        return ct_match and tag_match
+```
