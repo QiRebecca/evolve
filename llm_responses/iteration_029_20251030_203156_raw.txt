@@ -1,0 +1,36 @@
+The implementation is streamlined by:
+• Eliminating unnecessary docstrings/over-validation while keeping the required key-length check.  
+• Using concise local variables and a quick `or None` conversion for empty AAD to reduce Python-level overhead.  
+• Retaining a minimal, allocation-free class via `__slots__`.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Accepted AES key lengths and fixed GCM tag size (bytes)
+_KEY_LENS = {16, 24, 32}
+_TAG_LEN = 16
+
+
+class Solver:
+    __slots__ = ()  # no per-instance __dict__
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        # Fast local bindings
+        k: bytes = problem["key"]
+        if len(k) not in _KEY_LENS:      # minimal validation (matches baseline semantics)
+            raise ValueError("Unsupported AES key length")
+
+        # Encrypt (cryptography appends a 16-byte tag)
+        enc: bytes = AESGCM(k).encrypt(
+            problem["nonce"],
+            problem["plaintext"],
+            problem.get("associated_data") or None,  # avoid empty AAD overhead
+        )
+
+        # Split ciphertext and tag
+        return {
+            "ciphertext": enc[:-_TAG_LEN],
+            "tag": enc[-_TAG_LEN:],
+        }
+```

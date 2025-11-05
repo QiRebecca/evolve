@@ -1,0 +1,67 @@
+The baseline included verbose logging and redundant checks that slow execution.  
+I streamline the logic, keep only essential validation, and add an LRU-cache so AESGCM
+objects are reused when the same key appears again.  This drops per-call overhead while
+returning exactly the same ciphertext / tag pair.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# --------------------------------------------------------------------------- #
+# Module-level constants – kept local for micro-optimisation                  #
+# --------------------------------------------------------------------------- #
+_VALID_KEY_SIZES = {16, 24, 32}  # bytes for AES-128 / 192 / 256
+_TAG_LEN = 16                    # AES-GCM authentication tag length (bytes)
+
+
+# --------------------------------------------------------------------------- #
+# Small, fast cache for AESGCM objects                                        #
+# --------------------------------------------------------------------------- #
+@lru_cache(maxsize=128)
+def _cipher_for_key(key: bytes) -> AESGCM:  # noqa: D401  (simple helper)
+    """
+    Return (and memoise) an AESGCM object for *key*.
+
+    A tiny LRU cache avoids reconstructing the cipher when identical keys are
+    reused across `solve` calls, saving both time and entropy pool usage.
+    """
+    if len(key) not in _VALID_KEY_SIZES:  # quick fail-fast validation
+        raise ValueError("Unsupported AES key length (must be 16, 24, or 32 bytes).")
+    return AESGCM(key)
+
+
+# --------------------------------------------------------------------------- #
+# Public solver                                                               #
+# --------------------------------------------------------------------------- #
+class Solver:
+    """
+    AES-GCM encryption solver expected by the evaluation harness.
+
+    `solve(problem)` receives a dictionary with:
+        • key              (bytes)
+        • nonce            (bytes)
+        • plaintext        (bytes)
+        • associated_data  (bytes | None)
+
+    It returns a dictionary with:
+        • ciphertext (bytes) – encrypted payload, NOT including the tag
+        • tag        (bytes) – 16-byte authentication tag
+    """
+
+    __slots__ = ()  # no per-instance __dict__ needed
+
+    # The evaluator may pass extra kwargs; accept and ignore them.
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data") or None  # treat empty bytes as None
+
+        # Obtain cached cipher and encrypt
+        ct_tag: bytes = _cipher_for_key(key).encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag (tag is always last 16 bytes in cryptography’s API)
+        return {"ciphertext": ct_tag[:-_TAG_LEN], "tag": ct_tag[-_TAG_LEN:]}
+```

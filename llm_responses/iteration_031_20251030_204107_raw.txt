@@ -1,0 +1,68 @@
+The current solver already runs quickly, but we can shave off a bit more overhead by
+(1) re-using `AESGCM` objects when the same key is encountered again and  
+(2) passing `None` instead of an empty byte-string for AAD, which avoids an
+unnecessary OpenSSL call.  
+Both changes are negligible when inputs are huge, yet they help on the many small
+instances the benchmark contains.
+
+```python
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# ---------------------------------------------------------------------------
+# Module-local constants (fastest possible lookup)
+# ---------------------------------------------------------------------------
+_VALID_KEY_SIZES = {16, 24, 32}  # Allowed AES key lengths (bytes)
+_TAG_LEN = 16                    # GCM authentication-tag length (bytes)
+
+# Small global cache so we don’t rebuild AESGCM objects if the same key repeats.
+# The cache is intentionally capped to keep memory usage negligible.
+_AESGCM_CACHE: Dict[bytes, AESGCM] = {}
+
+
+class Solver:
+    """
+    Tiny, high-performance AES-GCM encryptor expected by the evaluation harness.
+
+    Input  (problem dict):
+        • key              – bytes (length 16 / 24 / 32)
+        • nonce            – bytes
+        • plaintext        – bytes
+        • associated_data  – bytes | None
+
+    Output (dict):
+        • ciphertext – bytes (encrypted data, tag removed)
+        • tag        – bytes (16-byte authentication tag)
+    """
+
+    __slots__ = ()  # eliminate per-instance attribute dict
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        # Fast local bindings (micro-optimisation: avoid repeated dict look-ups)
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data") or None  # turn empty b'' into None
+
+        # Validate AES key length once (cheap integer membership test)
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("AES key must be 16, 24, or 32 bytes long.")
+
+        # Re-use (or build) the AESGCM wrapper for this key
+        aes = _AESGCM_CACHE.get(key)
+        if aes is None:
+            aes = AESGCM(key)
+            # Cap cache to 32 entries to avoid unbounded growth
+            if len(_AESGCM_CACHE) < 32:
+                _AESGCM_CACHE[key] = aes
+
+        # Perform encryption (cryptography appends the 16-byte tag to the data)
+        ct_tag: bytes = aes.encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag
+        return {
+            "ciphertext": ct_tag[:-_TAG_LEN],
+            "tag": ct_tag[-_TAG_LEN:],
+        }
+```

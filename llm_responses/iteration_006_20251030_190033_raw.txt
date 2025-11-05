@@ -1,0 +1,69 @@
+Minor optimization opportunities lie in reducing object-creation overhead and repeated validations that add negligible but measurable runtime. By caching AESGCM instances per key (they are immutable and thread-safe) we avoid reallocating the cipher object when the same key is reused across multiple `solve` invocations, and we keep the hot path minimal.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Accepted AES key sizes (in bytes) and fixed GCM tag size
+_AES_KEY_SIZES: set[int] = {16, 24, 32}
+_TAG_SIZE: int = 16
+
+
+@lru_cache(maxsize=1024)
+def _cached_aesgcm(key: bytes) -> AESGCM:
+    """
+    Return a cached AESGCM instance for the given key.
+
+    AESGCM objects are immutable after creation, so reusing them across calls
+    removes the small but non-zero construction cost when identical keys
+    appear in multiple problem instances.
+    """
+    return AESGCM(key)
+
+
+class Solver:
+    __slots__ = ()  # avoid per-instance __dict__
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:
+        """
+        Encrypt plaintext with AES-GCM.
+
+        Parameters
+        ----------
+        problem : dict
+            Expected keys:
+              • key (bytes)
+              • nonce (bytes)
+              • plaintext (bytes)
+              • associated_data (bytes | None)
+
+        Returns
+        -------
+        dict
+            {
+                "ciphertext": bytes,  # encrypted data without authentication tag
+                "tag": bytes          # 16-byte GCM authentication tag
+            }
+        """
+        # Local variable look-ups are faster inside tight loops
+        key: bytes = problem["key"]
+        if len(key) not in _AES_KEY_SIZES:
+            raise ValueError("Invalid AES key length; must be 16, 24, or 32 bytes.")
+
+        aesgcm = _cached_aesgcm(key)  # reuse cipher objects when possible
+
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data", None)
+
+        # `cryptography` appends the 16-byte tag to the end of the ciphertext.
+        encrypted: bytes = aesgcm.encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag (avoid extra bounds checks with local var)
+        tag = encrypted[-_TAG_SIZE:]
+        ciphertext = encrypted[:-_TAG_SIZE]
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

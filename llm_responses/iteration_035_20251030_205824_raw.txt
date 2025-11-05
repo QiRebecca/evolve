@@ -1,0 +1,59 @@
+The current implementation is already lightweight; the main bottleneck is the expensive key-schedule setup that `AESGCM` performs the first time a given key is used.  
+I’ll keep the core logic intact but add an LRU-cached constructor (using `functools.lru_cache`) so we never rebuild a cipher object for the same key, while also capping memory growth. Nothing else changes, so correctness is preserved while we trim avoidable overhead.
+
+```python
+from typing import Any
+from functools import lru_cache
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+
+# --- Constants ---------------------------------------------------------------
+_VALID_KEY_SIZES = {16, 24, 32}  # valid AES key lengths in bytes
+_TAG_LEN = 16                    # GCM authentication tag length in bytes
+
+
+# --- Helper ------------------------------------------------------------------
+@lru_cache(maxsize=128)
+def _cached_cipher(key: bytes) -> AESGCM:          # noqa: D401
+    """Return an AESGCM object, caching by *key* (max 128 distinct keys)."""
+    return AESGCM(key)
+
+
+# --- Solver ------------------------------------------------------------------
+class Solver:
+    """
+    Fast AES-GCM encryption solver.
+
+    Expects a *problem* dict with:
+      • key              (bytes) : length 16/24/32
+      • nonce            (bytes) : typically 12 bytes
+      • plaintext        (bytes)
+      • associated_data  (bytes | None)
+
+    Returns a dict with:
+      • ciphertext (bytes)
+      • tag        (bytes) – 16-byte GCM tag
+    """
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        # Unpack inputs
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data", None)  # may be None or bytes
+
+        # Quick validation (avoid spending time on extensive checks)
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("Invalid AES key length.")
+
+        # Obtain cached cipher and encrypt
+        aesgcm = _cached_cipher(key)
+        ct_tag = aesgcm.encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag (last 16 bytes hold the tag)
+        return {
+            "ciphertext": ct_tag[:-_TAG_LEN],
+            "tag": ct_tag[-_TAG_LEN:],
+        }
+```

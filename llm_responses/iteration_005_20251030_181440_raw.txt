@@ -1,0 +1,66 @@
+Simplified the implementation by removing unnecessary framework integration and adding a lightweight
+AESGCM object cache to avoid repeated initialisation overhead when the same key is reused.  
+This keeps behaviour identical while trimming code size and marginally improving speed.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+
+class Solver:
+    """
+    AES-GCM encryption solver.
+
+    Given a problem dict containing:
+        • key : bytes (16/24/32 bytes for AES-128/192/256)
+        • nonce : bytes (12 bytes recommended)
+        • plaintext : bytes
+        • associated_data : Optional[bytes]
+
+    it returns a dict with:
+        • 'ciphertext' : encrypted bytes (without tag)
+        • 'tag'        : 16-byte authentication tag
+    """
+
+    # Valid AES key sizes and fixed GCM tag length
+    _VALID_KEY_SIZES = {16, 24, 32}
+    _TAG_LEN = 16
+
+    # Simple LRU-style cache for AESGCM objects (keyed by key bytes)
+    _aesgcm_cache: Dict[bytes, AESGCM] = {}
+    _CACHE_LIMIT = 64
+
+    def _get_aesgcm(self, key: bytes) -> AESGCM:
+        """Return (and cache) an AESGCM instance for the given key."""
+        aes = self._aesgcm_cache.get(key)
+        if aes is None:
+            # Maintain a small cache to avoid unbounded growth
+            if len(self._aesgcm_cache) >= self._CACHE_LIMIT:
+                self._aesgcm_cache.clear()
+            aes = AESGCM(key)
+            self._aesgcm_cache[key] = aes
+        return aes
+
+    def solve(self, problem: Dict[str, Any], **_) -> Dict[str, bytes]:
+        # Fast local variable binding
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        associated_data: bytes | None = problem.get("associated_data", None)
+
+        # Tiny validation (cryptography will raise if size invalid but we keep a cheap check)
+        if len(key) not in self._VALID_KEY_SIZES:
+            raise ValueError(f"Invalid AES key length {len(key)}; must be one of {sorted(self._VALID_KEY_SIZES)}")
+
+        # Fetch cached AESGCM instance or create a new one
+        aesgcm = self._get_aesgcm(key)
+
+        # Encrypt; cryptography appends 16-byte tag to the end of the ciphertext
+        ct_with_tag = aesgcm.encrypt(nonce, plaintext, associated_data)
+
+        # Split ciphertext and tag (slicing bytes is O(1) as it shares memory in CPython)
+        tag = ct_with_tag[-self._TAG_LEN:]
+        ciphertext = ct_with_tag[:-self._TAG_LEN]
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

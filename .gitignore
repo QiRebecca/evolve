@@ -1,3 +1,8 @@
 AlgoTune/data/
 logs/
 capacitated_facility_location/
+.dace_cache/
+dace_cache_*/
+__pycache__/
+*.pyc
+*.log

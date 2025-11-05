@@ -1,0 +1,48 @@
+By stripping unnecessary logging/validation and reusing AESGCM objects, the solver minimizes Python-level overhead while preserving identical output.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+
+class Solver:
+    """
+    Minimal AES-GCM encryption solver.
+
+    For each call it:
+      1. Re-uses (or creates) an AESGCM object for the given key
+      2. Encrypts the plaintext
+      3. Splits the resulting bytes into ciphertext and 16-byte tag
+    """
+
+    __slots__ = ("_cache",)
+
+    TAG_SIZE = 16  # GCM authentication tag length in bytes
+
+    def __init__(self) -> None:
+        # Small cache so repeated calls with identical keys avoid
+        # the (minor) cost of re-instantiating AESGCM.
+        self._cache: Dict[bytes, AESGCM] = {}
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data") or None
+
+        # Obtain (or create) the AESGCM object for this key.
+        aes = self._cache.get(key)
+        if aes is None:
+            aes = AESGCM(key)
+            self._cache[key] = aes
+
+        encrypted: bytes = aes.encrypt(nonce, plaintext, aad)
+
+        # Split off the authentication tag (appended to ciphertext).
+        if len(encrypted) < self.TAG_SIZE:  # sanity check; extremely unlikely
+            raise ValueError("Ciphertext shorter than authentication tag.")
+        return {
+            "ciphertext": encrypted[:-self.TAG_SIZE],
+            "tag": encrypted[-self.TAG_SIZE :],
+        }
+```

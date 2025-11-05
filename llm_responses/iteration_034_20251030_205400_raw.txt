@@ -1,0 +1,62 @@
+The current solver already caches AESGCM instances but still does a few
+redundant look-ups and key checks.  
+I’ll move the cache to an LRU function-level decorator (fast C implementation),
+drop per-call key validation (handled inside the cache), and streamline local
+variable access.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# --------------------------------------------------------------------------- #
+# Module-local constants – kept simple for fast lookup
+# --------------------------------------------------------------------------- #
+_VALID_KEY_BYTES = {16, 24, 32}  # legal AES key sizes
+_TAG_LEN = 16                    # GCM authentication-tag length (bytes)
+
+
+# --------------------------------------------------------------------------- #
+# Cached construction of AESGCM wrappers
+# --------------------------------------------------------------------------- #
+@lru_cache(maxsize=64)
+def _cipher_for(key: bytes) -> AESGCM:
+    """Return (and memoise) an AESGCM object for *key*."""
+    if len(key) not in _VALID_KEY_BYTES:
+        raise ValueError("AES key must be 16, 24 or 32 bytes long.")
+    return AESGCM(key)
+
+
+# --------------------------------------------------------------------------- #
+# Solver implementation
+# --------------------------------------------------------------------------- #
+class Solver:
+    """
+    Fast AES-GCM encryptor expected by the evaluation harness.
+
+    The heavy lifting is done in OpenSSL; we minimise Python overhead by:
+      • C-level LRU cache for AESGCM objects (key → cipher)
+      • Tight local variable binding to cut dictionary access
+      • No superfluous checks once the cipher is retrieved
+    """
+
+    __slots__ = ()  # eliminate per-instance __dict__
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        p = problem  # local alias (micro-optimisation)
+
+        key: bytes = p["key"]
+        nonce: bytes = p["nonce"]
+        plaintext: bytes = p["plaintext"]
+        aad = p.get("associated_data") or None  # pass None rather than b''
+
+        # Encrypt – AESGCM appends the 16-byte tag to the ciphertext
+        ct_tag: bytes = _cipher_for(key).encrypt(nonce, plaintext, aad)
+
+        # Split into ciphertext and tag without extra checks
+        return {
+            "ciphertext": ct_tag[:-_TAG_LEN],
+            "tag":        ct_tag[-_TAG_LEN:],
+        }
+```

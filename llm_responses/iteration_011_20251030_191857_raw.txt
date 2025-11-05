@@ -1,0 +1,53 @@
+Minimal logging-free implementation with a tiny AESGCM cache and direct dictionary
+access removes all superfluous overhead from the baseline while keeping identical
+behaviour.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Valid AES key sizes (in bytes) and fixed GCM tag length
+_VALID_KEY_SIZES = {16, 24, 32}
+_TAG_LEN = 16
+
+# Micro-cache so repeated keys reuse the same AESGCM object
+_AESGCM_CACHE: Dict[bytes, AESGCM] = {}
+
+
+class Solver:
+    """
+    Minimal AES-GCM encryption solver expected by the evaluation harness.
+
+    Input  (problem dict):
+        key, nonce, plaintext, associated_data
+    Output (dict):
+        ciphertext – encrypted plaintext (without tag)
+        tag        – 16-byte authentication tag
+    """
+
+    __slots__ = ()  # avoid per-instance __dict__
+
+    def solve(self, problem: Dict[str, Any], **_) -> Dict[str, bytes]:
+        key: bytes = problem["key"]
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("Unsupported AES key length")
+
+        # Reuse AESGCM object for identical keys (cheap speed-up)
+        aes = _AESGCM_CACHE.get(key)
+        if aes is None:
+            aes = AESGCM(key)
+            # Keep cache size reasonable
+            if len(_AESGCM_CACHE) < 64:
+                _AESGCM_CACHE[key] = aes
+
+        ct_tag: bytes = aes.encrypt(
+            problem["nonce"],
+            problem["plaintext"],
+            problem["associated_data"],
+        )
+
+        return {
+            "ciphertext": ct_tag[:-_TAG_LEN],
+            "tag": ct_tag[-_TAG_LEN:],
+        }
+```

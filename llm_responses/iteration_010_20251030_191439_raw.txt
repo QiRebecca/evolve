@@ -1,0 +1,64 @@
+The current implementation creates a new AESGCM object for every call, which incurs avoidable overhead when the same key is reused.  
+By introducing a small cache of AESGCM objects we eliminate this repeated construction cost, yielding a modest but measurable speed-up while preserving identical behaviour.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Constants kept module-local for micro-optimisation
+_VALID_KEY_SIZES = {16, 24, 32}  # AES-128 / 192 / 256
+_TAG_LEN = 16                    # GCM authentication tag length
+
+
+class Solver:
+    """
+    AES-GCM encryption solver.
+
+    The method `solve` receives a dictionary with:
+        • key              (bytes)
+        • nonce            (bytes)
+        • plaintext        (bytes)
+        • associated_data  (bytes | None)
+
+    It returns:
+        • ciphertext (bytes) – encrypted data without the tag
+        • tag        (bytes) – 16-byte authentication tag
+    """
+
+    __slots__ = ("_cache",)
+
+    # Limit cache size to avoid unbounded memory growth in long-running sessions
+    _MAX_CACHE_SIZE = 64
+
+    def __init__(self) -> None:
+        # Maps key bytes -> AESGCM instance
+        self._cache: Dict[bytes, AESGCM] = {}
+
+    # --------------------------------------------------------------------- #
+    # Public API                                                            #
+    # --------------------------------------------------------------------- #
+    def solve(self, problem: Dict[str, Any], **_) -> Dict[str, bytes]:
+        key: bytes = problem["key"]
+
+        # Minimal fast validation (kept to match baseline semantics)
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("Unsupported AES key length.")
+
+        aes = self._cache.get(key)
+        if aes is None:
+            aes = AESGCM(key)
+            # Simple FIFO eviction strategy when cache grows beyond limit
+            if len(self._cache) >= self._MAX_CACHE_SIZE:
+                self._cache.pop(next(iter(self._cache)))
+            self._cache[key] = aes
+
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data", None)
+
+        # Perform encryption – the tag is appended to the end
+        enc: bytes = aes.encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag
+        return {"ciphertext": enc[:-_TAG_LEN], "tag": enc[-_TAG_LEN:]}
+```

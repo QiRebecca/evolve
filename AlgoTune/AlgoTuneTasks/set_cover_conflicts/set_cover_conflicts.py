@@ -105,6 +105,7 @@ class SetCoverWithConflicts(Task):
 
         # Solve model
         solver = cp_model.CpSolver()
+        solver.parameters.num_workers = 24  # Limit workers to prevent thread allocation failure
         status = solver.Solve(model)
 
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:

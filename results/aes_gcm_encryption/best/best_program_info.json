@@ -1,23 +1,23 @@
 {
-  "id": "1311906b-1c4e-4885-a125-f3f3f90d7841",
-  "generation": 1,
-  "iteration": 1,
-  "timestamp": 1761813226.904653,
-  "parent_id": "4ead65bd-7026-4c5c-8b39-25d4d7637382",
+  "id": "b7bf6afd-3938-4915-b8a3-77e844ee1181",
+  "generation": 0,
+  "iteration": 0,
+  "timestamp": 1761820699.0276556,
+  "parent_id": null,
   "metrics": {
-    "score": 1.0431056902348803,
-    "mean_speedup": 1.0431056902348803,
-    "median_speedup": 1.0309415507497952,
+    "score": 1.086669287023938,
+    "mean_speedup": 1.086669287023938,
+    "median_speedup": 1.0821009255234242,
     "accuracy": 1.0,
     "success_rate": 1.0,
     "num_evaluated": 10.0,
     "num_valid": 10.0,
     "num_errors": 0.0,
     "num_timeouts": 0.0,
-    "avg_solver_time_ms": 97.8925465,
-    "avg_baseline_time_ms": 102.09874169999999,
-    "baseline_to_solver_ratio": 1.0429674714816004
+    "avg_solver_time_ms": 0.0,
+    "avg_baseline_time_ms": 107.5773797,
+    "baseline_to_solver_ratio": Infinity
   },
   "language": "python",
-  "saved_at": 1761813751.2704926
+  "saved_at": 1761830840.7489643
 }

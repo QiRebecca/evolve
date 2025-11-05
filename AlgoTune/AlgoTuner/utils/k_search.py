@@ -132,8 +132,25 @@ def _run_probe_safely_isolated(task, k, warmup_seed, timed_seed, timeout_s, memo
 def _run_probe_in_process(task, k, warmup_seed, timed_seed, timing_num_runs=5, timing_warmup_runs=3, memory_limit_mb=None):
     """Run probe in current process for efficiency - avoids subprocess overhead."""
     try:
-        # Check estimated memory usage for tasks known to have quadratic memory requirements
+        import os
+        import inspect
+        
+        # Configure solvers to avoid thread/resource issues
         task_name = getattr(task, '__class__', type(task)).__name__.lower()
+        
+        # Check if task uses OR-Tools and limit workers to prevent thread allocation failures
+        try:
+            source = inspect.getsource(task.solve)
+            if 'cp_model' in source or 'CpSolver' in source or 'ortools' in source.lower():
+                os.environ['OMP_NUM_THREADS'] = '24'
+                logging.info(f"Detected OR-Tools task '{task_name}', limiting threads to 24")
+        except:
+            pass
+        
+        # Force CVXPY to use ECOS solver instead of Clarabel (more stable)
+        os.environ['CVXPY_DEFAULT_SOLVER'] = 'ECOS'
+        
+        # Check estimated memory usage for tasks known to have quadratic memory requirements
         if 'sinkhorn' in task_name and memory_limit_mb:
             # Sinkhorn needs k^2 * 8 bytes for cost matrix plus overhead
             estimated_mb = (k * k * 8) / (1024 * 1024) * 1.5  # 1.5x for overhead

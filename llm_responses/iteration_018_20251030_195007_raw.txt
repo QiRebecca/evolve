@@ -1,0 +1,53 @@
+The main runtime cost stems from Python overhead around the C-level AES-GCM call.  
+I’ll minimise this overhead by:
+
+1. Caching AESGCM objects with an `lru_cache` (fast C-level lookup).  
+2. Binding locals once and using direct slicing.  
+3. Retaining a tiny code-path without extra branching or allocations.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# --------------------------------------------------------------------------- #
+# Constants – kept module-local for fastest lookup
+# --------------------------------------------------------------------------- #
+_VALID_KEY_SIZES = {16, 24, 32}  # Allowed AES key lengths (bytes)
+_TAG_LEN = 16                    # GCM authentication-tag length (bytes)
+
+# --------------------------------------------------------------------------- #
+# Helper – cached construction of AESGCM objects
+# --------------------------------------------------------------------------- #
+@lru_cache(maxsize=64)
+def _aesgcm_for_key(key: bytes) -> AESGCM:  # noqa: D401 (simple function)
+    """Return a cached AESGCM instance for *key* (validates length once)."""
+    if len(key) not in _VALID_KEY_SIZES:
+        raise ValueError("AES key must be 16, 24 or 32 bytes long")
+    return AESGCM(key)
+
+
+# --------------------------------------------------------------------------- #
+# Solver
+# --------------------------------------------------------------------------- #
+class Solver:
+    """Fast AES-GCM encryptor expected by the evaluation harness."""
+    __slots__ = ()  # no per-instance __dict__
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        # Local bindings (marginally faster than repeated dict lookups)
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data") or None  # pass None if empty/absent
+
+        # Encrypt – tag is appended to the end
+        encrypted: bytes = _aesgcm_for_key(key).encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag (last 16 bytes)
+        return {
+            "ciphertext": encrypted[:-_TAG_LEN],
+            "tag": encrypted[-_TAG_LEN:],
+        }
+```

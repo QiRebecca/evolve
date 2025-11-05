@@ -1,0 +1,48 @@
+The baseline contains unnecessary logging, validation, and class-framework overhead. A lean Solver class that directly performs the AES-GCM encryption minimizes Python-level work and maximizes speed.
+
+```python
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+
+class Solver:
+    """
+    Minimal AES-GCM encryption solver.
+
+    Given a dictionary with 'key', 'nonce', 'plaintext', and
+    'associated_data', it returns a dict with separate 'ciphertext'
+    and authentication 'tag'.
+    """
+
+    __slots__ = ("_tag_size",)
+
+    def __init__(self) -> None:
+        self._tag_size: int = 16  # GCM tag length in bytes
+
+    def solve(self, problem: Dict[str, Any], **_) -> Dict[str, bytes]:
+        """
+        Encrypt plaintext using AES-GCM.
+
+        Args:
+            problem: {
+                "key": bytes,
+                "nonce": bytes,
+                "plaintext": bytes,
+                "associated_data": bytes | None
+            }
+
+        Returns:
+            {"ciphertext": bytes, "tag": bytes}
+        """
+        # Perform encryption in a single call to optimized OpenSSL backend
+        full_ct = AESGCM(problem["key"]).encrypt(
+            problem["nonce"],
+            problem["plaintext"],
+            problem.get("associated_data") or None,
+        )
+
+        # Split ciphertext and tag without extra allocations
+        tag_size = self._tag_size
+        return {"ciphertext": full_ct[:-tag_size], "tag": full_ct[-tag_size:]}
+```

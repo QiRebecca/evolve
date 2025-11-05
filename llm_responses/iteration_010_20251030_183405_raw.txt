@@ -1,0 +1,55 @@
+The main cost is AESGCM object creation; we maximise reuse via an LRU cache and avoid small overheads (e.g. treating empty AAD as `None`).  The core encryption call is identical to the baseline, guaranteeing byte-for-byte identical results while shaving interpreter overhead.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Constants
+_GCM_TAG_LEN   = 16                 # authentication-tag length (bytes)
+_VALID_KEY_LEN = {16, 24, 32}       # AES-128/192/256
+
+
+@lru_cache(maxsize=64)
+def _get_cipher(key: bytes) -> AESGCM:  # pragma: no cover
+    """
+    Fetch (and cache) an AESGCM instance for the supplied key.
+
+    Creating the object touches OpenSSL and is moderately expensive, so
+    memoising yields a noticeable speed-up when keys repeat across calls.
+    """
+    return AESGCM(key)
+
+
+class Solver:
+    """
+    AES-GCM encryptor that mirrors the baseline output but runs faster by
+    re-using cipher objects and trimming Python-level overhead.
+    """
+
+    def solve(self, problem: Dict[str, Any], **_) -> Dict[str, bytes]:
+        # Fast local bindings
+        key: bytes       = problem["key"]
+        nonce: bytes     = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data")
+
+        # Tiny upfront check (cryptography will also validate internally)
+        if len(key) not in _VALID_KEY_LEN:
+            raise ValueError(f"Unsupported AES key length: {len(key)}")
+
+        # Empty AAD is equivalent to None for GCM and a little faster
+        if not aad:
+            aad = None
+
+        # Obtain cached cipher and encrypt
+        cipher  = _get_cipher(key)
+        result  = cipher.encrypt(nonce, plaintext, aad)   # ciphertext || tag
+
+        # Split without helper functions (bytes slicing is O(1) + copy)
+        tag        = result[-_GCM_TAG_LEN:]
+        ciphertext = result[:-_GCM_TAG_LEN]
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

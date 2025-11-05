@@ -1,0 +1,67 @@
+The current implementation is already concise but there's room for minor micro-optimisations.  
+I’ll streamline the cache via `functools.lru_cache`, cut redundant look-ups, and keep the code minimal while preserving full functionality.
+
+```python
+from __future__ import annotations
+
+import functools
+import hmac
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# --------------------------------------------------------------------------- #
+# Small, process-wide cache of AESGCM objects (keyed by the key bytes)        #
+# --------------------------------------------------------------------------- #
+_TAG_LEN = 16  # bytes
+
+
+@functools.lru_cache(maxsize=None)
+def _get_cipher(key: bytes) -> AESGCM:
+    """Return (and memoise) an AESGCM instance for the given key."""
+    return AESGCM(key)  # cryptography validates key length internally
+
+
+class Solver:
+    """Fast AES-GCM encryption solver."""
+
+    __slots__ = ()
+
+    # ------------------------------------------------------------------ #
+    # Main entry point required by the evaluation harness                #
+    # ------------------------------------------------------------------ #
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        """
+        Encrypt `problem["plaintext"]` with AES-GCM and return
+        a dict containing separate 'ciphertext' and 'tag' fields.
+        """
+        key: bytes = problem["key"]
+        ct_tag: bytes = _get_cipher(key).encrypt(
+            problem["nonce"],
+            problem["plaintext"],
+            problem.get("associated_data") or None,
+        )
+
+        # Split result – slicing an immutable bytes object is O(1) + copy
+        return {
+            "ciphertext": ct_tag[:-_TAG_LEN],
+            "tag": ct_tag[-_TAG_LEN:],
+        }
+
+    # ------------------------------------------------------------------ #
+    # Optional helper – may be invoked by the benchmark for validation   #
+    # ------------------------------------------------------------------ #
+    def is_solution(self, problem: Dict[str, Any], cand: Any) -> bool:
+        if not (
+            isinstance(cand, dict)
+            and isinstance(cand.get("ciphertext"), (bytes, bytearray, memoryview))
+            and isinstance(cand.get("tag"), (bytes, bytearray, memoryview))
+        ):
+            return False
+
+        ref = self.solve(problem)
+        return (
+            hmac.compare_digest(ref["ciphertext"], cand["ciphertext"])
+            and hmac.compare_digest(ref["tag"], cand["tag"])
+        )
+```

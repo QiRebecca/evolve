@@ -62,6 +62,7 @@ class MaxWeightedIndependentSet(Task):
         model.Maximize(sum(weights[i] * nodes[i] for i in range(n)))
 
         solver = cp_model.CpSolver()
+        solver.parameters.num_workers = 24  # Limit workers to prevent thread allocation failure
         status = solver.Solve(model)
         if status == cp_model.OPTIMAL:
             return [i for i in range(n) if solver.Value(nodes[i])]

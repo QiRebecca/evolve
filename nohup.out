@@ -1,0 +1,293 @@
+2025-10-30 17:51:00,059 - INFO - Logging to results/aes_gcm_encryption/logs/openevolve_20251030_175100.log
+2025-10-30 17:51:00,059 - INFO - Set random seed to 42 for reproducibility
+2025-10-30 17:51:00,082 - INFO - Initialized OpenAI LLM with model: o3
+2025-10-30 17:51:00,082 - INFO - Initialized LLM ensemble with models: o3 (weight: 1.00)
+2025-10-30 17:51:00,090 - INFO - Initialized prompt sampler
+2025-10-30 17:51:00,090 - INFO - Set custom templates: system=evaluator_system_message, user=None
+2025-10-30 17:51:00,090 - INFO - Initialized program database with 0 programs
+Attempting to load config from: /data/zq/evolve/AlgoTune/AlgoTuner/config/config.yaml
+Successfully loaded config from: /data/zq/evolve/AlgoTune/AlgoTuner/config/config.yaml
+2025-10-30 17:51:00,179 - WARNING - CODE_DIR not set when initializing DaCe for process 2752211
+2025-10-30 17:51:00,291 - INFO - discover_and_import_tasks: Starting file-based task discovery.
+2025-10-30 17:51:03,994 - INFO - Loading faiss with AVX512 support.
+2025-10-30 17:51:04,009 - INFO - Successfully loaded faiss with AVX512 support.
+2025-10-30 17:51:04,310 - INFO - discover_and_import_tasks: Finished discovery. TASK_REGISTRY keys: ['aes_gcm_encryption', 'affine_transform_2d', 'aircraft_wing_design', 'articulation_points', 'base64_encoding', 'battery_scheduling', 'btsp', 'capacitated_facility_location', 'chacha_encryption', 'channel_capacity', 'chebyshev_center', 'cholesky_factorization', 'clustering_outliers', 'communicability', 'convex_hull', 'convolve2d_full_fill', 'convolve_1d', 'correlate2d_full_fill', 'correlate_1d', 'count_connected_components', 'count_riemann_zeta_zeros', 'cumulative_simpson_1d', 'cumulative_simpson_multid', 'cvar_projection', 'cyclic_independent_set', 'dct_type_I_scipy_fftpack', 'delaunay', 'dijkstra_from_indices', 'discrete_log', 'dst_type_II_scipy_fftpack', 'dap', 'dynamic_assortment_planning', 'earth_movers_distance', 'edge_expansion', 'eigenvalues_complex', 'eigenvalues_real', 'eigenvectors_complex', 'eigenvectors_real', 'elementwise_integration', 'feedback_controller_design', 'fft_cmplx_scipy_fftpack', 'fft_convolution', 'fft_real_scipy_fftpack', 'firls', 'generalized_eigenvalues_complex', 'generalized_eigenvalues_real', 'generalized_eigenvectors_complex', 'generalized_eigenvectors_real', 'graph_coloring_assign', 'graph_global_efficiency', 'graph_isomorphism', 'graph_laplacian', 'group_lasso', 'gzip_compression', 'integer_factorization', 'job_shop_scheduling', 'kalman_filter', 'kcenters', 'kd_tree', 'kernel_density_estimation', 'kmeans', 'ks_test_2samp', 'l0_pruning', 'l1_pruning', 'lasso', 'least_squares', 'linear_system_solver', 'lp_box', 'lp_centering', 'lp_mdp', 'lqr', 'lti_simulation', 'lu_factorization', 'lyapunov_stability', 'markowitz', 'matrix_completion', 'matrix_exponential', 'matrix_exponential_sparse', 'matrix_multiplication', 'matrix_sqrt', 'max_clique_cpsat', 'max_common_subgraph', 'max_flow_min_cost', 'max_independent_set_cpsat', 'mwis', 'max_weighted_independent_set', 'min_dominating_set', 'min_weight_assignment', 'minimum_spanning_tree', 'minimum_volume_ellipsoid', 'multi_dim_knapsack', 'nmf', 'ode_brusselator', 'ode_fitzhughnagumo', 'ode_hires', 'ode_hodgkinhuxley', 'ode_lorenz96_nonchaotic', 'ode_lotkavolterra', 'ode_nbodyproblem', 'ode_seirs', 'ode_stiff_robertson', 'ode_stiff_vanderpol', 'odr', 'optimal_advertising', 'outer_product', 'pagerank', 'pca', 'pde_burgers1d', 'pde_heat1d', 'polynomial_mixed', 'polynomial_real', 'power_control', 'procrustes', 'psd_cone_projection', 'qp', 'qr_factorization', 'quantile_regression', 'queens_with_obstacles', 'queuing', 'qz_factorization', 'randomized_svd', 'rbf_interpolation', 'rectanglepacking', 'svd', 'robust_kalman_filter', 'robust_linear_program', 'rocket_landing_optimization', 'rotate_2d', 'set_cover', 'set_cover_conflicts', 'sha256_hashing', 'shift_2d', 'shortest_path_dijkstra', 'sinkhorn', 'sparse_eigenvectors_complex', 'sparse_lowest_eigenvalues_posdef', 'sparse_lowest_eigenvectors_posdef', 'sparse_pca', 'spectral_clustering', 'stable_matching', 'svm', 'sylvester_solver', 'tensor_completion_3d', 'toeplitz_solver', 'tsp', 'two_eigenvalues_around_0', 'unit_simplex_projection', 'upfirdn1d', 'vector_quantization', 'vectorized_newton', 'vehicle_routing', 'vertex_cover', 'voronoi_diagram', 'wasserstein_dist', 'water_filling', 'zoom_2d']
+2025-10-30 17:51:04,311 - INFO - utils.evaluator.loader: Successfully discovered and imported tasks.
+2025-10-30 17:51:04,317 - INFO - Successfully loaded evaluation function from AlgoTune/evaluate.py
+2025-10-30 17:51:04,317 - WARNING - Configuration has 'cascade_evaluation: true' but evaluator 'AlgoTune/evaluate.py' does not define 'evaluate_stage1' function. This will fall back to direct evaluation, making the cascade setting useless. Consider setting 'cascade_evaluation: false' or implementing cascade functions.
+2025-10-30 17:51:04,317 - INFO - Initialized evaluator with AlgoTune/evaluate.py
+2025-10-30 17:51:04,317 - INFO - Initialized OpenEvolve with /data/zq/evolve/AlgoTune/AlgoTuneTasks/aes_gcm_encryption/aes_gcm_encryption.py
+2025-10-30 17:51:04,317 - INFO - Adding initial program to database
+2025-10-30 17:51:04,318 - INFO - Evaluating solver at /tmp/tmpgc0lu3sj.py for task aes_gcm_encryption
+2025-10-30 17:51:04,319 - INFO - Loading dataset for task aes_gcm_encryption (split=train)
+2025-10-30 17:51:04,319 - INFO - load_dataset called for task 'aes_gcm_encryption' with train_size=10, test_size=10
+2025-10-30 17:51:04,319 - INFO - load_dataset: Determined target_time_ms via _get_target_time_ms() = 1000
+2025-10-30 17:51:04,319 - INFO - _find_dataset_files: Using task name 'aes_gcm_encryption' for file search (original was 'aes_gcm_encryption')
+2025-10-30 17:51:04,319 - INFO - _find_dataset_files: Absolute task-specific path being searched: /data/zq/evolve/AlgoTune/data/aes_gcm_encryption
+2025-10-30 17:51:04,319 - INFO - _find_dataset_files: Ignoring target_time_ms. Searching with glob pattern: 'aes_gcm_encryption_T*ms_n*_size10_train.jsonl' in '/data/zq/evolve/AlgoTune/data/aes_gcm_encryption'
+2025-10-30 17:51:04,320 - INFO - _find_dataset_files: Glob found 1 potential files: ['aes_gcm_encryption_T100ms_n76486_size10_train.jsonl']
+2025-10-30 17:51:04,321 - INFO - _find_dataset_files: Sorted potential files (descending k): ['aes_gcm_encryption_T100ms_n76486_size10_train.jsonl']
+2025-10-30 17:51:04,321 - INFO - Found 1 potential existing train files (target_time ANY), size=10.
+2025-10-30 17:51:04,321 - INFO - _find_dataset_files: Attempting to use best candidate train file: 'aes_gcm_encryption_T100ms_n76486_size10_train.jsonl'
+2025-10-30 17:51:04,321 - INFO - _find_dataset_files: Parsed k=76486 from filename 'aes_gcm_encryption_T100ms_n76486_size10_train.jsonl'
+2025-10-30 17:51:04,321 - INFO - _find_dataset_files: Checking for corresponding test file: '/data/zq/evolve/AlgoTune/data/aes_gcm_encryption/aes_gcm_encryption_T100ms_n76486_size10_test.jsonl'
+2025-10-30 17:51:04,321 - INFO - _find_dataset_files: Selected best available dataset (k=76486): aes_gcm_encryption_T100ms_n76486_size10_train.jsonl
+2025-10-30 17:51:04,321 - INFO - _find_dataset_files: Set k=76486 from found files. Updated self.k.
+2025-10-30 17:51:04,322 - INFO - _find_dataset_files: Successfully found and cached file paths (k=76486, T=100ms). Returning paths.
+2025-10-30 17:51:04,322 - INFO - load_dataset: Using dataset files identified and cached by _find_dataset_files (k=76486): /data/zq/evolve/AlgoTune/data/aes_gcm_encryption/aes_gcm_encryption_T100ms_n76486_size10_train.jsonl, /data/zq/evolve/AlgoTune/data/aes_gcm_encryption/aes_gcm_encryption_T100ms_n76486_size10_test.jsonl
+2025-10-30 17:51:04,322 - INFO - Streaming /data/zq/evolve/AlgoTune/data/aes_gcm_encryption/aes_gcm_encryption_T100ms_n76486_size10_train.jsonl using orjson.loads (with dataset_decoder for external refs, base_dir: /data/zq/evolve/AlgoTune/data/aes_gcm_encryption)
+2025-10-30 17:51:04,323 - INFO - Loaded 10 problem instances
+2025-10-30 17:51:04,345 - INFO - Using optimized evaluation pipeline (test_mode=False)
+2025-10-30 17:51:04,345 - INFO - Not in test mode, evaluating all samples
+2025-10-30 17:51:04,345 - INFO - Initialized evaluation orchestrator
+2025-10-30 17:51:04,345 - INFO - BaselineManager provided, getting baseline times for subset 'train'
+2025-10-30 17:51:04,345 - INFO - Generating baseline times for subset 'train'
+2025-10-30 17:51:04,346 - INFO - Using JSONL file for baseline generation: /data/zq/evolve/AlgoTune/data/aes_gcm_encryption/aes_gcm_encryption_T100ms_n76486_size10_train.jsonl
+2025-10-30 17:51:04,346 - INFO - Streaming /data/zq/evolve/AlgoTune/data/aes_gcm_encryption/aes_gcm_encryption_T100ms_n76486_size10_train.jsonl using orjson.loads (with dataset_decoder for external refs, base_dir: /data/zq/evolve/AlgoTune/data/aes_gcm_encryption)
+2025-10-30 17:51:04,346 - INFO - Running oracle evaluation to generate baseline times
+2025-10-30 17:51:04,347 - INFO - BaselineManager: Running oracle benchmark for 42
+2025-10-30 17:51:04,347 - INFO - run_benchmark starting for 'oracle_wrapper' (runs=2, warmups=1, timeout=60.0s) - Execution: direct, Timeout: threading
+2025-10-30 17:51:04,347 - INFO - Running 'oracle_wrapper' directly with threading timeout 60.0s
+2025-10-30 17:51:04,371 - INFO - BLAS thread configuration set to 96 threads (exported via ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')).
+2025-10-30 17:51:04,371 - INFO - time_execution_ns ENTER: func='oracle_wrapper', requested_warmups=1, requested_runs=2, capture_output=False
+2025-10-30 17:51:04,371 - INFO - time_execution_ns: Starting warmup phase for 'oracle_wrapper' (1 iterations).
+2025-10-30 17:51:04,477 - INFO - time_execution_ns: Warmup phase for 'oracle_wrapper' finished. Warmup success: True. Error (if any): None
+2025-10-30 17:51:04,477 - INFO - time_execution_ns: Starting measurement runs for 'oracle_wrapper' (requested: 2).
+2025-10-30 17:51:04,672 - INFO - time_execution_ns: Finished measurement phase for 'oracle_wrapper'. Total runs executed: 2/2.
+2025-10-30 17:51:04,672 - INFO - time_execution_ns: Calculating statistics for 'oracle_wrapper' with 2 successful runs
+2025-10-30 17:51:04,672 - INFO - time_execution_ns: Stats for 'oracle_wrapper' (ms): Mean=96.317, Median=96.317, Min=96.264, Max=96.369
+2025-10-30 17:51:04,673 - INFO - time_execution_ns: All 2 measurement runs were successful for 'oracle_wrapper'. Setting success=True.
+2025-10-30 17:51:04,673 - INFO - time_execution_ns: Checking result size for potential stripping to avoid memory issues
+2025-10-30 17:51:04,673 - INFO - time_execution_ns: Always replacing solver result with summary (size: 0.00MB) to prevent memory waste.
+2025-10-30 17:51:04,673 - INFO - time_execution_ns: Replaced solver result with summary: {'type': "<class 'dict'>", 'size_mb': 0.0, 'stripped_in_timing': True, 'length': 2}
+2025-10-30 17:51:04,673 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: Final results from time_execution_ns for 'oracle_wrapper': {'success': True, 'values_ns': [96264445, 96368809], 'num_runs_executed': 2, 'mean_ns': 96316627.0, 'median_ns': 96316627.0, 'stddev_ns': 73796.49211175284, 'min_ns': 96264445.0, 'max_ns': 96368809.0, 'mean_time_ms': 96.316627, 'median_time_ms': 96.316627, 'stddev_time_ms': None, 'min_time_ms': 96.264445, 'max_time_ms': 96.368809, 'error': None, 'traceback': None}
+2025-10-30 17:51:04,673 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - values_ns has 2 values, min_ns=96264445.0, mean_ns=96316627.0
+2025-10-30 17:51:04,673 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - min_time_ms=96.264445, mean_time_ms=96.316627
+2025-10-30 17:51:04,673 - INFO - time_execution_ns EXIT: func='oracle_wrapper'. Final success: True, Runs executed: 2/2. Error: None
+2025-10-30 17:51:04,677 - INFO - BENCHMARK_DEBUG: Using min_time_ms for elapsed time
+2025-10-30 17:51:04,677 - INFO - BaselineManager: Problem 42 oracle time: 96.264445ms (regular)
+2025-10-30 17:51:04,677 - INFO - BaselineManager: Running oracle benchmark for 43
+2025-10-30 17:51:04,677 - INFO - run_benchmark starting for 'oracle_wrapper' (runs=2, warmups=1, timeout=60.0s) - Execution: direct, Timeout: threading
+2025-10-30 17:51:04,677 - INFO - Running 'oracle_wrapper' directly with threading timeout 60.0s
+2025-10-30 17:51:04,680 - INFO - BLAS thread configuration set to 96 threads (exported via ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')).
+2025-10-30 17:51:04,680 - INFO - time_execution_ns ENTER: func='oracle_wrapper', requested_warmups=1, requested_runs=2, capture_output=False
+2025-10-30 17:51:04,680 - INFO - time_execution_ns: Starting warmup phase for 'oracle_wrapper' (1 iterations).
+2025-10-30 17:51:04,784 - INFO - time_execution_ns: Warmup phase for 'oracle_wrapper' finished. Warmup success: True. Error (if any): None
+2025-10-30 17:51:04,784 - INFO - time_execution_ns: Starting measurement runs for 'oracle_wrapper' (requested: 2).
+2025-10-30 17:51:04,979 - INFO - time_execution_ns: Finished measurement phase for 'oracle_wrapper'. Total runs executed: 2/2.
+2025-10-30 17:51:04,980 - INFO - time_execution_ns: Calculating statistics for 'oracle_wrapper' with 2 successful runs
+2025-10-30 17:51:04,980 - INFO - time_execution_ns: Stats for 'oracle_wrapper' (ms): Mean=96.455, Median=96.455, Min=95.539, Max=97.371
+2025-10-30 17:51:04,980 - INFO - time_execution_ns: All 2 measurement runs were successful for 'oracle_wrapper'. Setting success=True.
+2025-10-30 17:51:04,980 - INFO - time_execution_ns: Checking result size for potential stripping to avoid memory issues
+2025-10-30 17:51:04,980 - INFO - time_execution_ns: Always replacing solver result with summary (size: 0.00MB) to prevent memory waste.
+2025-10-30 17:51:04,980 - INFO - time_execution_ns: Replaced solver result with summary: {'type': "<class 'dict'>", 'size_mb': 0.0, 'stripped_in_timing': True, 'length': 2}
+2025-10-30 17:51:04,980 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: Final results from time_execution_ns for 'oracle_wrapper': {'success': True, 'values_ns': [95539187, 97370865], 'num_runs_executed': 2, 'mean_ns': 96455026.0, 'median_ns': 96455026.0, 'stddev_ns': 1295191.934750213, 'min_ns': 95539187.0, 'max_ns': 97370865.0, 'mean_time_ms': 96.455026, 'median_time_ms': 96.455026, 'stddev_time_ms': None, 'min_time_ms': 95.539187, 'max_time_ms': 97.370865, 'error': None, 'traceback': None}
+2025-10-30 17:51:04,980 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - values_ns has 2 values, min_ns=95539187.0, mean_ns=96455026.0
+2025-10-30 17:51:04,980 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - min_time_ms=95.539187, mean_time_ms=96.455026
+2025-10-30 17:51:04,980 - INFO - time_execution_ns EXIT: func='oracle_wrapper'. Final success: True, Runs executed: 2/2. Error: None
+2025-10-30 17:51:04,984 - INFO - BENCHMARK_DEBUG: Using min_time_ms for elapsed time
+2025-10-30 17:51:04,984 - INFO - BaselineManager: Problem 43 oracle time: 95.539187ms (regular)
+2025-10-30 17:51:04,984 - INFO - BaselineManager: Running oracle benchmark for 44
+2025-10-30 17:51:04,984 - INFO - run_benchmark starting for 'oracle_wrapper' (runs=2, warmups=1, timeout=60.0s) - Execution: direct, Timeout: threading
+2025-10-30 17:51:04,985 - INFO - Running 'oracle_wrapper' directly with threading timeout 60.0s
+2025-10-30 17:51:04,987 - INFO - BLAS thread configuration set to 96 threads (exported via ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')).
+2025-10-30 17:51:04,987 - INFO - time_execution_ns ENTER: func='oracle_wrapper', requested_warmups=1, requested_runs=2, capture_output=False
+2025-10-30 17:51:04,987 - INFO - time_execution_ns: Starting warmup phase for 'oracle_wrapper' (1 iterations).
+2025-10-30 17:51:05,091 - INFO - time_execution_ns: Warmup phase for 'oracle_wrapper' finished. Warmup success: True. Error (if any): None
+2025-10-30 17:51:05,091 - INFO - time_execution_ns: Starting measurement runs for 'oracle_wrapper' (requested: 2).
+2025-10-30 17:51:05,300 - INFO - time_execution_ns: Finished measurement phase for 'oracle_wrapper'. Total runs executed: 2/2.
+2025-10-30 17:51:05,301 - INFO - time_execution_ns: Calculating statistics for 'oracle_wrapper' with 2 successful runs
+2025-10-30 17:51:05,301 - INFO - time_execution_ns: Stats for 'oracle_wrapper' (ms): Mean=103.673, Median=103.673, Min=95.732, Max=111.614
+2025-10-30 17:51:05,301 - INFO - time_execution_ns: All 2 measurement runs were successful for 'oracle_wrapper'. Setting success=True.
+2025-10-30 17:51:05,301 - INFO - time_execution_ns: Checking result size for potential stripping to avoid memory issues
+2025-10-30 17:51:05,301 - INFO - time_execution_ns: Always replacing solver result with summary (size: 0.00MB) to prevent memory waste.
+2025-10-30 17:51:05,301 - INFO - time_execution_ns: Replaced solver result with summary: {'type': "<class 'dict'>", 'size_mb': 0.0, 'stripped_in_timing': True, 'length': 2}
+2025-10-30 17:51:05,301 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: Final results from time_execution_ns for 'oracle_wrapper': {'success': True, 'values_ns': [111613811, 95731518], 'num_runs_executed': 2, 'mean_ns': 103672664.5, 'median_ns': 103672664.5, 'stddev_ns': 11230477.081091635, 'min_ns': 95731518.0, 'max_ns': 111613811.0, 'mean_time_ms': 103.6726645, 'median_time_ms': 103.6726645, 'stddev_time_ms': None, 'min_time_ms': 95.731518, 'max_time_ms': 111.613811, 'error': None, 'traceback': None}
+2025-10-30 17:51:05,301 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - values_ns has 2 values, min_ns=95731518.0, mean_ns=103672664.5
+2025-10-30 17:51:05,301 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - min_time_ms=95.731518, mean_time_ms=103.6726645
+2025-10-30 17:51:05,301 - INFO - time_execution_ns EXIT: func='oracle_wrapper'. Final success: True, Runs executed: 2/2. Error: None
+2025-10-30 17:51:05,305 - INFO - BENCHMARK_DEBUG: Using min_time_ms for elapsed time
+2025-10-30 17:51:05,305 - INFO - BaselineManager: Problem 44 oracle time: 95.731518ms (regular)
+2025-10-30 17:51:05,305 - INFO - BaselineManager: Running oracle benchmark for 45
+2025-10-30 17:51:05,305 - INFO - run_benchmark starting for 'oracle_wrapper' (runs=2, warmups=1, timeout=60.0s) - Execution: direct, Timeout: threading
+2025-10-30 17:51:05,306 - INFO - Running 'oracle_wrapper' directly with threading timeout 60.0s
+2025-10-30 17:51:05,308 - INFO - BLAS thread configuration set to 96 threads (exported via ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')).
+2025-10-30 17:51:05,308 - INFO - time_execution_ns ENTER: func='oracle_wrapper', requested_warmups=1, requested_runs=2, capture_output=False
+2025-10-30 17:51:05,308 - INFO - time_execution_ns: Starting warmup phase for 'oracle_wrapper' (1 iterations).
+2025-10-30 17:51:05,412 - INFO - time_execution_ns: Warmup phase for 'oracle_wrapper' finished. Warmup success: True. Error (if any): None
+2025-10-30 17:51:05,412 - INFO - time_execution_ns: Starting measurement runs for 'oracle_wrapper' (requested: 2).
+2025-10-30 17:51:05,606 - INFO - time_execution_ns: Finished measurement phase for 'oracle_wrapper'. Total runs executed: 2/2.
+2025-10-30 17:51:05,606 - INFO - time_execution_ns: Calculating statistics for 'oracle_wrapper' with 2 successful runs
+2025-10-30 17:51:05,606 - INFO - time_execution_ns: Stats for 'oracle_wrapper' (ms): Mean=95.938, Median=95.938, Min=95.368, Max=96.509
+2025-10-30 17:51:05,606 - INFO - time_execution_ns: All 2 measurement runs were successful for 'oracle_wrapper'. Setting success=True.
+2025-10-30 17:51:05,606 - INFO - time_execution_ns: Checking result size for potential stripping to avoid memory issues
+2025-10-30 17:51:05,606 - INFO - time_execution_ns: Always replacing solver result with summary (size: 0.00MB) to prevent memory waste.
+2025-10-30 17:51:05,606 - INFO - time_execution_ns: Replaced solver result with summary: {'type': "<class 'dict'>", 'size_mb': 0.0, 'stripped_in_timing': True, 'length': 2}
+2025-10-30 17:51:05,606 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: Final results from time_execution_ns for 'oracle_wrapper': {'success': True, 'values_ns': [95367538, 96508709], 'num_runs_executed': 2, 'mean_ns': 95938123.5, 'median_ns': 95938123.5, 'stddev_ns': 806929.7525934336, 'min_ns': 95367538.0, 'max_ns': 96508709.0, 'mean_time_ms': 95.9381235, 'median_time_ms': 95.9381235, 'stddev_time_ms': None, 'min_time_ms': 95.367538, 'max_time_ms': 96.508709, 'error': None, 'traceback': None}
+2025-10-30 17:51:05,606 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - values_ns has 2 values, min_ns=95367538.0, mean_ns=95938123.5
+2025-10-30 17:51:05,607 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - min_time_ms=95.367538, mean_time_ms=95.9381235
+2025-10-30 17:51:05,607 - INFO - time_execution_ns EXIT: func='oracle_wrapper'. Final success: True, Runs executed: 2/2. Error: None
+2025-10-30 17:51:05,611 - INFO - BENCHMARK_DEBUG: Using min_time_ms for elapsed time
+2025-10-30 17:51:05,611 - INFO - BaselineManager: Problem 45 oracle time: 95.367538ms (regular)
+2025-10-30 17:51:05,611 - INFO - BaselineManager: Running oracle benchmark for 46
+2025-10-30 17:51:05,611 - INFO - run_benchmark starting for 'oracle_wrapper' (runs=2, warmups=1, timeout=60.0s) - Execution: direct, Timeout: threading
+2025-10-30 17:51:05,611 - INFO - Running 'oracle_wrapper' directly with threading timeout 60.0s
+2025-10-30 17:51:05,614 - INFO - BLAS thread configuration set to 96 threads (exported via ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')).
+2025-10-30 17:51:05,614 - INFO - time_execution_ns ENTER: func='oracle_wrapper', requested_warmups=1, requested_runs=2, capture_output=False
+2025-10-30 17:51:05,614 - INFO - time_execution_ns: Starting warmup phase for 'oracle_wrapper' (1 iterations).
+2025-10-30 17:51:05,717 - INFO - time_execution_ns: Warmup phase for 'oracle_wrapper' finished. Warmup success: True. Error (if any): None
+2025-10-30 17:51:05,717 - INFO - time_execution_ns: Starting measurement runs for 'oracle_wrapper' (requested: 2).
+2025-10-30 17:51:05,914 - INFO - time_execution_ns: Finished measurement phase for 'oracle_wrapper'. Total runs executed: 2/2.
+2025-10-30 17:51:05,914 - INFO - time_execution_ns: Calculating statistics for 'oracle_wrapper' with 2 successful runs
+2025-10-30 17:51:05,914 - INFO - time_execution_ns: Stats for 'oracle_wrapper' (ms): Mean=97.456, Median=97.456, Min=96.174, Max=98.737
+2025-10-30 17:51:05,914 - INFO - time_execution_ns: All 2 measurement runs were successful for 'oracle_wrapper'. Setting success=True.
+2025-10-30 17:51:05,914 - INFO - time_execution_ns: Checking result size for potential stripping to avoid memory issues
+2025-10-30 17:51:05,914 - INFO - time_execution_ns: Always replacing solver result with summary (size: 0.00MB) to prevent memory waste.
+2025-10-30 17:51:05,914 - INFO - time_execution_ns: Replaced solver result with summary: {'type': "<class 'dict'>", 'size_mb': 0.0, 'stripped_in_timing': True, 'length': 2}
+2025-10-30 17:51:05,914 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: Final results from time_execution_ns for 'oracle_wrapper': {'success': True, 'values_ns': [98737466, 96173717], 'num_runs_executed': 2, 'mean_ns': 97455591.5, 'median_ns': 97455591.5, 'stddev_ns': 1812844.30316023, 'min_ns': 96173717.0, 'max_ns': 98737466.0, 'mean_time_ms': 97.4555915, 'median_time_ms': 97.4555915, 'stddev_time_ms': None, 'min_time_ms': 96.173717, 'max_time_ms': 98.737466, 'error': None, 'traceback': None}
+2025-10-30 17:51:05,914 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - values_ns has 2 values, min_ns=96173717.0, mean_ns=97455591.5
+2025-10-30 17:51:05,914 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - min_time_ms=96.173717, mean_time_ms=97.4555915
+2025-10-30 17:51:05,914 - INFO - time_execution_ns EXIT: func='oracle_wrapper'. Final success: True, Runs executed: 2/2. Error: None
+2025-10-30 17:51:05,918 - INFO - BENCHMARK_DEBUG: Using min_time_ms for elapsed time
+2025-10-30 17:51:05,919 - INFO - BaselineManager: Problem 46 oracle time: 96.173717ms (regular)
+2025-10-30 17:51:05,919 - INFO - BaselineManager: Running oracle benchmark for 47
+2025-10-30 17:51:05,919 - INFO - run_benchmark starting for 'oracle_wrapper' (runs=2, warmups=1, timeout=60.0s) - Execution: direct, Timeout: threading
+2025-10-30 17:51:05,919 - INFO - Running 'oracle_wrapper' directly with threading timeout 60.0s
+2025-10-30 17:51:05,921 - INFO - BLAS thread configuration set to 96 threads (exported via ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')).
+2025-10-30 17:51:05,921 - INFO - time_execution_ns ENTER: func='oracle_wrapper', requested_warmups=1, requested_runs=2, capture_output=False
+2025-10-30 17:51:05,922 - INFO - time_execution_ns: Starting warmup phase for 'oracle_wrapper' (1 iterations).
+2025-10-30 17:51:06,024 - INFO - time_execution_ns: Warmup phase for 'oracle_wrapper' finished. Warmup success: True. Error (if any): None
+2025-10-30 17:51:06,024 - INFO - time_execution_ns: Starting measurement runs for 'oracle_wrapper' (requested: 2).
+2025-10-30 17:51:06,218 - INFO - time_execution_ns: Finished measurement phase for 'oracle_wrapper'. Total runs executed: 2/2.
+2025-10-30 17:51:06,218 - INFO - time_execution_ns: Calculating statistics for 'oracle_wrapper' with 2 successful runs
+2025-10-30 17:51:06,218 - INFO - time_execution_ns: Stats for 'oracle_wrapper' (ms): Mean=95.682, Median=95.682, Min=95.184, Max=96.180
+2025-10-30 17:51:06,218 - INFO - time_execution_ns: All 2 measurement runs were successful for 'oracle_wrapper'. Setting success=True.
+2025-10-30 17:51:06,218 - INFO - time_execution_ns: Checking result size for potential stripping to avoid memory issues
+2025-10-30 17:51:06,218 - INFO - time_execution_ns: Always replacing solver result with summary (size: 0.00MB) to prevent memory waste.
+2025-10-30 17:51:06,218 - INFO - time_execution_ns: Replaced solver result with summary: {'type': "<class 'dict'>", 'size_mb': 0.0, 'stripped_in_timing': True, 'length': 2}
+2025-10-30 17:51:06,218 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: Final results from time_execution_ns for 'oracle_wrapper': {'success': True, 'values_ns': [95184095, 96180328], 'num_runs_executed': 2, 'mean_ns': 95682211.5, 'median_ns': 95682211.5, 'stddev_ns': 704443.1099418178, 'min_ns': 95184095.0, 'max_ns': 96180328.0, 'mean_time_ms': 95.6822115, 'median_time_ms': 95.6822115, 'stddev_time_ms': None, 'min_time_ms': 95.184095, 'max_time_ms': 96.180328, 'error': None, 'traceback': None}
+2025-10-30 17:51:06,218 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - values_ns has 2 values, min_ns=95184095.0, mean_ns=95682211.5
+2025-10-30 17:51:06,218 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - min_time_ms=95.184095, mean_time_ms=95.6822115
+2025-10-30 17:51:06,219 - INFO - time_execution_ns EXIT: func='oracle_wrapper'. Final success: True, Runs executed: 2/2. Error: None
+2025-10-30 17:51:06,223 - INFO - BENCHMARK_DEBUG: Using min_time_ms for elapsed time
+2025-10-30 17:51:06,223 - INFO - BaselineManager: Running oracle benchmark for 48
+2025-10-30 17:51:06,223 - INFO - run_benchmark starting for 'oracle_wrapper' (runs=2, warmups=1, timeout=60.0s) - Execution: direct, Timeout: threading
+2025-10-30 17:51:06,223 - INFO - Running 'oracle_wrapper' directly with threading timeout 60.0s
+2025-10-30 17:51:06,225 - INFO - BLAS thread configuration set to 96 threads (exported via ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')).
+2025-10-30 17:51:06,226 - INFO - time_execution_ns ENTER: func='oracle_wrapper', requested_warmups=1, requested_runs=2, capture_output=False
+2025-10-30 17:51:06,226 - INFO - time_execution_ns: Starting warmup phase for 'oracle_wrapper' (1 iterations).
+2025-10-30 17:51:06,329 - INFO - time_execution_ns: Warmup phase for 'oracle_wrapper' finished. Warmup success: True. Error (if any): None
+2025-10-30 17:51:06,329 - INFO - time_execution_ns: Starting measurement runs for 'oracle_wrapper' (requested: 2).
+2025-10-30 17:51:06,531 - INFO - time_execution_ns: Finished measurement phase for 'oracle_wrapper'. Total runs executed: 2/2.
+2025-10-30 17:51:06,531 - INFO - time_execution_ns: Calculating statistics for 'oracle_wrapper' with 2 successful runs
+2025-10-30 17:51:06,531 - INFO - time_execution_ns: Stats for 'oracle_wrapper' (ms): Mean=99.861, Median=99.861, Min=98.826, Max=100.896
+2025-10-30 17:51:06,531 - INFO - time_execution_ns: All 2 measurement runs were successful for 'oracle_wrapper'. Setting success=True.
+2025-10-30 17:51:06,531 - INFO - time_execution_ns: Checking result size for potential stripping to avoid memory issues
+2025-10-30 17:51:06,531 - INFO - time_execution_ns: Always replacing solver result with summary (size: 0.00MB) to prevent memory waste.
+2025-10-30 17:51:06,531 - INFO - time_execution_ns: Replaced solver result with summary: {'type': "<class 'dict'>", 'size_mb': 0.0, 'stripped_in_timing': True, 'length': 2}
+2025-10-30 17:51:06,531 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: Final results from time_execution_ns for 'oracle_wrapper': {'success': True, 'values_ns': [98825600, 100895852], 'num_runs_executed': 2, 'mean_ns': 99860726.0, 'median_ns': 99860726.0, 'stddev_ns': 1463889.2279650124, 'min_ns': 98825600.0, 'max_ns': 100895852.0, 'mean_time_ms': 99.860726, 'median_time_ms': 99.860726, 'stddev_time_ms': None, 'min_time_ms': 98.8256, 'max_time_ms': 100.895852, 'error': None, 'traceback': None}
+2025-10-30 17:51:06,531 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - values_ns has 2 values, min_ns=98825600.0, mean_ns=99860726.0
+2025-10-30 17:51:06,531 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - min_time_ms=98.8256, mean_time_ms=99.860726
+2025-10-30 17:51:06,531 - INFO - time_execution_ns EXIT: func='oracle_wrapper'. Final success: True, Runs executed: 2/2. Error: None
+2025-10-30 17:51:06,536 - INFO - BENCHMARK_DEBUG: Using min_time_ms for elapsed time
+2025-10-30 17:51:06,536 - INFO - BaselineManager: Running oracle benchmark for 49
+2025-10-30 17:51:06,536 - INFO - run_benchmark starting for 'oracle_wrapper' (runs=2, warmups=1, timeout=60.0s) - Execution: direct, Timeout: threading
+2025-10-30 17:51:06,536 - INFO - Running 'oracle_wrapper' directly with threading timeout 60.0s
+2025-10-30 17:51:06,539 - INFO - BLAS thread configuration set to 96 threads (exported via ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')).
+2025-10-30 17:51:06,539 - INFO - time_execution_ns ENTER: func='oracle_wrapper', requested_warmups=1, requested_runs=2, capture_output=False
+2025-10-30 17:51:06,539 - INFO - time_execution_ns: Starting warmup phase for 'oracle_wrapper' (1 iterations).
+2025-10-30 17:51:06,652 - INFO - time_execution_ns: Warmup phase for 'oracle_wrapper' finished. Warmup success: True. Error (if any): None
+2025-10-30 17:51:06,652 - INFO - time_execution_ns: Starting measurement runs for 'oracle_wrapper' (requested: 2).
+2025-10-30 17:51:06,849 - INFO - time_execution_ns: Finished measurement phase for 'oracle_wrapper'. Total runs executed: 2/2.
+2025-10-30 17:51:06,849 - INFO - time_execution_ns: Calculating statistics for 'oracle_wrapper' with 2 successful runs
+2025-10-30 17:51:06,849 - INFO - time_execution_ns: Stats for 'oracle_wrapper' (ms): Mean=97.426, Median=97.426, Min=97.320, Max=97.532
+2025-10-30 17:51:06,850 - INFO - time_execution_ns: All 2 measurement runs were successful for 'oracle_wrapper'. Setting success=True.
+2025-10-30 17:51:06,850 - INFO - time_execution_ns: Checking result size for potential stripping to avoid memory issues
+2025-10-30 17:51:06,850 - INFO - time_execution_ns: Always replacing solver result with summary (size: 0.00MB) to prevent memory waste.
+2025-10-30 17:51:06,850 - INFO - time_execution_ns: Replaced solver result with summary: {'type': "<class 'dict'>", 'size_mb': 0.0, 'stripped_in_timing': True, 'length': 2}
+2025-10-30 17:51:06,850 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: Final results from time_execution_ns for 'oracle_wrapper': {'success': True, 'values_ns': [97319885, 97532312], 'num_runs_executed': 2, 'mean_ns': 97426098.5, 'median_ns': 97426098.5, 'stddev_ns': 150208.57220711472, 'min_ns': 97319885.0, 'max_ns': 97532312.0, 'mean_time_ms': 97.4260985, 'median_time_ms': 97.4260985, 'stddev_time_ms': None, 'min_time_ms': 97.319885, 'max_time_ms': 97.532312, 'error': None, 'traceback': None}
+2025-10-30 17:51:06,850 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - values_ns has 2 values, min_ns=97319885.0, mean_ns=97426098.5
+2025-10-30 17:51:06,850 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - min_time_ms=97.319885, mean_time_ms=97.4260985
+2025-10-30 17:51:06,850 - INFO - time_execution_ns EXIT: func='oracle_wrapper'. Final success: True, Runs executed: 2/2. Error: None
+2025-10-30 17:51:06,854 - INFO - BENCHMARK_DEBUG: Using min_time_ms for elapsed time
+2025-10-30 17:51:06,854 - INFO - BaselineManager: Running oracle benchmark for 50
+2025-10-30 17:51:06,854 - INFO - run_benchmark starting for 'oracle_wrapper' (runs=2, warmups=1, timeout=60.0s) - Execution: direct, Timeout: threading
+2025-10-30 17:51:06,854 - INFO - Running 'oracle_wrapper' directly with threading timeout 60.0s
+2025-10-30 17:51:06,857 - INFO - BLAS thread configuration set to 96 threads (exported via ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')).
+2025-10-30 17:51:06,857 - INFO - time_execution_ns ENTER: func='oracle_wrapper', requested_warmups=1, requested_runs=2, capture_output=False
+2025-10-30 17:51:06,857 - INFO - time_execution_ns: Starting warmup phase for 'oracle_wrapper' (1 iterations).
+2025-10-30 17:51:06,963 - INFO - time_execution_ns: Warmup phase for 'oracle_wrapper' finished. Warmup success: True. Error (if any): None
+2025-10-30 17:51:06,963 - INFO - time_execution_ns: Starting measurement runs for 'oracle_wrapper' (requested: 2).
+2025-10-30 17:51:07,162 - INFO - time_execution_ns: Finished measurement phase for 'oracle_wrapper'. Total runs executed: 2/2.
+2025-10-30 17:51:07,162 - INFO - time_execution_ns: Calculating statistics for 'oracle_wrapper' with 2 successful runs
+2025-10-30 17:51:07,162 - INFO - time_execution_ns: Stats for 'oracle_wrapper' (ms): Mean=97.954, Median=97.954, Min=97.275, Max=98.633
+2025-10-30 17:51:07,162 - INFO - time_execution_ns: All 2 measurement runs were successful for 'oracle_wrapper'. Setting success=True.
+2025-10-30 17:51:07,162 - INFO - time_execution_ns: Checking result size for potential stripping to avoid memory issues
+2025-10-30 17:51:07,162 - INFO - time_execution_ns: Always replacing solver result with summary (size: 0.00MB) to prevent memory waste.
+2025-10-30 17:51:07,162 - INFO - time_execution_ns: Replaced solver result with summary: {'type': "<class 'dict'>", 'size_mb': 0.0, 'stripped_in_timing': True, 'length': 2}
+2025-10-30 17:51:07,162 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: Final results from time_execution_ns for 'oracle_wrapper': {'success': True, 'values_ns': [97274927, 98633062], 'num_runs_executed': 2, 'mean_ns': 97953994.5, 'median_ns': 97953994.5, 'stddev_ns': 960346.4682667917, 'min_ns': 97274927.0, 'max_ns': 98633062.0, 'mean_time_ms': 97.9539945, 'median_time_ms': 97.9539945, 'stddev_time_ms': None, 'min_time_ms': 97.274927, 'max_time_ms': 98.633062, 'error': None, 'traceback': None}
+2025-10-30 17:51:07,162 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - values_ns has 2 values, min_ns=97274927.0, mean_ns=97953994.5
+2025-10-30 17:51:07,162 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - min_time_ms=97.274927, mean_time_ms=97.9539945
+2025-10-30 17:51:07,162 - INFO - time_execution_ns EXIT: func='oracle_wrapper'. Final success: True, Runs executed: 2/2. Error: None
+2025-10-30 17:51:07,167 - INFO - BENCHMARK_DEBUG: Using min_time_ms for elapsed time
+2025-10-30 17:51:07,167 - INFO - BaselineManager: Running oracle benchmark for 51
+2025-10-30 17:51:07,167 - INFO - run_benchmark starting for 'oracle_wrapper' (runs=2, warmups=1, timeout=60.0s) - Execution: direct, Timeout: threading
+2025-10-30 17:51:07,167 - INFO - Running 'oracle_wrapper' directly with threading timeout 60.0s
+2025-10-30 17:51:07,170 - INFO - BLAS thread configuration set to 96 threads (exported via ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')).
+2025-10-30 17:51:07,170 - INFO - time_execution_ns ENTER: func='oracle_wrapper', requested_warmups=1, requested_runs=2, capture_output=False
+2025-10-30 17:51:07,170 - INFO - time_execution_ns: Starting warmup phase for 'oracle_wrapper' (1 iterations).
+2025-10-30 17:51:07,275 - INFO - time_execution_ns: Warmup phase for 'oracle_wrapper' finished. Warmup success: True. Error (if any): None
+2025-10-30 17:51:07,275 - INFO - time_execution_ns: Starting measurement runs for 'oracle_wrapper' (requested: 2).
+2025-10-30 17:51:07,480 - INFO - time_execution_ns: Finished measurement phase for 'oracle_wrapper'. Total runs executed: 2/2.
+2025-10-30 17:51:07,480 - INFO - time_execution_ns: Calculating statistics for 'oracle_wrapper' with 2 successful runs
+2025-10-30 17:51:07,481 - INFO - time_execution_ns: Stats for 'oracle_wrapper' (ms): Mean=101.319, Median=101.319, Min=98.360, Max=104.278
+2025-10-30 17:51:07,481 - INFO - time_execution_ns: All 2 measurement runs were successful for 'oracle_wrapper'. Setting success=True.
+2025-10-30 17:51:07,481 - INFO - time_execution_ns: Checking result size for potential stripping to avoid memory issues
+2025-10-30 17:51:07,481 - INFO - time_execution_ns: Always replacing solver result with summary (size: 0.00MB) to prevent memory waste.
+2025-10-30 17:51:07,481 - INFO - time_execution_ns: Replaced solver result with summary: {'type': "<class 'dict'>", 'size_mb': 0.0, 'stripped_in_timing': True, 'length': 2}
+2025-10-30 17:51:07,481 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: Final results from time_execution_ns for 'oracle_wrapper': {'success': True, 'values_ns': [98359796, 104277697], 'num_runs_executed': 2, 'mean_ns': 101318746.5, 'median_ns': 101318746.5, 'stddev_ns': 4184587.9274906507, 'min_ns': 98359796.0, 'max_ns': 104277697.0, 'mean_time_ms': 101.3187465, 'median_time_ms': 101.3187465, 'stddev_time_ms': None, 'min_time_ms': 98.359796, 'max_time_ms': 104.277697, 'error': None, 'traceback': None}
+2025-10-30 17:51:07,481 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - values_ns has 2 values, min_ns=98359796.0, mean_ns=101318746.5
+2025-10-30 17:51:07,481 - INFO - TIME_EXECUTION_NS_EXIT_DEBUG: SUCCESS CASE - min_time_ms=98.359796, mean_time_ms=101.3187465
+2025-10-30 17:51:07,481 - INFO - time_execution_ns EXIT: func='oracle_wrapper'. Final success: True, Runs executed: 2/2. Error: None
+2025-10-30 17:51:07,485 - INFO - BENCHMARK_DEBUG: Using min_time_ms for elapsed time
+2025-10-30 17:51:07,485 - INFO - BaselineManager: Generated baseline times for 10 out of 10 problems
+2025-10-30 17:51:07,485 - INFO - Generated 10 baseline times
+2025-10-30 17:51:07,486 - INFO - Sample baseline times: {'42': 96.264445, '43': 95.539187, '44': 95.731518}
+2025-10-30 17:51:07,523 - INFO - Cached 10 baseline times for train
+2025-10-30 17:51:07,523 - INFO - BaselineManager.get_baseline_times completed, returning to caller
+2025-10-30 17:51:07,523 - INFO - Got baseline times from BaselineManager: 10 entries
+2025-10-30 17:51:07,523 - INFO - Baseline times available: 10 entries
+2025-10-30 17:51:07,523 - INFO - Sample baseline keys: ['42', '43', '44', '45', '46']
+2025-10-30 17:51:07,523 - INFO - Problem 1: item_id='42', baseline_time=96.264445
+2025-10-30 17:51:07,708 - INFO - Problem 2: item_id='43', baseline_time=95.539187
+2025-10-30 17:51:07,866 - INFO - Problem 3: item_id='44', baseline_time=95.731518
+2025-10-30 17:51:08,011 - INFO - Problem 4: item_id='45', baseline_time=95.367538
+2025-10-30 17:51:08,165 - INFO - Problem 5: item_id='46', baseline_time=96.173717
+2025-10-30 17:51:09,054 - INFO - Starting evaluation of 10 problems for task aes_gcm_encryption
+2025-10-30 17:51:09,054 - INFO - DEBUG_BASELINE: baseline_times parameter type: <class 'dict'>
+2025-10-30 17:51:09,054 - INFO - DEBUG_BASELINE: baseline_times has 10 entries
+2025-10-30 17:51:09,054 - INFO - DEBUG_BASELINE: sample keys: ['42', '43', '44', '45', '46']
+2025-10-30 17:51:09,054 - INFO - Evaluating problem 1/10: 42
+2025-10-30 17:51:09,054 - INFO - DEBUG_BASELINE: Looking up problem_id '42' (type: <class 'str'>)
+2025-10-30 17:51:09,054 - INFO - DEBUG_BASELINE: Lookup result: 96.264445
+2025-10-30 17:51:09,054 - INFO - SolverExecutor.execute: is_daemon=False, use_isolated=True
+2025-10-30 17:51:09,054 - INFO - Using process pool for efficient isolated execution
+2025-10-30 17:51:09,054 - INFO - [TIMEOUT_DEBUG_ISO] run_isolated_benchmark called with timeout_seconds=10.000s
+Using primary model: o3
+Applied CLI model overrides - active models:
+  Model 1: o3 (weight: 1.0)
+Process SyncManager-1:
+Traceback (most recent call last):
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/multiprocessing/managers.py", line 594, in _run_server
+    writer.send(server.address)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/multiprocessing/connection.py", line 206, in send
+    self._send_bytes(_ForkingPickler.dumps(obj))
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/multiprocessing/connection.py", line 411, in _send_bytes
+    self._send(header + buf)
+  File "/home/zhangqi/.conda/envs/env/lib/python3.10/multiprocessing/connection.py", line 368, in _send
+    n = write(self._handle, buf)
+BrokenPipeError: [Errno 32] Broken pipe

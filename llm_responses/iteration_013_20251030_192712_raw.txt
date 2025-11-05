@@ -1,0 +1,50 @@
+The current implementation recreates an `AESGCM` object on every call, which is unnecessary overhead when the same key appears repeatedly.  
+I'll add a small in-memory cache so each distinct key only constructs its cipher once, and keep the rest of the logic minimal and branch-free.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Valid AES key lengths (bytes) and fixed GCM-tag length
+_VALID_KEY_SIZES = {16, 24, 32}
+_TAG_LEN = 16
+
+
+class Solver:
+    """
+    AES-GCM encryption solver expected by the evaluation harness.
+
+    A tiny per-process cache avoids rebuilding AESGCM objects when the same
+    key is reused, giving a noticeable speed-up on small inputs while adding
+    virtually zero complexity.
+    """
+
+    __slots__ = ()  # no per-instance __dict__
+
+    # Simple global cache (max ~32 entries to stay tiny)
+    _cipher_cache: Dict[bytes, AESGCM] = {}
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        key: bytes = problem["key"]
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("AES key length must be 16, 24 or 32 bytes.")
+
+        # Fetch or build the AESGCM object for this key
+        aes = self._cipher_cache.get(key)
+        if aes is None:
+            aes = AESGCM(key)
+            if len(self._cipher_cache) < 32:  # cap cache size
+                self._cipher_cache[key] = aes
+
+        ct_tag = aes.encrypt(
+            problem["nonce"],
+            problem["plaintext"],
+            problem.get("associated_data") or None,  # pass None if empty / missing
+        )
+
+        # Split ciphertext and authentication tag (last 16 bytes)
+        return {
+            "ciphertext": ct_tag[:-_TAG_LEN],
+            "tag": ct_tag[-_TAG_LEN:],
+        }
+```

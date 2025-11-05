@@ -1062,16 +1062,46 @@ def evaluate_code_on_dataset(
         logging.info(f"Attached {len(attributed_results.invalid_solution_analysis)} invalid solution analysis entries (from {len(all_invalid_analyses)} total)")
     
     # Calculate and attach aggregate metrics across all results
+    import statistics
+    
     num_evaluated = len(all_results)
     num_valid = sum(1 for r in all_results if r.get("is_valid", False))
     num_errors = sum(1 for r in all_results if r.get("error") is not None)
+    num_timeouts = sum(1 for r in all_results if r.get("timeout_occurred", False))
+    
+    # Calculate speedups
+    speedups = [r["speedup"] for r in all_results if r.get("speedup") is not None and r["speedup"] != float('inf')]
+    mean_speedup = statistics.mean(speedups) if speedups else None
+    median_speedup = statistics.median(speedups) if speedups else None
+    
+    # Calculate average times (note: legacy format uses solver_min_time_ms, not solver_time_ms)
+    solver_times = [r.get("solver_min_time_ms") or r.get("min_time_ms") for r in all_results if r.get("solver_min_time_ms") is not None or r.get("min_time_ms") is not None]
+    baseline_times = [r["baseline_time_ms"] for r in all_results if r.get("baseline_time_ms") is not None]
+    
+    avg_solver_time = statistics.mean(solver_times) if solver_times else None
+    avg_baseline_time = statistics.mean(baseline_times) if baseline_times else None
+    
+    # Calculate total runtime speedup (paper method)
+    total_solver_time = sum(solver_times) if solver_times else 0
+    total_baseline_time = sum(baseline_times) if baseline_times else 0
+    total_runtime_speedup = total_baseline_time / total_solver_time if total_solver_time > 0 else None
     
     attributed_results.aggregate_metrics = {
         "num_evaluated": num_evaluated,
         "num_valid": num_valid,
         "num_errors": num_errors,
+        "num_timeouts": num_timeouts,
         "accuracy": num_valid / num_evaluated if num_evaluated > 0 else 0,
+        "success_rate": (num_evaluated - num_errors) / num_evaluated if num_evaluated > 0 else 0,
+        "mean_speedup": mean_speedup,
+        "median_speedup": median_speedup,
+        "avg_solver_time_ms": avg_solver_time,
+        "avg_oracle_time_ms": avg_baseline_time,
+        "total_runtime_speedup": total_runtime_speedup,
     }
+    
+    # Log computed metrics for verification
+    logging.info(f"Aggregate metrics computed: mean_speedup={mean_speedup}, avg_solver_time_ms={avg_solver_time}, total_runtime_speedup={total_runtime_speedup}")
     
     logging.info(
         f"Evaluation complete. Valid: {attributed_results.aggregate_metrics.get('num_valid', 0)}/{attributed_results.aggregate_metrics.get('num_evaluated', 0)}"

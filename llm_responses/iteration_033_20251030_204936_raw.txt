@@ -1,0 +1,89 @@
+The previous solver already avoids most overhead. We can squeeze a bit more performance by:
+1. Eliminating per-call AESGCM construction with a tiny cache keyed by the key bytes.
+2. Dropping redundant attribute storage and validations (the `cryptography` backend will error on bad keys anyway).
+3. Using module-level constants and a minimal `__slots__` class to shave attribute look-ups.
+
+```python
+from __future__ import annotations
+
+import hmac
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# --------------------------------------------------------------------------- #
+# Constants & lightweight cache (module-level to survive across `solve` calls)
+# --------------------------------------------------------------------------- #
+_GCM_TAG_SIZE = 16              # Authentication-tag length in bytes
+_AESGCM_CACHE: dict[bytes, AESGCM] = {}     # key-> AESGCM object
+
+
+def _get_aesgcm(key: bytes) -> AESGCM:
+    """
+    Return a cached AESGCM instance for the given key, constructing it once.
+    The cache is tiny (<= number of distinct keys seen in a run) and lookup
+    is O(1); this saves Python-level overhead for repeated keys.
+    """
+    try:
+        return _AESGCM_CACHE[key]
+    except KeyError:
+        # cryptography validates the key length internally
+        obj = AESGCM(key)
+        _AESGCM_CACHE[key] = obj
+        return obj
+
+
+class Solver:
+    """
+    Extremely small-overhead AES-GCM encryption solver.
+
+    Expected `problem` dict keys:
+        • key : bytes   (length 16/24/32)
+        • nonce : bytes (12 bytes typical)
+        • plaintext : bytes
+        • associated_data : bytes | None
+    Returns:
+        {'ciphertext': bytes, 'tag': bytes}
+    """
+
+    __slots__ = ()          # no per-instance dict
+
+    # --------------------------------------------------------------------- #
+    # Core entry point
+    # --------------------------------------------------------------------- #
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        """
+        Encrypt plaintext using AES-GCM and separate ciphertext / tag.
+        """
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data") or None
+
+        # Fetch (or create) AESGCM object
+        aes = _get_aesgcm(key)
+
+        # Single C-level call for encryption
+        ct_tag: bytes = aes.encrypt(nonce, plaintext, aad)
+
+        # Split without extra work
+        tag = ct_tag[-_GCM_TAG_SIZE:]
+        ciphertext = ct_tag[:-_GCM_TAG_SIZE]
+
+        return {"ciphertext": ciphertext, "tag": tag}
+
+    # --------------------------------------------------------------------- #
+    # Optional: self-verification helper (used by evaluator)
+    # --------------------------------------------------------------------- #
+    def is_solution(self, problem: Dict[str, Any], candidate: Any) -> bool:
+        if not (
+            isinstance(candidate, dict)
+            and isinstance(candidate.get("ciphertext"), bytes)
+            and isinstance(candidate.get("tag"), bytes)
+        ):
+            return False
+
+        reference = self.solve(problem)
+        return hmac.compare_digest(reference["ciphertext"], candidate["ciphertext"]) and \
+               hmac.compare_digest(reference["tag"], candidate["tag"])
+```

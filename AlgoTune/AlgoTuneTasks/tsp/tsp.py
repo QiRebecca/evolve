@@ -80,6 +80,7 @@ class TravelingSalesman(Task):
         solver = cp_model.CpSolver()
         # solver.parameters.max_time_in_seconds = 60.0
         solver.parameters.log_search_progress = True
+        solver.parameters.num_workers = 24  # Limit workers to prevent thread allocation failure
         status = solver.Solve(model)
 
         if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):

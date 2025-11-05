@@ -1,0 +1,52 @@
+The main cost in the baseline is constructing a new `AESGCM` object every call.  
+I’ll introduce an LRU-cached helper that reuses (and automatically bounds) `AESGCM`
+instances keyed by the raw key bytes, eliminating that construction overhead while
+keeping the rest of the logic identical.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Length (bytes) of the GCM authentication tag that cryptography appends
+_GCM_TAG_SIZE = 16
+# Valid AES key sizes
+_AES_KEY_SIZES = {16, 24, 32}
+
+
+@lru_cache(maxsize=256)
+def _get_cipher(key: bytes) -> AESGCM:
+    """
+    Return a cached AESGCM instance for the given key.
+    The LRU cache automatically bounds memory usage and handles thread-safety.
+    """
+    if len(key) not in _AES_KEY_SIZES:  # very cheap guard
+        raise ValueError("Unsupported AES key length.")
+    return AESGCM(key)
+
+
+class Solver:
+    """
+    High-performance AES-GCM encryptor that matches the baseline output but
+    avoids recreating AESGCM objects for the same key.
+    """
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:  # noqa: D401
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data", None)  # may be None or bytes
+
+        # Re-use cipher from the bounded LRU cache
+        aesgcm = _get_cipher(key)
+
+        # cryptography returns ciphertext||tag in one blob
+        ct_and_tag = aesgcm.encrypt(nonce, plaintext, aad)
+
+        # Split into ciphertext and tag (constant 16-byte tag)
+        return {
+            "ciphertext": ct_and_tag[:-_GCM_TAG_SIZE],
+            "tag": ct_and_tag[-_GCM_TAG_SIZE:],
+        }
+```

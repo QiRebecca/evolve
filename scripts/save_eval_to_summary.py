@@ -10,28 +10,345 @@ Usage:
         --summary-file results/eval_summary.json
 
 This script:
-1. Runs evaluation using generation.json baseline
-2. Saves/updates results in agent_summary.json format
-3. Supports multiple models per task
+1. Loads per-problem baselines from test_baseline.json (TEST dataset, required)
+2. Evaluates solver on TEST dataset with 10 runs per problem
+3. Calculates speedup = mean([baseline_i / solver_i]) (AlgoTune official method)
+4. Saves/updates results in summary JSON format
+5. Supports multiple models per task
+
+Prerequisites:
+1. Generate TEST baseline first: ./run_generate_test_baseline.sh
+2. Then run this script
 """
 
 import argparse
 import json
 import logging
 import sys
+import os
+import time
+import statistics
+import importlib.util
+import glob
 from pathlib import Path
 from datetime import datetime
+from typing import Dict, Any, List
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "AlgoTune"))
 
-from scripts.final_eval_with_generation_baseline import (
-    load_baseline_from_generation,
-    evaluate_solver_on_test,
-    calculate_final_metrics
-)
+from AlgoTuneTasks.factory import TaskFactory
+from AlgoTuner.utils.discover_and_list_tasks import discover_and_import_tasks
+from AlgoTuner.utils.serialization import dataset_decoder
+
+
+def load_per_problem_baselines(generation_file: Path, task_name: str) -> List[float]:
+    """
+    Load per-problem baseline times from test_baseline.json.
+    
+    Args:
+        generation_file: Path to generation.json (used to locate test_baseline.json)
+        task_name: Name of the task
+        
+    Returns:
+        List of baseline times (ms) for each problem
+    """
+    test_baseline_file = generation_file.parent / 'test_baseline.json'
+    
+    if not test_baseline_file.exists():
+        raise FileNotFoundError(
+            f"test_baseline.json not found at {test_baseline_file}\n"
+            f"Please run ./run_generate_test_baseline.sh first to generate TEST baseline."
+        )
+    
+    logging.info(f"Loading per-problem baselines from {test_baseline_file}")
+    
+    with open(test_baseline_file, 'r') as f:
+        data = json.load(f)
+    
+    if task_name not in data:
+        raise ValueError(f"Task '{task_name}' not found in {test_baseline_file}")
+    
+    task_data = data[task_name]
+    
+    if 'problem_min_times' not in task_data:
+        raise ValueError(f"'problem_min_times' not found in test_baseline.json for task '{task_name}'")
+    
+    per_problem_baselines = task_data['problem_min_times']
+    
+    logging.info(f"Loaded {len(per_problem_baselines)} per-problem baselines")
+    logging.info(f"  First 3 problems: {[f'{b:.2f}ms' for b in per_problem_baselines[:3]]}")
+    logging.info(f"  Overall mean: {statistics.mean(per_problem_baselines):.4f}ms")
+    
+    return per_problem_baselines
+
+
+def evaluate_solver_on_test(
+    solver_path: str,
+    task_name: str,
+    data_dir: Path,
+    num_runs: int = 10
+) -> Dict[str, Any]:
+    """
+    Evaluate solver on TEST dataset with specified number of runs.
+    
+    Args:
+        solver_path: Path to solver.py
+        task_name: Name of the task
+        data_dir: Data directory
+        num_runs: Number of runs per problem (default 10 for test)
+        
+    Returns:
+        Dictionary with solver times for each problem
+    """
+    discover_and_import_tasks()
+    
+    task_instance = TaskFactory(task_name, data_dir=str(data_dir))
+    task_instance.task_name = task_name
+    
+    logging.info(f"Loading TEST dataset for {task_name}")
+    
+    dataset_split = os.environ.get('ALGO_TUNE_SPLIT', 'test').lower()
+    
+    data_files = glob.glob(str(data_dir / "**" / f"{task_name}*_{dataset_split}.jsonl"), recursive=True)
+    if not data_files:
+        data_files = glob.glob(str(data_dir / f"{task_name}" / f"*_{dataset_split}.jsonl"))
+    
+    if not data_files:
+        raise FileNotFoundError(f"No {dataset_split} JSONL file found for {task_name} in {data_dir}")
+    
+    test_file = data_files[0]
+    logging.info(f"Loading {dataset_split.upper()} data from: {test_file}")
+    
+    test_base_dir = os.path.dirname(test_file)
+    
+    test_dataset = []
+    with open(test_file, 'r') as f:
+        for line in f:
+            if line.strip():
+                raw_data = json.loads(line)
+                decoded_data = dataset_decoder(raw_data, base_dir=test_base_dir)
+                if 'problem' in decoded_data:
+                    test_dataset.append(decoded_data['problem'])
+                else:
+                    test_dataset.append(decoded_data)
+    
+    logging.info(f"Loaded {len(test_dataset)} test problems from file")
+    
+    logging.info(f"Loading solver from: {solver_path}")
+    spec = importlib.util.spec_from_file_location("solver_module", solver_path)
+    if spec is None:
+        raise ValueError(f"Could not load spec from {solver_path}")
+    
+    solver_module = importlib.util.module_from_spec(spec)
+    sys.modules['solver_module'] = solver_module
+    
+    try:
+        spec.loader.exec_module(solver_module)
+    except Exception as e:
+        logging.error(f"Failed to execute module: {e}")
+        raise
+    
+    logging.info(f"Module attributes: {[a for a in dir(solver_module) if not a.startswith('_')]}")
+    
+    if hasattr(solver_module, 'Solver'):
+        solver_instance = solver_module.Solver()
+        logging.info("Using standalone Solver class")
+    else:
+        task_classes = [
+            getattr(solver_module, attr) 
+            for attr in dir(solver_module) 
+            if not attr.startswith('_') and hasattr(getattr(solver_module, attr), 'solve')
+        ]
+        
+        if not task_classes:
+            raise AttributeError(
+                f"Module loaded from {solver_path} does not contain 'Solver' class or Task class with solve() method. "
+                f"Available attributes: {[a for a in dir(solver_module) if not a.startswith('_')]}"
+            )
+        
+        task_class = task_classes[0]
+        logging.info(f"Using Task class: {task_class.__name__}")
+        solver_instance = task_class(data_dir=str(data_dir))
+        solver_instance.task_name = task_name
+    
+    solver_results = []
+    
+    for idx, problem_data in enumerate(test_dataset):
+        problem = problem_data.get('problem', problem_data)
+        problem_id = problem_data.get('id', f'problem_{idx+1}')
+        
+        logging.info(f"Evaluating problem {idx+1}/{len(test_dataset)} (ID: {problem_id})")
+        
+        try:
+            times_ns = []
+            
+            # Warmup run
+            _ = solver_instance.solve(problem)
+            
+            # Timed runs
+            for run_idx in range(num_runs):
+                t0 = time.perf_counter_ns()
+                result = solver_instance.solve(problem)
+                elapsed_ns = time.perf_counter_ns() - t0
+                times_ns.append(elapsed_ns)
+            
+            min_ns = min(times_ns)
+            mean_ns = statistics.mean(times_ns)
+            min_time_ms = min_ns / 1e6
+            mean_time_ms = mean_ns / 1e6
+            
+            is_valid = task_instance.is_solution(problem, result)
+            
+            solver_results.append({
+                'problem_id': problem_id,
+                'min_time_ms': min_time_ms,
+                'mean_time_ms': mean_time_ms,
+                'times_ms': [t / 1e6 for t in times_ns],
+                'is_valid': is_valid,
+                'num_runs': num_runs,
+                'error': None,
+                'status': 'success'
+            })
+            
+            logging.info(
+                f"  Problem {problem_id}: min={min_time_ms:.2f}ms, "
+                f"mean={mean_time_ms:.2f}ms, valid={is_valid}"
+            )
+        
+        except Exception as e:
+            error_msg = f"{type(e).__name__}: {str(e)}"
+            logging.error(f"  Problem {problem_id} FAILED: {error_msg}")
+            
+            solver_results.append({
+                'problem_id': problem_id,
+                'min_time_ms': None,
+                'mean_time_ms': None,
+                'times_ms': [],
+                'is_valid': False,
+                'num_runs': 0,
+                'error': error_msg,
+                'status': 'failed'
+            })
+    
+    return {
+        'results': solver_results,
+        'num_problems': len(test_dataset)
+    }
+
+
+def calculate_final_metrics(
+    per_problem_baselines: List[float],
+    solver_results: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    """
+    Calculate final metrics using AlgoTune official methodology.
+    
+    AlgoTune official method:
+    1. For each problem: calculate speedup_i = baseline_i / solver_i
+    2. final_speedup = mean([speedup_1, speedup_2, ..., speedup_N])
+    
+    Args:
+        per_problem_baselines: List of baseline times for each problem
+        solver_results: List of solver evaluation results
+        
+    Returns:
+        Dictionary with metrics
+    """
+    num_problems = len(solver_results)
+    num_valid = sum(1 for r in solver_results if r['is_valid'])
+    num_failed = sum(1 for r in solver_results if r['status'] == 'failed')
+    num_success = sum(1 for r in solver_results if r['status'] == 'success')
+    
+    if len(per_problem_baselines) != num_problems:
+        raise ValueError(
+            f"Mismatch: {len(per_problem_baselines)} baselines but {num_problems} solver results"
+        )
+    
+    # Build detailed problem results
+    problem_details = []
+    per_problem_speedups = []
+    successful_solver_times = []
+    
+    for i in range(num_problems):
+        baseline_i = per_problem_baselines[i]
+        result = solver_results[i]
+        
+        problem_detail = {
+            'problem_id': result['problem_id'],
+            'baseline_time_ms': baseline_i,
+            'solver_time_ms': result['min_time_ms'],
+            'is_valid': result['is_valid'],
+            'status': result['status'],
+            'error': result['error']
+        }
+        
+        # Only calculate speedup for successful runs
+        if result['status'] == 'success' and result['min_time_ms'] is not None and result['min_time_ms'] > 0:
+            speedup_i = baseline_i / result['min_time_ms']
+            problem_detail['speedup'] = speedup_i
+            per_problem_speedups.append(speedup_i)
+            successful_solver_times.append(result['min_time_ms'])
+        else:
+            problem_detail['speedup'] = None
+        
+        problem_details.append(problem_detail)
+    
+    # Calculate aggregate metrics only from successful problems
+    if per_problem_speedups:
+        final_speedup = statistics.mean(per_problem_speedups)
+        median_speedup = statistics.median(per_problem_speedups)
+    else:
+        final_speedup = 0.0
+        median_speedup = 0.0
+    
+    baseline_avg_min_ms = statistics.mean(per_problem_baselines)
+    
+    if successful_solver_times:
+        solver_avg_min_ms = statistics.mean(successful_solver_times)
+        solver_std_min_ms = statistics.stdev(successful_solver_times) if len(successful_solver_times) > 1 else 0.0
+    else:
+        solver_avg_min_ms = 0.0
+        solver_std_min_ms = 0.0
+    
+    metrics = {
+        'speedup': final_speedup,
+        'baseline_avg_min_ms': baseline_avg_min_ms,
+        'solver_avg_min_ms': solver_avg_min_ms,
+        'solver_std_min_ms': solver_std_min_ms,
+        'mean_per_problem_speedup': final_speedup,
+        'median_per_problem_speedup': median_speedup,
+        'num_problems': num_problems,
+        'num_success': num_success,
+        'num_failed': num_failed,
+        'num_valid': num_valid,
+        'accuracy': num_valid / num_problems if num_problems > 0 else 0.0,
+        'improvement_pct': (final_speedup - 1.0) * 100,
+        'num_errors': num_problems - num_valid,
+        'num_timeouts': 0,
+        'problem_results': problem_details,
+    }
+    
+    logging.info("=" * 70)
+    logging.info("METRICS (AlgoTune Official Methodology):")
+    logging.info(f"  Final Speedup:       {final_speedup:.4f}x ⭐")
+    logging.info(f"    = mean([baseline_i / solver_i]) for successful problems")
+    logging.info(f"  Median Speedup:      {median_speedup:.4f}x")
+    logging.info(f"  Baseline avg:        {baseline_avg_min_ms:.4f}ms (reference)")
+    logging.info(f"  Solver avg:          {solver_avg_min_ms:.4f}ms (std={solver_std_min_ms:.4f})")
+    logging.info(f"  Improvement:         {metrics['improvement_pct']:+.2f}%")
+    logging.info(f"  Problems:            {num_problems} total")
+    logging.info(f"    ✓ Success:         {num_success}")
+    logging.info(f"    ✓ Valid:           {num_valid}")
+    logging.info(f"    ✗ Failed:          {num_failed}")
+    if num_failed > 0:
+        failed_ids = [p['problem_id'] for p in problem_details if p['status'] == 'failed']
+        logging.info(f"      Failed IDs:      {', '.join(failed_ids)}")
+    logging.info("=" * 70)
+    
+    return metrics
 
 
 def load_summary_json(summary_path: Path) -> dict:
@@ -59,18 +376,21 @@ def add_result_to_summary(
     """
     Add evaluation result to summary data.
     
-    Format:
+    Format (aligned with baseline generation logic):
     {
         "task_name": {
             "model_name": {
-                "final_speedup": "1.0234",
+                "speedup": "1.0234",  # mean([baseline_i / solver_i]) ⭐ AlgoTune official
                 "accuracy": "1.0000",
-                "mean_speedup": "1.0234",
-                "median_speedup": "1.0234",
+                "baseline_avg_min_ms": "98.9890",
+                "solver_avg_min_ms": "96.5000",
+                "solver_std_min_ms": "1.2345",
+                "mean_per_problem_speedup": "1.0250",
+                "median_per_problem_speedup": "1.0200",
                 "num_valid": 10,
                 "num_evaluated": 10,
-                "total_runtime_speedup": "1.0234",
-                "eval_date": "2025-10-30"
+                "improvement_pct": "+2.34",
+                "eval_date": "2025-10-31"
             }
         }
     }
@@ -81,28 +401,41 @@ def add_result_to_summary(
     
     # Format the result (convert floats to strings like in agent_summary.json)
     result = {
-        "final_speedup": f"{metrics['total_runtime_speedup']:.4f}",
+        "speedup": f"{metrics['speedup']:.4f}",  # Main speedup (mean of per-problem speedups)
         "accuracy": f"{metrics['accuracy']:.4f}",
-        "mean_speedup": f"{metrics['mean_speedup']:.4f}",
-        "median_speedup": f"{metrics['median_speedup']:.4f}",
+        "baseline_avg_min_ms": f"{metrics['baseline_avg_min_ms']:.4f}",
+        "solver_avg_min_ms": f"{metrics['solver_avg_min_ms']:.4f}",
+        "solver_std_min_ms": f"{metrics['solver_std_min_ms']:.4f}",
+        "mean_per_problem_speedup": f"{metrics['mean_per_problem_speedup']:.4f}",
+        "median_per_problem_speedup": f"{metrics['median_per_problem_speedup']:.4f}",
         "num_valid": metrics['num_valid'],
         "num_evaluated": metrics['num_problems'],
+        "num_success": metrics['num_success'],
+        "num_failed": metrics['num_failed'],
         "num_errors": metrics.get('num_errors', 0),
         "num_timeouts": metrics.get('num_timeouts', 0),
-        "baseline_runtime_ms": f"{metrics['baseline_runtime_ms']:.4f}",
-        "avg_solver_time_ms": f"{metrics['avg_solver_time_ms']:.2f}",
-        "total_solver_ms": f"{metrics['total_solver_ms']:.2f}",
-        "total_baseline_ms": f"{metrics['total_baseline_ms']:.2f}",
         "improvement_pct": f"{metrics['improvement_pct']:.2f}",
         "eval_date": datetime.now().strftime("%Y-%m-%d"),
-        "eval_timestamp": datetime.now().isoformat()
+        "eval_timestamp": datetime.now().isoformat(),
+        "problem_results": [
+            {
+                "problem_id": p['problem_id'],
+                "baseline_time_ms": f"{p['baseline_time_ms']:.4f}",
+                "solver_time_ms": f"{p['solver_time_ms']:.4f}" if p['solver_time_ms'] is not None else None,
+                "speedup": f"{p['speedup']:.4f}" if p['speedup'] is not None else None,
+                "is_valid": p['is_valid'],
+                "status": p['status'],
+                "error": p['error']
+            }
+            for p in metrics['problem_results']
+        ]
     }
     
     # Add to summary
     summary_data[task_name][model_name] = result
     
     logging.info(f"Added result for {task_name} / {model_name}")
-    logging.info(f"  Final Speedup: {result['final_speedup']}x")
+    logging.info(f"  Speedup: {result['speedup']}x")
     logging.info(f"  Accuracy: {result['accuracy']}")
     
     return summary_data
@@ -171,9 +504,9 @@ def main():
     logging.info(f"Summary file: {summary_path}")
     logging.info("")
     
-    # Step 1: Load baseline from generation.json
-    logging.info("Step 1: Loading baseline from generation.json...")
-    baseline_ms = load_baseline_from_generation(generation_file, args.task)
+    # Step 1: Load per-problem baselines from test_baseline.json (required)
+    logging.info("Step 1: Loading per-problem TEST baselines...")
+    per_problem_baselines = load_per_problem_baselines(generation_file, args.task)
     logging.info("")
     
     # Step 2: Evaluate solver on TEST dataset
@@ -186,9 +519,9 @@ def main():
     )
     logging.info("")
     
-    # Step 3: Calculate final metrics
-    logging.info("Step 3: Calculating final metrics...")
-    metrics = calculate_final_metrics(baseline_ms, eval_results['results'])
+    # Step 3: Calculate final metrics (AlgoTune official: per-problem speedup)
+    logging.info("Step 3: Calculating final metrics (AlgoTune official methodology)...")
+    metrics = calculate_final_metrics(per_problem_baselines, eval_results['results'])
     logging.info("")
     
     # Step 4: Load existing summary
@@ -210,7 +543,9 @@ def main():
     logging.info("="*70)
     logging.info("✓ Evaluation complete and summary updated!")
     logging.info("="*70)
-    print(f"\n📊 Final Speedup: {metrics['total_runtime_speedup']:.4f}x")
+    print(f"\n📊 Final Speedup: {metrics['speedup']:.4f}x (AlgoTune official: mean of per-problem speedups)")
+    print(f"   Baseline avg: {metrics['baseline_avg_min_ms']:.2f}ms (reference)")
+    print(f"   Solver avg:   {metrics['solver_avg_min_ms']:.2f}ms")
     print(f"✓ Accuracy: {metrics['accuracy']:.1%}")
     print(f"📁 Summary: {summary_path}\n")
     

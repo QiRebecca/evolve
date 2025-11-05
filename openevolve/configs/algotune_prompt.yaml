@@ -3,12 +3,12 @@ llm:
   api_base: "https://api.shubiaobiao.cn/v1"
   reasoning_effort: "medium"
   models:
-    - name: "o3"
+    - name: "gpt-4o"  # 暂时改用gpt-4o，等o3 API key修复后再改回
       weight: 1.0
 
   # Reuse the same model for evaluator feedback unless overridden
   evaluator_models:
-    - name: "o3"
+    - name: "gpt-4o"  # 暂时改用gpt-4o
       weight: 1.0
 
 # Evolution settings

@@ -1,0 +1,41 @@
+The main overhead beyond the actual AES-GCM encryption was repeated object
+creation and unnecessary checks.  
+I streamlined the routine, kept a tiny per-key cache for the AESGCM objects and
+minimised Python-level work. This preserves correctness while shaving off
+micro-seconds that add up for large inputs.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# constants (module-level look-ups are fastest once)
+_TAG_LEN = 16          # GCM authentication tag size (bytes)
+_VALID_KEY_LENS = {16, 24, 32}
+
+class Solver:
+    """High-throughput AES-GCM encryptor compatible with the baseline output."""
+
+    # cache AESGCM instances so identical keys don’t rebuild context each call
+    _cache: Dict[bytes, AESGCM] = {}
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:  # noqa: D401
+        k: bytes = problem["key"]
+        n: bytes = problem["nonce"]
+        p: bytes = problem["plaintext"]
+        aad = problem.get("associated_data")  # may be None or bytes
+
+        # quick sanity check – benchmark always provides correct size, but stay safe
+        if len(k) not in _VALID_KEY_LENS:
+            raise ValueError("Unsupported AES key length.")
+
+        aes = self._cache.get(k)
+        if aes is None:                 # first time we see this key
+            aes = AESGCM(k)
+            self._cache[k] = aes
+
+        combined = aes.encrypt(n, p, aad)  # ciphertext || tag
+        return {
+            "ciphertext": combined[:-_TAG_LEN],
+            "tag": combined[-_TAG_LEN:],
+        }
+```

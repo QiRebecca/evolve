@@ -93,6 +93,7 @@ class MaxCommonSubgraph(Task):
         model.Maximize(sum(x[i][p] for i in range(n) for p in range(m)))
 
         solver = cp_model.CpSolver()
+        solver.parameters.num_workers = 24  # Limit workers to prevent thread allocation failure
         status = solver.Solve(model)
 
         if status == cp_model.OPTIMAL:

@@ -1,0 +1,52 @@
+Streamlined the implementation by removing unnecessary logging, exception wrappers, and redundant checks, focusing solely on the essential encryption steps for maximal speed.
+
+```python
+from typing import Any
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+
+class Solver:
+    """
+    Fast AES-GCM encryption solver.
+
+    Given a problem dictionary containing:
+        • key              (bytes)
+        • nonce            (bytes)
+        • plaintext        (bytes)
+        • associated_data  (bytes | None)
+
+    the solver returns a dictionary with:
+        • ciphertext (bytes) – encrypted plaintext (without tag)
+        • tag        (bytes) – 16-byte GCM authentication tag
+    """
+
+    __slots__ = ()
+
+    _VALID_KEY_SIZES = {16, 24, 32}  # AES-128, AES-192, AES-256
+    _TAG_SIZE = 16                   # bytes
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        # Extract inputs (direct access is faster than .get with default)
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        associated_data = problem["associated_data"]
+
+        # Minimal key-size validation (micro-seconds, keeps behaviour identical)
+        if len(key) not in self._VALID_KEY_SIZES:
+            raise ValueError(
+                f"Invalid AES key length {len(key)}; "
+                f"supported sizes: {sorted(self._VALID_KEY_SIZES)} bytes."
+            )
+
+        # Perform encryption
+        encrypted: bytes = AESGCM(key).encrypt(nonce, plaintext, associated_data)
+
+        # Split ciphertext and tag (tag is always the last 16 bytes)
+        tag_start = len(encrypted) - self._TAG_SIZE
+        return {
+            "ciphertext": encrypted[:tag_start],
+            "tag": encrypted[tag_start:],
+        }
+```

@@ -85,6 +85,7 @@ class MultiDimKnapsack(Task):
         model.Maximize(sum(x[i] * problem.value[i] for i in range(n)))
 
         solver = cp_model.CpSolver()
+        solver.parameters.num_workers = 24  # Limit workers to prevent thread allocation failure
         status = solver.Solve(model)
 
         if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):

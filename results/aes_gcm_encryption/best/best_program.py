@@ -1,59 +1,62 @@
-from functools import lru_cache
 from typing import Any, Dict
-
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-# Accepted AES key lengths in bytes
-_AES_KEY_SIZES = {16, 24, 32}
-_GCM_TAG_SIZE = 16  # bytes
+# ---------------------------------------------------------------------------
+# Fast-path constants and cache (module-local for quickest lookup)
+# ---------------------------------------------------------------------------
+_VALID_KEY_SIZES = {16, 24, 32}   # Allowed AES key lengths (bytes)
+_TAG_LEN = 16                     # Size of GCM authentication tag (bytes)
 
-
-@lru_cache(maxsize=256)
-def _get_cipher(key: bytes) -> AESGCM:
-    """
-    Return a cached AESGCM object for the given key to avoid the
-    overhead of repeatedly constructing identical cipher instances.
-    """
-    # Convert to immutable bytes to ensure hashability even if a bytearray is passed
-    return AESGCM(bytes(key))
+# Re-use AESGCM objects for identical keys to skip re-initialisation overhead.
+# Capped to a modest size to avoid unbounded memory growth.
+_AESGCM_CACHE: Dict[bytes, AESGCM] = {}
 
 
 class Solver:
     """
-    Fast AES-GCM encryption solver.
+    High-performance AES-GCM encryptor.
 
-    The evaluate harness calls `solve(problem)` where `problem` is a dict with:
-        key: bytes  (16/24/32 bytes)
-        nonce: bytes  (12 bytes typical)
-        plaintext: bytes
-        associated_data: bytes or None
-    The method must return {'ciphertext': bytes, 'tag': bytes}
+    Expected input dictionary keys:
+        • key : bytes            (16/24/32 bytes)
+        • nonce : bytes          (unique per encryption)
+        • plaintext : bytes      (data to encrypt)
+        • associated_data : bytes | None (optional AAD)
+
+    Returns a dict with:
+        • ciphertext : bytes – encrypted data (tag removed)
+        • tag        : bytes – 16-byte authentication tag
     """
 
-    __slots__ = ()  # prevent per-instance __dict__ creation
+    __slots__ = ()  # prevent per-instance attribute dict
 
-    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:
-        # Fast local variable lookups
-        key: bytes = problem["key"]
-        nonce: bytes = problem["nonce"]
-        plaintext: bytes = problem["plaintext"]
-        aad: bytes | None = problem.get("associated_data", None)
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        # Local alias for minimum attribute/dict look-ups
+        p = problem
 
-        # Quick key length validation (raises early on misuse)
-        if len(key) not in _AES_KEY_SIZES:
-            raise ValueError("Unsupported AES key length.")
+        key: bytes = p["key"]
+        # Quick key length validation (cryptography will also check, but earlier
+        # failure avoids cipher cache pollution).
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("AES key must be 16, 24, or 32 bytes long.")
 
-        # Re-use AESGCM objects for identical keys to cut instantiation cost
-        aesgcm = _get_cipher(key)
+        # Obtain (or create) a cached AESGCM instance for this key
+        aes = _AESGCM_CACHE.get(key)
+        if aes is None:
+            aes = AESGCM(key)
+            # Simple capped cache to keep memory usage negligible
+            if len(_AESGCM_CACHE) < 128:
+                _AESGCM_CACHE[key] = aes
 
-        # Passing None instead of empty bytes avoids extra work inside cryptography
-        if not aad:
-            aad = None
+        # Fast field extraction
+        nonce: bytes = p["nonce"]
+        plaintext: bytes = p["plaintext"]
+        aad = p.get("associated_data") or None  # treat empty b'' as None
 
-        ct_and_tag = aesgcm.encrypt(nonce, plaintext, aad)
+        # Perform encryption (cryptography appends 16-byte tag to ciphertext)
+        ct_tag: bytes = aes.encrypt(nonce, plaintext, aad)
 
-        # Split ciphertext and tag (last 16 bytes)
-        ciphertext = ct_and_tag[:-_GCM_TAG_SIZE]
-        tag = ct_and_tag[-_GCM_TAG_SIZE:]
-
-        return {"ciphertext": ciphertext, "tag": tag}
+        # Split ciphertext and tag
+        return {
+            "ciphertext": ct_tag[:-_TAG_LEN],
+            "tag": ct_tag[-_TAG_LEN:],
+        }

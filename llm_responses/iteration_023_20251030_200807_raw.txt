@@ -1,0 +1,44 @@
+The current implementation includes a custom cache and some extra bookkeeping that add negligible benefit yet introduce overhead. By removing this cache, eliminating optional look-ups, and streamlining variable handling, we can shave off a bit more Python-level latency and improve overall speed.
+
+```python
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Acceptable AES key sizes (bytes) and fixed GCM tag length
+_VALID_KEY_SIZES = {16, 24, 32}
+_TAG_LEN = 16
+
+
+class Solver:
+    """
+    Fast, minimal-overhead AES-GCM encryption solver.
+
+    Expected `problem` dictionary keys:
+        • key              (bytes) – 16/24/32-byte AES key
+        • nonce            (bytes)
+        • plaintext        (bytes)
+        • associated_data  (bytes | None)
+
+    Returned dictionary:
+        • ciphertext (bytes) – encrypted data without the tag
+        • tag        (bytes) – 16-byte authentication tag
+    """
+
+    __slots__ = ()  # no per-instance __dict__
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        key: bytes = problem["key"]
+        if len(key) not in _VALID_KEY_SIZES:  # quick fail-fast validation
+            raise ValueError("AES key must be 16, 24, or 32 bytes long.")
+
+        # Perform encryption (cryptography appends the 16-byte tag to the ciphertext)
+        enc: bytes = AESGCM(key).encrypt(
+            problem["nonce"],
+            problem["plaintext"],
+            problem["associated_data"],
+        )
+
+        # Separate ciphertext and tag
+        return {"ciphertext": enc[:-_TAG_LEN], "tag": enc[-_TAG_LEN:]}
+```

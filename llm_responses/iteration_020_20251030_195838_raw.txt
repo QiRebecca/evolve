@@ -1,0 +1,63 @@
+The current solver maintains a manual cipher cache per instance. Switching to a module-level `lru_cache` (C-optimised) removes per-instance state and slightly lowers overhead while still re-using `AESGCM` objects. Minor micro-optimisations (local bindings, `__slots__`, fast key check) further streamline execution.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# ---------------------------------------------------------------------------
+# Constants (module-local for fastest access)
+# ---------------------------------------------------------------------------
+
+_VALID_KEY_SIZES = {16, 24, 32}  # Allowed AES key lengths (bytes)
+_TAG_BYTES = 16                  # Length of the GCM authentication tag
+
+
+# ---------------------------------------------------------------------------
+# Fast, C-level cached factory for AESGCM objects
+# ---------------------------------------------------------------------------
+
+@lru_cache(maxsize=64)
+def _cipher_for(key: bytes) -> AESGCM:
+    """Return (and cache) an AESGCM instance for the given key."""
+    if len(key) not in _VALID_KEY_SIZES:  # quick validation
+        raise ValueError("AES key must be 16, 24 or 32 bytes long.")
+    return AESGCM(key)
+
+
+# ---------------------------------------------------------------------------
+# Solver
+# ---------------------------------------------------------------------------
+
+class Solver:
+    """
+    Minimal, high-performance AES-GCM encryptor expected by the evaluation
+    harness. Receives a problem dict with keys:
+
+        key, nonce, plaintext, associated_data
+
+    and returns a dict with 'ciphertext' (without tag) and 'tag' (16 bytes).
+    """
+
+    __slots__ = ()  # eliminate per-instance __dict__
+
+    # The harness instantiates Solver() and calls solve(...)
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        prob = problem  # local alias (micro-optimisation)
+
+        # Fast field extraction
+        key: bytes = prob["key"]
+        nonce: bytes = prob["nonce"]
+        plaintext: bytes = prob["plaintext"]
+        aad = prob.get("associated_data")
+
+        # Retrieve cached cipher and encrypt
+        ct_tag: bytes = _cipher_for(key).encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext from 16-byte authentication tag
+        return {
+            "ciphertext": ct_tag[:-_TAG_BYTES],
+            "tag": ct_tag[-_TAG_BYTES:],
+        }
+```

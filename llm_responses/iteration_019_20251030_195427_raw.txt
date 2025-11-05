@@ -1,0 +1,52 @@
+The previous solution introduced an LRU-cache lookup on every call, which adds Python-level overhead while bringing little benefit (each key is typically used only once).  
+By eliminating that cache, avoiding extra indirections, and keeping the implementation minimal, we reduce per-call overhead and slightly improve runtime.
+
+```python
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# --------------------------------------------------------------------------- #
+# Constants                                                                   #
+# --------------------------------------------------------------------------- #
+_VALID_KEY_SIZES = {16, 24, 32}  # Supported AES key lengths in bytes
+_TAG_LEN = 16                    # GCM authentication-tag length (bytes)
+
+
+class Solver:
+    """
+    Fast AES-GCM encryptor.
+
+    The `solve` method expects a dictionary with:
+        • key              (bytes)
+        • nonce            (bytes)
+        • plaintext        (bytes)
+        • associated_data  (bytes | None)
+
+    It returns a dictionary with:
+        • ciphertext (bytes) – encrypted plaintext (without tag)
+        • tag        (bytes) – 16-byte authentication tag
+    """
+
+    __slots__ = ()  # saves a few bytes per instance by preventing __dict__
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        # Fast local bindings
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data")
+
+        # Minimal key-length validation (matches baseline semantics)
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("AES key must be 16, 24, or 32 bytes long.")
+
+        # Directly create AESGCM object; construction is cheap and avoids cache overhead
+        encrypted: bytes = AESGCM(key).encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag (tag is appended as the last 16 bytes)
+        return {
+            "ciphertext": encrypted[:-_TAG_LEN],
+            "tag": encrypted[-_TAG_LEN:]
+        }
+```

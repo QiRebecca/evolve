@@ -1,0 +1,50 @@
+A streamlined re-implementation removing all non-essential code and checks to minimize overhead while preserving correctness.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Supported AES key sizes (bytes) and fixed GCM tag size
+_AES_KEY_SIZES = {16, 24, 32}
+_TAG_SIZE = 16
+
+
+class Solver:
+    __slots__ = ()  # prevent per-instance dict allocation for tiny memory gain
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:
+        """
+        Encrypt the provided plaintext with AES-GCM.
+
+        Parameters
+        ----------
+        problem : dict
+            {
+                "key": bytes,
+                "nonce": bytes,
+                "plaintext": bytes,
+                "associated_data": bytes | None
+            }
+
+        Returns
+        -------
+        dict
+            {
+                "ciphertext": bytes,  # encrypted data (no tag)
+                "tag": bytes          # 16-byte authentication tag
+            }
+        """
+        key: bytes = problem["key"]
+        if len(key) not in _AES_KEY_SIZES:
+            # Fast failure for invalid keys
+            raise ValueError("Invalid AES key length (must be 16/24/32 bytes).")
+
+        aesgcm = AESGCM(key)
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data", None)
+
+        # cryptography appends a 16-byte tag to the end of the ciphertext
+        encrypted = aesgcm.encrypt(nonce, plaintext, aad)
+        return {"ciphertext": encrypted[:-_TAG_SIZE], "tag": encrypted[-_TAG_SIZE:]}
+```

@@ -1,0 +1,60 @@
+Optimization focus: remove superfluous logic, minimize allocations, and cache AESGCM objects so repeated keys avoid re-initialisation. Associated-data handling is simplified and list look-ups replaced with a set for O(1) membership.
+
+```python
+# solver.py
+from functools import lru_cache
+from typing import Any
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Constants
+_AES_KEY_SIZES = {16, 24, 32}          # valid AES key lengths
+_TAG_LEN = 16                          # GCM authentication-tag length (bytes)
+
+
+@lru_cache(maxsize=128)
+def _cached_aesgcm(key: bytes) -> AESGCM:
+    """Return a cached AESGCM instance for the given key bytes."""
+    return AESGCM(key)
+
+
+class Solver:
+    """
+    Fast AES-GCM encryptor.
+
+    The `solve` method receives a dictionary with the following keys:
+        - key: bytes  (16/24/32 bytes for AES-128/192/256)
+        - nonce: bytes (12-byte IV recommended)
+        - plaintext: bytes
+        - associated_data: Optional[bytes]
+
+    It returns:
+        { "ciphertext": bytes, "tag": bytes }
+    """
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        # Extract inputs (local variables for faster access)
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data", None)
+
+        # Quick key length validation (guard against misuse)
+        if len(key) not in _AES_KEY_SIZES:
+            raise ValueError("Unsupported AES key length.")
+
+        # cryptography treats empty AAD as None internally; avoid passing b'' to skip hashing
+        if not aad:
+            aad = None
+
+        # Obtain (possibly cached) cipher object and perform encryption.
+        aesgcm = _cached_aesgcm(key)
+        out = aesgcm.encrypt(nonce, plaintext, aad)
+
+        # Separate ciphertext and authentication tag without unnecessary copies
+        tag = out[-_TAG_LEN:]
+        ciphertext = out[:-_TAG_LEN]
+
+        # Return as required (bytes or memoryview both work with compare_digest; keep bytes)
+        return {"ciphertext": ciphertext, "tag": tag}
+```

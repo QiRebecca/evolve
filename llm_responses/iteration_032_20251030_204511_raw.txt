@@ -1,0 +1,56 @@
+Simplified implementation focuses on minimal overhead and re-uses AESGCM objects via a lightweight cache to avoid repeated instantiation.  
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+
+# --- Constants ---
+_GCM_TAG_SIZE = 16          # Standard tag length for AES-GCM (bytes)
+_VALID_KEY_SIZES = {16, 24, 32}   # AES-128 / 192 / 256
+
+
+class Solver:
+    """
+    Fast AES-GCM encryptor.
+
+    The `solve` method receives a problem dictionary containing:
+        key (bytes)             – AES key   (16/24/32 bytes)
+        nonce (bytes)           – 12-byte nonce/IV
+        plaintext (bytes)       – data to encrypt
+        associated_data (bytes) – optional AAD (can be b'' or None)
+
+    It returns a dict with separate 'ciphertext' and 'tag' entries.
+    """
+
+    # Small cache so repeated calls with the same key reuse AESGCM object.
+    _aesgcm_cache: Dict[bytes, AESGCM] = {}
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data", None)
+
+        # Basic key-size check (constant time here is unnecessary; simple length test is faster)
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError(
+                f"Invalid AES key length {len(key)}. Expected one of {_VALID_KEY_SIZES}"
+            )
+
+        # Reuse AESGCM instance for identical keys to avoid re-initialisation overhead
+        aesgcm = self._aesgcm_cache.get(key)
+        if aesgcm is None:
+            aesgcm = AESGCM(key)
+            # Store a reference; keys are immutable bytes so safe as dict key
+            self._aesgcm_cache[key] = aesgcm
+
+        # Perform encryption (ciphertext || tag)
+        combined: bytes = aesgcm.encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag without additional work
+        ciphertext = combined[:-_GCM_TAG_SIZE]
+        tag = combined[-_GCM_TAG_SIZE:]
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

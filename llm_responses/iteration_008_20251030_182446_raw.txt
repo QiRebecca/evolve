@@ -1,0 +1,54 @@
+Small optimization: cache the bound `encrypt` method per key to avoid recreating `AESGCM` objects and their attribute lookup on each call.  
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Size (in bytes) of the GCM authentication tag that cryptography appends
+_GCM_TAG_SIZE = 16
+
+
+class Solver:
+    """
+    AES-GCM encryptor with a micro-cache.
+
+    Creating an AESGCM instance is relatively expensive compared to the
+    actual encryption work for small/medium plaintexts.  We therefore keep
+    a tiny cache that maps the raw key bytes to the *bound* ``encrypt`` method
+    of a corresponding AESGCM instance.  This eliminates:
+
+        • object construction cost on repeated keys
+        • one extra attribute lookup per call
+
+    The behaviour (ciphertext and tag) remains identical to the baseline.
+    """
+
+    # class-wide cache: key-bytes  ->  bound encrypt method
+    _encrypt_cache: Dict[bytes, Any] = {}
+
+    def solve(self, problem: dict[str, Any], **__) -> dict[str, bytes]:
+        """
+        Encrypt ``problem["plaintext"]`` with AES-GCM and return:
+
+            {"ciphertext": <bytes>, "tag": <16-byte tag>}
+        """
+        key: bytes        = problem["key"]
+        nonce: bytes      = problem["nonce"]
+        plaintext: bytes  = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data")
+
+        # Fast retrieval (or creation) of the bound encrypt method
+        encrypt = self._encrypt_cache.get(key)
+        if encrypt is None:
+            encrypt = AESGCM(key).encrypt
+            self._encrypt_cache[key] = encrypt
+
+        # cryptography returns ciphertext || tag
+        full_ct: bytes = encrypt(nonce, plaintext, aad)
+
+        # Split without additional overhead
+        return {
+            "ciphertext": full_ct[:-_GCM_TAG_SIZE],
+            "tag":        full_ct[-_GCM_TAG_SIZE:],
+        }
+```

@@ -115,6 +115,7 @@ class QueensWithObstacles(Task):
 
         solver = cp_model.CpSolver()
         solver.parameters.log_search_progress = True
+        solver.parameters.num_workers = 24  # Limit workers to prevent thread allocation failure
         status = solver.Solve(model)
 
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:

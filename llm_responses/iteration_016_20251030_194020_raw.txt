@@ -1,0 +1,64 @@
+The current implementation leverages `functools.lru_cache`, which introduces thread-safety locks and argument hashing overhead on every call.  
+Replacing it with a very small, hand-rolled dictionary cache removes that overhead and yields a modest speed-up while preserving behaviour.  The rest of the logic stays minimal and identical to the baseline.
+
+```python
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Acceptable AES key lengths and constant GCM tag size (bytes)
+_VALID_KEY_SIZES = {16, 24, 32}
+_TAG_LEN = 16
+
+# Tiny FIFO cache: key-bytes  -> AESGCM instance (max 64 distinct keys kept)
+_AES_CACHE: Dict[bytes, AESGCM] = {}
+_CACHE_LIMIT = 64
+
+
+def _aesgcm_for(key: bytes) -> AESGCM:
+    """
+    Return an AESGCM object for the given key, caching a small number of
+    instances to avoid repeated (relatively expensive) constructions.
+    """
+    aes = _AES_CACHE.get(key)
+    if aes is None:
+        # Fast key-length validation
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("AES key must be 16, 24 or 32 bytes long.")
+        aes = AESGCM(key)
+        if len(_AES_CACHE) >= _CACHE_LIMIT:
+            # Drop an arbitrary (FIFO) item to keep cache size bounded
+            _AES_CACHE.pop(next(iter(_AES_CACHE)))
+        _AES_CACHE[key] = aes
+    return aes
+
+
+class Solver:
+    __slots__ = ()  # eliminate per-instance dict to save a few cycles/memory
+
+    def solve(self, problem: Dict[str, Any], **_) -> Dict[str, bytes]:
+        """
+        Encrypt the supplied plaintext using AES-GCM and return ciphertext
+        and tag separately (tag length fixed to 16 bytes).
+
+        Expected `problem` keys:
+            key (bytes)            – 16/24/32-byte AES key
+            nonce (bytes)          – 12-byte IV recommended for GCM
+            plaintext (bytes)      – data to encrypt
+            associated_data (bytes or None) – AAD (may be empty/None)
+        """
+        key = problem["key"]
+        aes = _aesgcm_for(key)                     # cached cipher wrapper
+
+        ct_tag = aes.encrypt(
+            problem["nonce"],
+            problem["plaintext"],
+            problem.get("associated_data"),
+        )
+
+        # Split concatenated result into (ciphertext, tag)
+        return {
+            "ciphertext": ct_tag[:-_TAG_LEN],
+            "tag": ct_tag[-_TAG_LEN:],
+        }
+```

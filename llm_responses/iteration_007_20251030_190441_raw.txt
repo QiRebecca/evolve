@@ -1,0 +1,55 @@
+Shortening and streamlining: we remove unnecessary boilerplate, avoid logging/hmac overhead, and add an LRU-cached factory for AESGCM objects to skip repeated instantiation. This keeps correctness while cutting code size and per-call latency.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Valid AES key lengths (bytes) and GCM tag length
+_VALID_KEY_SIZES = {16, 24, 32}
+_TAG_LEN = 16
+
+
+@lru_cache(maxsize=32)
+def _aesgcm_for_key(key: bytes) -> AESGCM:
+    """Return (and cache) an AESGCM instance for the given key."""
+    if len(key) not in _VALID_KEY_SIZES:
+        raise ValueError("AES key must be 16, 24 or 32 bytes long")
+    return AESGCM(key)
+
+
+class Solver:
+    __slots__ = ()  # tiny memory/perf gain; disallow per-instance __dict__
+
+    def solve(self, problem: Dict[str, Any], **_) -> Dict[str, bytes]:
+        """
+        Encrypt plaintext with AES-GCM.
+
+        Parameters
+        ----------
+        problem : dict
+            {
+                "key": bytes,
+                "nonce": bytes,
+                "plaintext": bytes,
+                "associated_data": bytes | None
+            }
+
+        Returns
+        -------
+        dict
+            {
+                "ciphertext": bytes,
+                "tag": bytes
+            }
+        """
+        key = problem["key"]
+        aesgcm = _aesgcm_for_key(key)          # cached construction
+        ct_tag = aesgcm.encrypt(
+            problem["nonce"],
+            problem["plaintext"],
+            problem.get("associated_data"),
+        )
+        return {"ciphertext": ct_tag[:-_TAG_LEN], "tag": ct_tag[-_TAG_LEN:]}
+```

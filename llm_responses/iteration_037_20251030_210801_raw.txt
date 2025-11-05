@@ -1,0 +1,57 @@
+Minor micro-optimisations are possible: remove superfluous checks and look-ups, streamline caching with `dict.setdefault`, and bind frequently-used objects to locals to reduce attribute access overhead.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+
+# --- Constants ----------------------------------------------------------------
+_VALID_KEY_SIZES = {16, 24, 32}          # AES-128 / 192 / 256
+_TAG_LEN         = 16                   # GCM authentication tag length (bytes)
+
+
+class Solver:
+    """
+    High-throughput AES-GCM encryptor.
+
+    Expected input keys in `problem`:
+        key (bytes)             – AES key   (16 / 24 / 32 bytes)
+        nonce (bytes)           – 12-byte IV / nonce
+        plaintext (bytes)       – data to encrypt
+        associated_data (bytes) – optional AAD (can be b'' or None)
+
+    Output:
+        {'ciphertext': <bytes_without_tag>, 'tag': <16-byte_tag>}
+    """
+
+    # Cache of AESGCM objects so the expensive key-schedule is reused if the same
+    # key appears again (rare but free to support).  Keys are immutable bytes so
+    # perfectly safe as dict keys.
+    _cache: Dict[bytes, AESGCM] = {}
+
+    def solve(self, problem: Dict[str, Any], **_) -> Dict[str, bytes]:  # noqa: D401
+        # Fast local variable extraction
+        key        = problem["key"]
+        nonce      = problem["nonce"]
+        plaintext  = problem["plaintext"]
+        aad        = problem.get("associated_data")  # may be None
+
+        # Cheap key-size validation
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("Unsupported AES key length")
+
+        # Re-use or create AESGCM instance
+        aesgcm = self._cache.get(key)
+        if aesgcm is None:
+            aesgcm = self._cache.setdefault(key, AESGCM(key))
+
+        # Encrypt: cryptography returns (ciphertext || tag) in one blob
+        combined = aesgcm.encrypt(nonce, plaintext, aad)
+
+        # Split without extra overhead for the small 16-byte tag
+        tag_start = len(combined) - _TAG_LEN
+        ciphertext = combined[:tag_start]
+        tag        = combined[tag_start:]
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

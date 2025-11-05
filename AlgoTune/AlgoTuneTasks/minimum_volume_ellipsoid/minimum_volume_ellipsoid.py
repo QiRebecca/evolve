@@ -76,7 +76,7 @@ class MinimumVolumeEllipsoid(Task):
         problem = cp.Problem(cp.Minimize(-cp.log_det(X)), constraint)
 
         try:
-            problem.solve(solver=cp.CLARABEL, verbose=False)
+            problem.solve(solver=cp.ECOS, verbose=False)
 
             # Check if a solution was found
             if problem.status not in ["optimal", "optimal_inaccurate"]:

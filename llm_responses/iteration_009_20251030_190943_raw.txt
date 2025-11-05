@@ -1,0 +1,88 @@
+The current implementation recreates an `AESGCM` object for every call, which incurs unnecessary overhead when the same key is reused across multiple problems.  
+I’ll add a tiny LRU-style cache for `AESGCM` instances (keyed by the raw key bytes) so subsequent encryptions with an identical key skip object construction. This simple change shaves off function-call time and gains extra speed without affecting correctness. I’ll also keep error-handling minimal and use local variables for faster access.
+
+```python
+from collections import OrderedDict
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Valid AES key sizes (bytes) and fixed GCM tag length
+_VALID_KEY_SIZES = {16, 24, 32}
+_TAG_LEN = 16
+
+# Maximum number of AESGCM objects to keep – small to bound memory
+_CACHE_CAPACITY = 64
+
+
+class _AesgcmCache(OrderedDict):
+    """
+    Very small LRU cache for AESGCM objects.
+    Keyed by the raw key bytes to avoid re-creating cipher objects when the
+    same key appears in multiple task instances.
+    """
+
+    __slots__ = ()
+
+    def get_cipher(self, key: bytes) -> AESGCM:
+        cipher = self.get(key)
+        if cipher is not None:
+            # Move to end to mark as recently used
+            self.move_to_end(key)
+            return cipher
+        # Create and cache new cipher
+        cipher = AESGCM(key)
+        self[key] = cipher
+        # Maintain bounded size (simple LRU eviction)
+        if len(self) > _CACHE_CAPACITY:
+            self.popitem(last=False)
+        return cipher
+
+
+# Instantiate a single global cache (shared across Solver instances)
+_GLOBAL_CIPHER_CACHE = _AesgcmCache()
+
+
+class Solver:
+    """
+    Fast AES-GCM encryption solver with lightweight LRU caching of AESGCM objects.
+    """
+
+    __slots__ = ()  # prevent per-instance dict allocation
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:
+        """
+        Parameters
+        ----------
+        problem : dict
+            Expected keys:
+              • key: bytes (16/24/32 bytes)
+              • nonce: bytes (12 bytes recommended)
+              • plaintext: bytes
+              • associated_data: bytes | None
+        Returns
+        -------
+        dict
+            {'ciphertext': bytes, 'tag': bytes}
+        """
+        key: bytes = problem["key"]
+        if len(key) not in _VALID_KEY_SIZES:
+            # Fail fast on invalid key length
+            raise ValueError("Unsupported AES key length (must be 16, 24, or 32 bytes)")
+
+        # Obtain (or create) cached AESGCM object
+        aesgcm = _GLOBAL_CIPHER_CACHE.get_cipher(key)
+
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data") or None  # allow missing / empty
+
+        # Perform encryption (tag appended to ciphertext)
+        ct_tag: bytes = aesgcm.encrypt(nonce, plaintext, aad)
+
+        # Split into ciphertext and tag without extra checks (encrypt always appends 16-byte tag)
+        return {
+            "ciphertext": ct_tag[:-_TAG_LEN],
+            "tag": ct_tag[-_TAG_LEN:],
+        }
+```

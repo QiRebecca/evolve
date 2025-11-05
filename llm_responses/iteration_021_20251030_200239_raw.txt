@@ -1,0 +1,59 @@
+Add memoisation to avoid recreating AESGCM objects for repeated keys and keep code minimal. This removes the per-call cipher construction cost, further improving runtime.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Valid AES key lengths (bytes) & fixed GCM tag length
+_VALID_KEY_SIZES = {16, 24, 32}
+_TAG_LEN = 16
+
+
+@lru_cache(maxsize=128)
+def _cipher_for(key: bytes) -> AESGCM:
+    """
+    Return (and cache) an AESGCM instance for the given key.
+    The lru_cache keeps up to 128 distinct keys without manual bookkeeping.
+    """
+    if len(key) not in _VALID_KEY_SIZES:
+        raise ValueError("AES key must be 16, 24 or 32 bytes long.")
+    return AESGCM(key)
+
+
+class Solver:
+    __slots__ = ()  # eliminate per-instance __dict__ for tiny speed gain
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        """
+        Encrypt `problem["plaintext"]` with AES-GCM and return
+        separate ciphertext and authentication tag.
+
+        Expected keys in `problem`:
+            key              (bytes)
+            nonce            (bytes)
+            plaintext        (bytes)
+            associated_data  (bytes | None)
+
+        Returns:
+            {
+                "ciphertext": bytes,  # encrypted data without tag
+                "tag": bytes          # 16-byte GCM authentication tag
+            }
+        """
+        # Pull locals (faster than repeated dict look-ups)
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad = problem.get("associated_data")
+
+        # Obtain cached AESGCM instance and encrypt
+        encrypted: bytes = _cipher_for(key).encrypt(nonce, plaintext, aad)
+
+        # cryptography appends the 16-byte tag to the end of the ciphertext
+        return {
+            "ciphertext": encrypted[:-_TAG_LEN],
+            "tag": encrypted[-_TAG_LEN:],
+        }
+```

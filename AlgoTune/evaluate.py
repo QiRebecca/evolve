@@ -493,9 +493,13 @@ def evaluate(program_path: str, config: Optional[Dict[str, Any]] = None) -> Eval
         baseline_to_solver_ratio = 0.0
 
     score = mean_speedup if mean_speedup > 0 else accuracy
+    
+    # Use mean_speedup as combined_score for proper comparison in OpenEvolve
+    combined_score = mean_speedup if mean_speedup > 0 else accuracy
 
     metrics = {
         "score": score,
+        "combined_score": combined_score,  # OpenEvolve uses this for ranking
         "mean_speedup": mean_speedup,
         "median_speedup": median_speedup,
         "accuracy": accuracy,

@@ -230,6 +230,7 @@ class RectanglePacking(Task):
                 solver = cp_model.CpSolver()
                 solver.parameters.max_time_in_seconds = time_limit
                 solver.parameters.log_search_progress = True
+        solver.parameters.num_workers = 24  # Limit workers to prevent thread allocation failure
                 status = solver.Solve(self.model)
                 if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
                     return self._extract_solution(solver)

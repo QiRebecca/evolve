@@ -1,0 +1,61 @@
+The previous implementation performs per-instance caching and extra checks that add minor overhead. We'll switch to a lightweight, module-level LRU-cache for `AESGCM` objects and streamline variable handling for maximal speed.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# --- Constants -------------------------------------------------------------
+_VALID_KEY_SIZES = {16, 24, 32}  # Allowed AES key lengths (bytes)
+_TAG_LEN = 16                    # GCM authentication-tag length (bytes)
+
+# --- Cached constructor ----------------------------------------------------
+
+
+@lru_cache(maxsize=64)
+def _aesgcm_for_key(key: bytes) -> AESGCM:
+    """
+    Return (and cache) an AESGCM wrapper for the given key.
+
+    The LRU cache avoids re-instantiating AESGCM when the same key is reused,
+    saving a small but measurable amount of time.
+    """
+    if len(key) not in _VALID_KEY_SIZES:
+        raise ValueError("AES key must be 16, 24 or 32 bytes long")
+    return AESGCM(key)
+
+
+# --- Solver ----------------------------------------------------------------
+
+
+class Solver:
+    """
+    Minimal AES-GCM encryption solver.
+
+    Input  (problem dict):
+        key              – bytes
+        nonce            – bytes
+        plaintext        – bytes
+        associated_data  – bytes | None
+
+    Output (dict):
+        ciphertext – bytes  (encrypted data without tag)
+        tag        – bytes  (16-byte authentication tag)
+    """
+
+    __slots__ = ()  # eliminate per-instance __dict__
+
+    # The evaluator calls this method repeatedly; keep it ultra-lean.
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        key = problem["key"]
+        nonce = problem["nonce"]
+        plaintext = problem["plaintext"]
+        aad = problem.get("associated_data")
+
+        # Fetch cached AESGCM instance and encrypt
+        enc = _aesgcm_for_key(key).encrypt(nonce, plaintext, aad)
+
+        # Split off the tag appended by cryptography (last 16 bytes)
+        return {"ciphertext": enc[:-_TAG_LEN], "tag": enc[-_TAG_LEN:]}
+```

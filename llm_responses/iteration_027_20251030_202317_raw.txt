@@ -1,0 +1,64 @@
+The original implementation includes extensive task-framework scaffolding and redundant checks that add overhead.  
+I’ll streamline the code to only what the evaluator needs: a minimal `Solver` class with a fast `solve` method.  
+Key optimizations:  
+• Remove unused framework/registration code and extra logging.  
+• Use a tiny helper to cache `AESGCM` objects per key to avoid rebuilding the cipher when the same key recurs.  
+• Keep validation minimal and eliminate superfluous try/except blocks.  
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+
+# Constants
+_VALID_KEY_SIZES = {16, 24, 32}
+_TAG_LEN = 16  # bytes
+
+
+class Solver:
+    """
+    Fast AES-GCM encryption solver.
+
+    The method expects a problem dict with keys:
+      - 'key' : bytes of length 16/24/32
+      - 'nonce' : bytes (typically 12 bytes for GCM)
+      - 'plaintext' : bytes to be encrypted
+      - 'associated_data' : optional bytes (may be None or b'')
+    It returns a dict with:
+      - 'ciphertext' : encrypted bytes
+      - 'tag'        : 16-byte authentication tag
+    """
+
+    # Cache AESGCM objects per key to avoid repeated key-schedule setups
+    _cipher_cache: Dict[bytes, AESGCM] = {}
+
+    @classmethod
+    def _cipher_for_key(cls, key: bytes) -> AESGCM:
+        """Return a cached AESGCM object for the given key."""
+        try:
+            return cls._cipher_cache[key]
+        except KeyError:
+            cipher = AESGCM(key)
+            cls._cipher_cache[key] = cipher
+            return cipher
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data", None)
+
+        # Minimal validation
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("Invalid AES key length.")
+
+        # Obtain (or create) cipher and encrypt
+        aesgcm = self._cipher_for_key(key)
+        ct_with_tag = aesgcm.encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag (last 16 bytes)
+        return {
+            "ciphertext": ct_with_tag[:-_TAG_LEN],
+            "tag": ct_with_tag[-_TAG_LEN:],
+        }
+```

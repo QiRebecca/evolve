@@ -1,0 +1,73 @@
+The previous implementation unnecessarily duplicated the ciphertext when splitting the tag from AESGCM’s combined output.  
+By switching to the lower-level Cipher / GCM API we obtain the ciphertext and tag separately in a single pass, avoiding this extra copy.  
+We keep lightweight validation and cache the AES key schedule for further speed-ups.
+
+```python
+from typing import Any
+from functools import lru_cache
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+
+# --------------------------------------------------------------------------- #
+#  Constants
+# --------------------------------------------------------------------------- #
+_VALID_KEY_SIZES = {16, 24, 32}   # Valid AES key lengths in bytes
+_TAG_LEN = 16                     # GCM authentication tag size (bytes)
+
+
+# --------------------------------------------------------------------------- #
+#  Caches
+# --------------------------------------------------------------------------- #
+@lru_cache(maxsize=128)
+def _cached_algorithm(key: bytes) -> algorithms.AES:        # noqa: D401
+    """Return (and cache) an AES algorithm object for *key*."""
+    return algorithms.AES(key)
+
+
+# --------------------------------------------------------------------------- #
+#  Solver
+# --------------------------------------------------------------------------- #
+class Solver:
+    """
+    Fast AES-GCM encryption solver.
+
+    Problem dict keys:
+        key              : bytes (16/24/32)
+        nonce            : bytes (usually 12)
+        plaintext        : bytes
+        associated_data  : bytes | None
+
+    Returns:
+        dict with 'ciphertext' and 'tag' (both bytes).
+    """
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        # Unpack inputs
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data", None)
+
+        # Minimal validation
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("Invalid AES key length.")
+
+        # Retrieve cached AES algorithm (key schedule)
+        algorithm = _cached_algorithm(key)
+
+        # Build Cipher with fresh GCM mode (depends on unique nonce each call)
+        encryptor = Cipher(algorithm, modes.GCM(nonce)).encryptor()
+
+        # Optional AAD
+        if aad:
+            encryptor.authenticate_additional_data(aad)
+
+        # Encrypt in a single update call (faster for contiguous plaintext)
+        ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+
+        # Extract authentication tag directly (no extra slicing copy)
+        tag = encryptor.tag  # already 16-byte bytes object
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

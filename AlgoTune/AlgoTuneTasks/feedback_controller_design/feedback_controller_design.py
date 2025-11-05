@@ -82,7 +82,7 @@ class FeedbackControllerDesign(Task):
         prob = cp.Problem(objective, constraints)
 
         try:
-            prob.solve(solver=cp.CLARABEL)
+            prob.solve(solver=cp.ECOS)
 
             if prob.status in ["optimal", "optimal_inaccurate"]:
                 K_value = L.value @ np.linalg.inv(Q.value)

@@ -1,0 +1,70 @@
+Simplified the implementation by removing unnecessary boilerplate and focusing on the core encryption logic while preserving functionality.
+
+```python
+from typing import Any, Dict
+import hmac
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Constants
+_AES_KEY_SIZES = {16, 24, 32}         # Valid AES key lengths
+_GCM_TAG_SIZE = 16                    # Bytes
+
+
+class Solver:
+    """
+    AES-GCM encryption solver.
+
+    The `solve` method expects a dictionary with:
+        • key   : bytes (16/24/32 bytes)
+        • nonce : bytes (recommended 12 bytes)
+        • plaintext : bytes
+        • associated_data : bytes | None
+    and returns:
+        {'ciphertext': bytes, 'tag': bytes}
+    """
+
+    @staticmethod
+    def _validate_key(key: bytes) -> None:
+        if len(key) not in _AES_KEY_SIZES:
+            raise ValueError(
+                f"Invalid AES key length {len(key)}; must be one of {_AES_KEY_SIZES}"
+            )
+
+    def solve(self, problem: Dict[str, Any], **_) -> Dict[str, bytes]:
+        """
+        Encrypt plaintext with AES-GCM and split out the tag.
+        """
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data") or None
+
+        # 1) Fast sanity check for key size
+        self._validate_key(key)
+
+        # 2) Perform encryption (cryptography does the heavy lifting in C)
+        ct_and_tag: bytes = AESGCM(key).encrypt(nonce, plaintext, aad)
+
+        # 3) Split ciphertext and tag without extra copies (slicing a bytes object reuses data)
+        ciphertext = ct_and_tag[:-_GCM_TAG_SIZE]
+        tag = ct_and_tag[-_GCM_TAG_SIZE:]
+
+        return {"ciphertext": ciphertext, "tag": tag}
+
+    # Optional helper (used by evaluator for self-verification)
+    def is_solution(self, problem: Dict[str, Any], candidate: Any) -> bool:
+        """
+        Verify candidate output using constant-time comparison.
+        """
+        if not (
+            isinstance(candidate, dict)
+            and isinstance(candidate.get("ciphertext"), bytes)
+            and isinstance(candidate.get("tag"), bytes)
+        ):
+            return False
+
+        ref = self.solve(problem)
+        return hmac.compare_digest(ref["ciphertext"], candidate["ciphertext"]) and \
+               hmac.compare_digest(ref["tag"], candidate["tag"])
+```

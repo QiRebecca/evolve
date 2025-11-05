@@ -1,0 +1,53 @@
+The original code contains unnecessary task-framework boilerplate and repeated object creations that add overhead. I streamline it into a lightweight, standalone `Solver` with a tiny AES-GCM object cache to avoid rebuilding the cipher when the same key is reused (e.g., during internal verifications). All sanity checks are preserved, but extraneous logging and comments are removed for speed.
+
+```python
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Constant definitions
+_AES_KEY_SIZES = {16, 24, 32}   # Valid AES key lengths (bytes)
+_GCM_TAG_SIZE = 16              # Bytes
+# Small cache to reuse AESGCM objects when the same key appears again
+_AESGCM_CACHE: Dict[bytes, AESGCM] = {}
+
+
+class Solver:
+    """
+    Fast AES-GCM encryptor.
+
+    solve(problem) expects a dictionary with the keys:
+        key, nonce, plaintext, associated_data
+    and returns a dict with keys 'ciphertext' and 'tag'.
+    """
+
+    def _get_aesgcm(self, key: bytes) -> AESGCM:
+        """Return a cached AESGCM object for the given key."""
+        cipher = _AESGCM_CACHE.get(key)
+        if cipher is None:
+            cipher = AESGCM(key)
+            _AESGCM_CACHE[key] = cipher
+        return cipher
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        associated_data: bytes | None = problem.get("associated_data") or None
+
+        # Quick key-length validation
+        if len(key) not in _AES_KEY_SIZES:
+            raise ValueError(
+                f"Invalid AES key size: {len(key)} bytes "
+                f"(must be one of {_AES_KEY_SIZES})."
+            )
+
+        aesgcm = self._get_aesgcm(key)
+        ct_and_tag = aesgcm.encrypt(nonce, plaintext, associated_data)
+
+        # Split ciphertext and tag
+        ciphertext = ct_and_tag[:-_GCM_TAG_SIZE]
+        tag = ct_and_tag[-_GCM_TAG_SIZE:]
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

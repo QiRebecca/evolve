@@ -1,0 +1,49 @@
+The original code mixes task-registration tooling and extensive logging, adding overhead that isn’t required by the evaluator.  
+I’ll strip everything down to the essentials, re-use AESGCM objects when the same key appears again, and avoid all superfluous checks / logging so that only the encryption itself remains on the critical path.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Constants (kept local for micro-optimisation)
+_VALID_KEY_SIZES = {16, 24, 32}
+_TAG_LEN = 16
+
+
+class Solver:
+    """
+    Minimal AES-GCM encryption solver expected by the evaluation harness.
+    `solve()` receives a dict with key / nonce / plaintext / associated_data and
+    returns a dict with separate ciphertext and authentication tag.
+    """
+
+    # Small cache so we don’t recreate AESGCM objects when the same key is reused.
+    _aesgcm_cache: Dict[bytes, AESGCM] = {}
+
+    def solve(self, problem: Dict[str, Any], **_) -> Dict[str, bytes]:
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data", None)
+
+        # Quick key-size check (fast path, no logging)
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("Unsupported AES key length")
+
+        # Re-use AESGCM wrapper if possible
+        aes = self._aesgcm_cache.get(key)
+        if aes is None:
+            aes = AESGCM(key)
+            # cache only small number of entries to avoid unbounded growth
+            if len(self._aesgcm_cache) < 32:
+                self._aesgcm_cache[key] = aes
+
+        # Perform encryption; AESGCM appends the tag to the ciphertext
+        ct_with_tag = aes.encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag (last 16 bytes)
+        return {
+            "ciphertext": ct_with_tag[:-_TAG_LEN],
+            "tag": ct_with_tag[-_TAG_LEN:],
+        }
+```

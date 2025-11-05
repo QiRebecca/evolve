@@ -1,0 +1,60 @@
+The solve method only needs to perform AES-GCM encryption and split off the 16-byte tag.  
+I removed all logging/validation overhead and added a tiny cache so the AESGCM
+object is built just once per distinct key, which shaves time when the same key
+is reused across calls.
+
+```python
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Constants
+_AES_KEY_SIZES = {16, 24, 32}       # Valid AES key lengths
+_GCM_TAG_SIZE  = 16                 # Authentication-tag length (bytes)
+
+
+class Solver:
+    """
+    Fast AES-GCM encryptor that matches the baseline’s output while introducing
+    a small cache for re-used keys.
+    """
+
+    # Class-level cache: key-bytes  -> AESGCM instance
+    _aesgcm_cache: Dict[bytes, AESGCM] = {}
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        """
+        Encrypt plaintext with AES-GCM and return the ciphertext and tag.
+
+        Args:
+            problem: dict containing 'key', 'nonce', 'plaintext', 'associated_data'.
+
+        Returns:
+            Dict with keys:
+              • 'ciphertext' – encrypted bytes (without the tag)
+              • 'tag'        – 16-byte GCM authentication tag
+        """
+        key: bytes             = problem["key"]
+        nonce: bytes           = problem["nonce"]
+        plaintext: bytes       = problem["plaintext"]
+        associated_data: bytes | None = problem.get("associated_data", None)
+
+        # Fast key-length check (cryptography will also raise if invalid)
+        if len(key) not in _AES_KEY_SIZES:
+            raise ValueError("Unsupported AES key length")
+
+        # Reuse AESGCM objects for identical keys
+        aesgcm = self._aesgcm_cache.get(key)
+        if aesgcm is None:
+            aesgcm = AESGCM(key)
+            self._aesgcm_cache[key] = aesgcm
+
+        # Perform encryption (cryptography appends the tag to the ciphertext)
+        full_ct = aesgcm.encrypt(nonce, plaintext, associated_data)
+
+        # Split ciphertext and authentication tag
+        return {
+            "ciphertext": full_ct[:-_GCM_TAG_SIZE],
+            "tag":        full_ct[-_GCM_TAG_SIZE:],
+        }
+```

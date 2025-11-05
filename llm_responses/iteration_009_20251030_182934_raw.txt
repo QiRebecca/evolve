@@ -1,0 +1,41 @@
+The main cost is AES-GCM encryption itself; we can only shave Python-side overhead.  
+I’ll streamline look-ups, avoid needless branching, and normalise empty AAD to
+`None` (cryptography skips hashing in that case). A tiny `try/except` beats two
+dictionary look-ups when the key is cached.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+_GCM_TAG = 16                       # authentication-tag length
+_VALID_KEYS = {16, 24, 32}          # allowed AES key lengths
+
+
+class Solver:
+    """Fast AES-GCM encryptor with tiny key-to-cipher cache."""
+    _cache: Dict[bytes, AESGCM] = {}
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data")
+
+        # quick sanity – cryptography will also raise, but earlier is cheaper
+        if len(key) not in _VALID_KEYS:
+            raise ValueError("Bad AES key length.")
+
+        # fetch / build cached cipher (single dictionary hit on cache-hit path)
+        cache = self._cache
+        try:
+            aesgcm = cache[key]
+        except KeyError:
+            aesgcm = cache.setdefault(key, AESGCM(key))
+
+        # treat empty AAD as None – saves OpenSSL header hashing
+        if not aad:
+            aad = None
+
+        out = aesgcm.encrypt(nonce, plaintext, aad)
+        return {"ciphertext": out[:-_GCM_TAG], "tag": out[-_GCM_TAG:]}
+```

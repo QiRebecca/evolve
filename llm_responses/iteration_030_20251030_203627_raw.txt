@@ -1,0 +1,57 @@
+To further reduce overhead, we drop the `lru_cache` indirection and rely on a tiny bespoke dictionary that re-uses `AESGCM` objects only when the same key reappears.  
+This removes the hashing / locking overhead of `lru_cache`, keeps the hot path minimal, and avoids recreating ciphers in the (rare) key-reuse case.
+
+```python
+from typing import Any, Dict
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# --------------------------------------------------------------------------- #
+# Constants
+# --------------------------------------------------------------------------- #
+_VALID_KEY_SIZES = (16, 24, 32)   # permitted AES key lengths (bytes)
+_TAG_BYTES = 16                   # GCM authentication-tag length
+_CACHE_LIMIT = 64                 # max cached AESGCM objects (bounded growth)
+
+
+class Solver:
+    """
+    Fast, minimalist AES-GCM encryptor expected by the evaluation harness.
+    Receives a dict with keys: key, nonce, plaintext, associated_data
+    and returns a dict with separate ciphertext and 16-byte authentication tag.
+    """
+
+    __slots__ = ()  # eliminate per-instance __dict__
+
+    # module-level cache shared by all Solver instances
+    _cipher_cache: Dict[bytes, AESGCM] = {}
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        p = problem  # local alias (micro-optimisation)
+
+        key: bytes = p["key"]
+        nonce: bytes = p["nonce"]
+        plaintext: bytes = p["plaintext"]
+        aad = p.get("associated_data") or None  # pass None if empty / absent
+
+        # Lightweight key-length validation (cryptography will fail anyway,
+        # but we keep a predictable error message / branch)
+        if len(key) not in _VALID_KEY_SIZES:
+            raise ValueError("AES key must be 16 / 24 / 32 bytes")
+
+        # Obtain (or build) the AESGCM object for this key
+        aes = self._cipher_cache.get(key)
+        if aes is None:
+            aes = AESGCM(key)
+            # bound cache size to avoid unbounded memory growth
+            if len(self._cipher_cache) < _CACHE_LIMIT:
+                self._cipher_cache[key] = aes
+
+        # Encrypt; tag comes appended to ciphertext
+        ct_tag: bytes = aes.encrypt(nonce, plaintext, aad)
+
+        # Separate ciphertext and tag (last 16 bytes)
+        return {
+            "ciphertext": ct_tag[:-_TAG_BYTES],
+            "tag": ct_tag[-_TAG_BYTES:],
+        }
+```
