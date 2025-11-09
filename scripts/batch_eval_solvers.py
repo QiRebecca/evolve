@@ -97,9 +97,19 @@ class SolverEvaluator:
         logger.addHandler(console_handler)
     
     def load_tasks(self) -> List[str]:
-        """Load all tasks from generation.json"""
+        """Load all tasks from test_baseline.json (preferred) or generation.json"""
+        # Try test_baseline.json first (more accurate for TEST dataset)
+        test_baseline_file = self.generation_file.parent / 'test_baseline.json'
+        if test_baseline_file.exists():
+            with open(test_baseline_file, 'r') as f:
+                data = json.load(f)
+            tasks = sorted(data.keys())
+            logging.info(f"Loaded {len(tasks)} tasks from {test_baseline_file}")
+            return tasks
+        
+        # Fallback to generation.json
         if not self.generation_file.exists():
-            raise FileNotFoundError(f"Generation file not found: {self.generation_file}")
+            raise FileNotFoundError(f"Neither test_baseline.json nor generation.json found")
         
         with open(self.generation_file, 'r') as f:
             data = json.load(f)
@@ -150,6 +160,7 @@ class SolverEvaluator:
             "--solver", str(solver_path),
             "--generation-file", str(self.generation_file),
             "--summary-file", str(self.summary_file),
+            "--data-dir", "AlgoTune/data",  # Explicitly set data-dir to match single run
             "--num-runs", str(self.num_runs)
         ]
         
