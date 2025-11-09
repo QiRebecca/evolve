@@ -672,6 +672,10 @@ def _evaluate_single_problem(
     validation_error_info = {} # Default to empty dict
 
     if result_to_validate is not None:
+        # Convert numpy arrays to lists for validation compatibility
+        # This handles cases where solvers return numpy arrays but is_solution expects lists
+        result_to_validate = _convert_numpy_to_list(result_to_validate)
+        
         # Check if validation was already done in-process
         if solver_result.get("validation_result") is not None:
             logging.info("Using in-process validation result")
@@ -1126,16 +1130,37 @@ def run_evaluation_on_input(task_instance, problem_input, timeout_ms=10000, comm
         if hasattr(problem, 'ndim'):
             logging.info(f"Problem ndim: {problem.ndim}")
             
-        # Reload code so latest edits take effect
-        reload_start = time.perf_counter_ns()
-        try:
-            reload_all_llm_src(CODE_DIR)
-            logging.info(f"Code reload for eval_input took {(time.perf_counter_ns() - reload_start)/1e6:.2f}ms")
-        except Exception as reload_err:
-            logging.warning(f"Failed to reload code before eval_input: {reload_err}")
-        
-        code_dir_str = os.environ.get("CODE_DIR", ".") 
+        # Reload code so latest edits take effect (only if CODE_DIR has changed)
+        # Check if reload is needed by comparing CODE_DIR modification time
+        code_dir_str = os.environ.get("CODE_DIR", ".")
         code_dir_path = Path(code_dir_str)
+        reload_needed = True
+        
+        # Check if solver.py exists and get its modification time
+        solver_file = code_dir_path / "solver.py"
+        if solver_file.exists():
+            try:
+                current_mtime = solver_file.stat().st_mtime
+                # Store last reload time in a module-level cache
+                if not hasattr(run_evaluation_on_input, '_last_reload_mtime'):
+                    run_evaluation_on_input._last_reload_mtime = 0
+                
+                if current_mtime <= run_evaluation_on_input._last_reload_mtime:
+                    reload_needed = False
+                    logging.debug(f"Skipping code reload - solver.py unchanged (mtime: {current_mtime})")
+                else:
+                    run_evaluation_on_input._last_reload_mtime = current_mtime
+            except Exception:
+                pass  # If we can't check, reload anyway
+        
+        if reload_needed:
+            reload_start = time.perf_counter_ns()
+            try:
+                reload_all_llm_src(code_dir_str)
+                reload_time_ms = (time.perf_counter_ns() - reload_start) / 1e6
+                logging.debug(f"Code reload for eval_input took {reload_time_ms:.2f}ms")
+            except Exception as reload_err:
+                logging.warning(f"Failed to reload code before eval_input: {reload_err}")
         is_valid, validation_error = validate_solver_setup(code_dir_path, command_source)
         if not is_valid:
             logging.error(f"Solver validation failed during eval_on_input (after reload): {validation_error}")

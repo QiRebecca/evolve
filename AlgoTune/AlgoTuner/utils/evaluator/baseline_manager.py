@@ -3,9 +3,11 @@ Baseline Manager for handling baseline time generation and caching.
 """
 
 import os
+import json
 import logging
 import threading
 from typing import Dict, Optional, Any
+from pathlib import Path
 import glob
 
 from AlgoTuner.utils.timing_config import DEV_RUNS, EVAL_RUNS
@@ -69,6 +71,102 @@ class BaselineManager:
             
             return baseline_times
     
+    def _load_baseline_from_json(self, subset: str) -> Optional[Dict[str, float]]:
+        """
+        Try to load baseline times from train_baseline.json or test_baseline.json.
+        
+        Args:
+            subset: 'train' or 'test'
+            
+        Returns:
+            Dictionary mapping problem IDs to baseline times, or None if not found
+        """
+        # Try to find reports directory
+        # Check environment variable first
+        reports_dir = os.environ.get("REPORTS_DIR")
+        if not reports_dir:
+            # Try common locations relative to current working directory
+            cwd = Path.cwd()
+            # Check if we're in evolve directory
+            if (cwd / "reports").exists():
+                reports_dir = str(cwd / "reports")
+            elif (cwd.parent / "reports").exists():
+                reports_dir = str(cwd.parent / "reports")
+            elif (cwd.parent.parent / "reports").exists():
+                reports_dir = str(cwd.parent.parent / "reports")
+            else:
+                # Try absolute path
+                reports_dir = "/data/zq/evolve/reports"
+        
+        baseline_file = Path(reports_dir) / f"{subset}_baseline.json"
+        
+        if not baseline_file.exists():
+            logging.debug(f"Baseline file not found: {baseline_file}")
+            return None
+        
+        try:
+            task_name = getattr(self.task_instance, 'task_name', None)
+            if not task_name:
+                logging.warning("Cannot load baseline: task_name not available")
+                return None
+            
+            logging.info(f"Loading baseline from {baseline_file} for task {task_name}")
+            with open(baseline_file, 'r') as f:
+                data = json.load(f)
+            
+            if task_name not in data:
+                logging.warning(f"Task '{task_name}' not found in {baseline_file}")
+                return None
+            
+            task_data = data[task_name]
+            problem_min_times = task_data.get('problem_min_times', [])
+            
+            if not problem_min_times:
+                logging.warning(f"No problem_min_times found for task '{task_name}' in {baseline_file}")
+                return None
+            
+            # Convert list to dict (problem_id -> time)
+            # Load dataset to get problem IDs in order
+            data_dir = self.task_instance.data_dir or self.task_instance.get_task_directory()
+            jsonl_pattern = os.path.join(data_dir, f"{task_name}_T*ms_n*_size*_{subset}.jsonl")
+            jsonl_pattern_subdir = os.path.join(data_dir, task_name, f"{task_name}_T*ms_n*_size*_{subset}.jsonl")
+            jsonl_files = glob.glob(jsonl_pattern) + glob.glob(jsonl_pattern_subdir)
+            
+            baseline_times = {}
+            if jsonl_files:
+                # Load dataset to get problem IDs
+                from AlgoTuner.utils.streaming_json import stream_jsonl
+                dataset_iter = stream_jsonl(jsonl_files[0])
+                dataset_list = list(dataset_iter)
+                
+                # Map problem_min_times list to problem IDs
+                for i, item in enumerate(dataset_list):
+                    if isinstance(item, dict):
+                        problem_id = item.get("id", item.get("seed", item.get("k", None)))
+                        if problem_id is None:
+                            problem_id = f"problem_{i+1}"
+                    else:
+                        problem_id = f"problem_{i+1}"
+                    
+                    problem_id = str(problem_id)
+                    
+                    if i < len(problem_min_times):
+                        baseline_times[problem_id] = float(problem_min_times[i])
+                    else:
+                        logging.warning(f"More problems in dataset than baseline times for {task_name}")
+                        break
+            else:
+                # Fallback: use index-based IDs
+                for i, time_ms in enumerate(problem_min_times):
+                    baseline_times[f"problem_{i+1}"] = float(time_ms)
+            
+            logging.info(f"Loaded {len(baseline_times)} baseline times from {baseline_file}")
+            return baseline_times
+            
+        except Exception as e:
+            logging.warning(f"Failed to load baseline from {baseline_file}: {e}")
+            return None
+    
     def _generate_baseline_times(
         self, 
         subset: str, 
@@ -77,6 +175,7 @@ class BaselineManager:
     ) -> Dict[str, float]:
         """
         Generate baseline times by running the oracle solver.
+        First tries to load from train_baseline.json or test_baseline.json.
         
         Args:
             subset: 'train' or 'test'
@@ -86,6 +185,15 @@ class BaselineManager:
         Returns:
             Dictionary mapping problem IDs to baseline times
         """
+        # First, try to load from JSON file
+        baseline_times = self._load_baseline_from_json(subset)
+        if baseline_times:
+            logging.info(f"Using baseline times from JSON file for {subset} subset")
+            return baseline_times
+        
+        # Fallback to generating baseline times by running oracle solver
+        logging.info(f"JSON baseline not available, generating baseline times for {subset} subset")
+        
         # Use 10 runs for both train and test (matching train_baseline.json generation)
         num_runs = EVAL_RUNS  # Always use 10 runs for consistency
         

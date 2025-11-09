@@ -93,14 +93,12 @@ python /data/zq/evolve/AlgoTune/scripts/gen_all_tasks.py \
 
 
 generate tasks data（10+10data）：
-# 注意：脚本已归档到 znoneed/ 目录
 cd /data/zq/evolve && \
-nohup bash znoneed/run_sequential_with_real_timeout.sh > /data/zq/evolve/logs/nohup_sequential_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+nohup bash run_sequential_with_real_timeout.sh > /data/zq/evolve/logs/nohup_sequential_$(date +%Y%m%d_%H%M%S).log 2>&1 &
  
 #断点重跑超时跳过：
-# 注意：脚本已归档到 znoneed/ 目录
 cd /data/zq/evolve && \
-nohup bash znoneed/run_retry_timeouts.sh > /data/zq/evolve/logs/nohup_retry_timeouts_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+nohup bash run_retry_timeouts.sh > /data/zq/evolve/logs/nohup_retry_timeouts_$(date +%Y%m%d_%H%M%S).log 2>&1 &
 
 
 
@@ -137,7 +135,7 @@ poetry run python scripts/save_eval_to_summary.py \
 
 
 gptoss-20b evaluate:
-./scripts/run_batch_eval_solvers.sh
+./run_batch_eval_solvers.sh
 
   
 

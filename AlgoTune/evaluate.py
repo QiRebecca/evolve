@@ -227,12 +227,30 @@ def _load_solver_callable(
 
     def _wrapped_solver(problem: Any) -> Any:
         try:
-            return solver_callable(problem)
+            result = solver_callable(problem)
         except TypeError as exc:
             # Some solvers expect the task instance as an additional argument
             if "missing" in str(exc) and "positional argument" in str(exc):
-                return solver_callable(problem, candidate_task)
-            raise
+                result = solver_callable(problem, candidate_task)
+            else:
+                raise
+        
+        # Convert numpy arrays to lists for validation compatibility
+        # This handles cases where solvers return numpy arrays but is_solution expects lists
+        if isinstance(result, dict):
+            import numpy as np
+            converted_result = {}
+            for key, value in result.items():
+                if isinstance(value, np.ndarray):
+                    if value.size == 0:
+                        converted_result[key] = []
+                    else:
+                        converted_result[key] = value.tolist()
+                else:
+                    converted_result[key] = value
+            return converted_result
+        
+        return result
 
     return _wrapped_solver
 
@@ -436,13 +454,11 @@ def evaluate(program_path: str, config: Optional[Dict[str, Any]] = None) -> Eval
     except Exception as exc:
         LOGGER.error("Evaluation failed: %s", exc)
         metrics = {
-            "score": 0.0,
+            "combined_score": 0.0,  # OpenEvolve uses this for ranking
             "mean_speedup": 0.0,
-            "median_speedup": 0.0,
-            "accuracy": 0.0,
-            "num_evaluated": 0.0,
             "num_valid": 0.0,
-            "num_errors": 1.0,
+            "success_rate": 0.0,
+            "accuracy": 0.0,
         }
         artifacts = {
             "error": str(exc),
@@ -453,13 +469,11 @@ def evaluate(program_path: str, config: Optional[Dict[str, Any]] = None) -> Eval
     if isinstance(results, dict):
         LOGGER.warning("Evaluation returned error structure: %s", results.get("error"))
         metrics = {
-            "score": 0.0,
+            "combined_score": 0.0,  # OpenEvolve uses this for ranking
             "mean_speedup": 0.0,
-            "median_speedup": 0.0,
-            "accuracy": 0.0,
-            "num_evaluated": float(results.get("problems_evaluated", 0) or 0),
             "num_valid": 0.0,
-            "num_errors": 1.0,
+            "success_rate": 0.0,
+            "accuracy": 0.0,
         }
         artifacts = {
             "error": _safe_json(results),
@@ -475,42 +489,20 @@ def evaluate(program_path: str, config: Optional[Dict[str, Any]] = None) -> Eval
     LOGGER.info(f"DEBUG_METRICS: avg_solver_time_ms={aggregate_metrics.get('avg_solver_time_ms')}, avg_oracle_time_ms={aggregate_metrics.get('avg_oracle_time_ms')}")
 
     mean_speedup = _normalize_metric(aggregate_metrics.get("mean_speedup"))
-    median_speedup = _normalize_metric(aggregate_metrics.get("median_speedup"))
     accuracy = _normalize_metric(aggregate_metrics.get("accuracy"))
     success_rate = _normalize_metric(aggregate_metrics.get("success_rate"))
-    num_evaluated = _normalize_metric(aggregate_metrics.get("num_evaluated"))
     num_valid = _normalize_metric(aggregate_metrics.get("num_valid"))
-    num_errors = _normalize_metric(aggregate_metrics.get("num_errors"))
-    num_timeouts = _normalize_metric(aggregate_metrics.get("num_timeouts"))
-    avg_solver_time_ms = _normalize_metric(aggregate_metrics.get("avg_solver_time_ms"))
-    avg_baseline_time_ms = _normalize_metric(aggregate_metrics.get("avg_oracle_time_ms"))
-
-    if avg_solver_time_ms > 0:
-        baseline_to_solver_ratio = avg_baseline_time_ms / avg_solver_time_ms
-    elif avg_baseline_time_ms > 0:
-        baseline_to_solver_ratio = float("inf")
-    else:
-        baseline_to_solver_ratio = 0.0
-
-    score = mean_speedup if mean_speedup > 0 else accuracy
     
-    # Use mean_speedup as combined_score for proper comparison in OpenEvolve
-    combined_score = mean_speedup if mean_speedup > 0 else accuracy
+    # combined_score is mean_speedup (used by OpenEvolve for ranking)
+    combined_score = mean_speedup
 
+    # Only return essential metrics aligned with AlgoTuner
     metrics = {
-        "score": score,
-        "combined_score": combined_score,  # OpenEvolve uses this for ranking
+        "combined_score": combined_score,  # OpenEvolve uses this for ranking (equals mean_speedup)
         "mean_speedup": mean_speedup,
-        "median_speedup": median_speedup,
-        "accuracy": accuracy,
-        "success_rate": success_rate,
-        "num_evaluated": num_evaluated,
         "num_valid": num_valid,
-        "num_errors": num_errors,
-        "num_timeouts": num_timeouts,
-        "avg_solver_time_ms": avg_solver_time_ms,
-        "avg_baseline_time_ms": avg_baseline_time_ms,
-        "baseline_to_solver_ratio": baseline_to_solver_ratio,
+        "success_rate": success_rate,
+        "accuracy": accuracy,
     }
 
     summary = _summarize_results(results, aggregate_metrics)

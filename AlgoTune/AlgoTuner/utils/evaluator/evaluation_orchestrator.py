@@ -5,6 +5,7 @@ This is the single entry point for the clean architecture.
 
 import logging
 import time
+import numpy as np
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from AlgoTuner.utils.evaluator.evaluation_types import (
@@ -20,6 +21,29 @@ from AlgoTuner.utils.evaluator.solver_executor import SolverExecutor
 from AlgoTuner.utils.evaluator.validation_pipeline import ValidationPipeline
 from AlgoTuner.utils.evaluator.memory_optimizer import MemoryOptimizer
 from AlgoTuner.utils.evaluator.result_aggregator import ResultAggregator
+
+
+def _convert_numpy_to_list(obj: Any) -> Any:
+    """
+    Recursively converts numpy arrays within a nested structure to lists.
+    This ensures compatibility with is_solution validation which expects lists.
+    """
+    if isinstance(obj, dict):
+        return {k: _convert_numpy_to_list(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [_convert_numpy_to_list(item) for item in obj]
+    elif isinstance(obj, np.ndarray):
+        if obj.size == 0:
+            return []
+        return obj.tolist()
+    elif isinstance(obj, (np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64,
+                          np.uint8, np.uint16, np.uint32, np.uint64)):
+        return int(obj)
+    elif isinstance(obj, (np.float64, np.float16, np.float32)):
+        return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    return obj
 
 
 class EvaluationOrchestrator:
@@ -84,14 +108,11 @@ class EvaluationOrchestrator:
         
         self.logger.info(f"Starting evaluation of {len(dataset)} problems for task {task_name}")
         
-        # DEBUG: Log baseline_times parameter
-        self.logger.info(f"DEBUG_BASELINE: baseline_times parameter type: {type(baseline_times)}")
+        # Log baseline_times parameter (only summary, not per-problem)
         if baseline_times is None:
-            self.logger.info(f"DEBUG_BASELINE: baseline_times is None!")
+            self.logger.debug(f"baseline_times is None")
         else:
-            self.logger.info(f"DEBUG_BASELINE: baseline_times has {len(baseline_times)} entries")
-            sample_keys = list(baseline_times.keys())[:5]
-            self.logger.info(f"DEBUG_BASELINE: sample keys: {sample_keys}")
+            self.logger.debug(f"baseline_times has {len(baseline_times)} entries")
         
         results = []
         
@@ -109,8 +130,11 @@ class EvaluationOrchestrator:
             warmup_problem_data = dataset[warmup_idx]
             warmup_problem, _ = self._extract_problem_data(warmup_problem_data)
             
-            # Log individual problem start
-            self.logger.info(f"Evaluating problem {i+1}/{len(dataset)}: {problem_id}")
+            # Log individual problem start (reduced verbosity)
+            if i < 3 or (i + 1) % 5 == 0:  # Log first 3 and every 5th
+                self.logger.info(f"Evaluating problem {i+1}/{len(dataset)}: {problem_id}")
+            else:
+                self.logger.debug(f"Evaluating problem {i+1}/{len(dataset)}: {problem_id}")
             
             # Ensure task_name is in metadata for isolated execution
             metadata["task_name"] = task_name
@@ -118,18 +142,9 @@ class EvaluationOrchestrator:
             # Get baseline time from the provided dictionary if available
             baseline_time_ms = baseline_times.get(problem_id) if baseline_times else metadata.get("baseline_time_ms")
             
-            # DEBUG: Log baseline lookup for each problem
-            self.logger.info(f"DEBUG_BASELINE: Looking up problem_id '{problem_id}' (type: {type(problem_id)})")
-            if baseline_times:
-                found_time = baseline_times.get(problem_id)
-                self.logger.info(f"DEBUG_BASELINE: Lookup result: {found_time}")
-                if found_time is None:
-                    available_keys = list(baseline_times.keys())[:10]
-                    self.logger.info(f"DEBUG_BASELINE: Problem not found! Available keys (first 10): {available_keys}")
-            else:
-                self.logger.info(f"DEBUG_BASELINE: No baseline_times dict provided, trying metadata")
-                metadata_time = metadata.get("baseline_time_ms")
-                self.logger.info(f"DEBUG_BASELINE: Metadata baseline_time_ms: {metadata_time}")
+            # Only log baseline lookup issues (not every lookup)
+            if baseline_times and baseline_time_ms is None:
+                self.logger.warning(f"Baseline time not found for problem_id '{problem_id}'")
 
             # Evaluate single problem
             result = self.evaluate_single(
@@ -279,11 +294,15 @@ class EvaluationOrchestrator:
         # Step 2: Validate if execution succeeded
         validation_result = None
         if execution_result.success and execution_result.output is not None:
-            self.logger.info(f"Validating solution for {problem_id}: output type={type(execution_result.output).__name__}")
+            # Convert numpy arrays to lists for validation compatibility
+            # This handles cases where solvers return numpy arrays but is_solution expects lists
+            solution_to_validate = _convert_numpy_to_list(execution_result.output)
+            
+            self.logger.info(f"Validating solution for {problem_id}: output type={type(solution_to_validate).__name__}")
             validation_result = self.validator.validate(
                 task_instance=task_instance,
                 problem=problem,
-                solution=execution_result.output,
+                solution=solution_to_validate,
                 capture_context=True
             )
             self.logger.info(f"Validation complete for {problem_id}: is_valid={validation_result.is_valid}")
