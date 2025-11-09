@@ -88,9 +88,15 @@ class OpenEvolve:
             self.config = load_config(config_path)
 
         # Set up output directory
-        self.output_dir = output_dir or os.path.join(
-            os.path.dirname(initial_program_path), "openevolve_output"
-        )
+        # Default to evolve/openevolve/result/<task_name>
+        if output_dir:
+            self.output_dir = output_dir
+        else:
+            # Try to get task name from environment or config
+            task_name = os.environ.get('ALGO_TUNE_TASK', 'default_task')
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            self.output_dir = os.path.join(project_root, "result", task_name)
+        
         os.makedirs(self.output_dir, exist_ok=True)
 
         # Set up logging
@@ -173,9 +179,10 @@ class OpenEvolve:
         if self.config.evolution_trace.enabled:
             trace_output_path = self.config.evolution_trace.output_path
             if not trace_output_path:
-                # Default to output_dir/evolution_trace.{format}
+                # Default to output_dir/log/evolution_trace.{format}
+                log_dir = self.config.log_dir or os.path.join(self.output_dir, "log")
                 trace_output_path = os.path.join(
-                    self.output_dir, 
+                    log_dir, 
                     f"evolution_trace.{self.config.evolution_trace.format}"
                 )
             
@@ -197,7 +204,7 @@ class OpenEvolve:
 
     def _setup_logging(self) -> None:
         """Set up logging"""
-        log_dir = self.config.log_dir or os.path.join(self.output_dir, "logs")
+        log_dir = self.config.log_dir or os.path.join(self.output_dir, "log")
         os.makedirs(log_dir, exist_ok=True)
 
         # Set up root logger
@@ -546,18 +553,16 @@ class OpenEvolve:
             logger.warning("No best program found to save")
             return
 
-        best_dir = os.path.join(self.output_dir, "best")
-        os.makedirs(best_dir, exist_ok=True)
-
+        # Save directly in output_dir (not in best/ subdirectory)
         # Use the extension from the initial program file
         filename = f"best_program{self.file_extension}"
-        code_path = os.path.join(best_dir, filename)
+        code_path = os.path.join(self.output_dir, filename)
 
         with open(code_path, "w") as f:
             f.write(program.code)
 
         # Save complete program info including metrics
-        info_path = os.path.join(best_dir, "best_program_info.json")
+        info_path = os.path.join(self.output_dir, "best_program_info.json")
         with open(info_path, "w") as f:
             import json
 

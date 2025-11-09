@@ -1,0 +1,92 @@
+Minor optimizations can still yield speed gains without sacrificing correctness.  
+1. Fast-path for the very common identity case (no transformation): simply return a copy of the
+   input image – avoiding any call into SciPy.  
+2. Pass `matrix` and `offset` to `scipy.ndimage.affine_transform` in the most efficient form
+   (explicit linear part + offset) and supply a pre-allocated output array to save internal
+   allocations.
+
+```python
+import numpy as np
+import scipy.ndimage
+
+
+class Solver:
+    """
+    Fast 2-D affine transformer.
+
+    The task requires cubic (order=3) interpolation and ‘constant’ boundary mode.
+    We keep full numerical fidelity with SciPy’s reference implementation while
+    adding small but effective speed improvements.
+
+    1.  If the affine matrix is (close to) the identity with zero translation
+        the result equals the input – we just return a copy.
+    2.  Otherwise we call scipy.ndimage.affine_transform but:
+        • split the provided 2×3 matrix into its 2×2 linear part and 2-vector
+          offset (SciPy’s preferred, slightly faster signature);
+        • give an already-allocated output array to avoid an internal malloc.
+    """
+
+    # constants reused across calls (no attribute lookups at runtime)
+    _ORDER = 3
+    _MODE = "constant"
+    _ATOL_IDENTITY = 0.0  # exact check – the generator uses exact 1/0 for identity
+
+    def solve(self, problem, **kwargs):
+        """
+        Parameters
+        ----------
+        problem : dict
+            { "image": 2-D array-like, "matrix": 2×3 or 2×2 array-like }
+
+        Returns
+        -------
+        dict
+            { "transformed_image": ndarray }
+        """
+        img = np.asarray(problem["image"], dtype=float)
+        mat = np.asarray(problem["matrix"], dtype=float)
+
+        # Handle the (trivial) identity transform very quickly
+        if mat.shape in ((2, 3), (2, 2)):
+            linear = mat[:, :2]
+            offset = mat[:, 2] if mat.shape[1] == 3 else np.zeros(2, dtype=mat.dtype)
+
+            if np.allclose(linear, np.eye(2), atol=self._ATOL_IDENTITY) and np.allclose(
+                offset, 0.0, atol=self._ATOL_IDENTITY
+            ):
+                # Exact identity – just return a copy to guarantee independence
+                return {"transformed_image": img.copy()}
+
+        # General case – use SciPy (fast C implementation)
+        if mat.shape == (2, 3):
+            # Separate linear part and offset for marginal speed benefit
+            matrix = mat[:, :2]
+            offset = mat[:, 2]
+        elif mat.shape == (2, 2):
+            matrix = mat
+            offset = 0.0
+        else:
+            # Fallback: let SciPy parse whatever was supplied
+            matrix = mat
+            offset = 0.0
+
+        # Pre-allocate output to avoid an internal allocation
+        out = np.empty_like(img)
+        try:
+            scipy.ndimage.affine_transform(
+                img,
+                matrix,
+                offset=offset,
+                output=out,
+                order=self._ORDER,
+                mode=self._MODE,
+                cval=0.0,
+                prefilter=True,
+            )
+            transformed = out
+        except Exception:
+            # Graceful failure: follow baseline behaviour (return empty list)
+            transformed = []
+
+        return {"transformed_image": transformed}
+```

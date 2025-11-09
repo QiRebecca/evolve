@@ -1,0 +1,95 @@
+The main cost is the encryption itself, so we minimise Python overhead:  
+1. Re-use (cache) the `algorithms.AES` objects to avoid rebuilding the key schedule for repeated keys.  
+2. Construct the cipher via the low-level `Cipher / encryptor` API (faster than `AESGCM.encrypt`) and use `update_into` to stream data directly into a pre-allocated `bytearray`, which avoids an intermediate allocation and halves copying for large plaintexts.  
+3. Fall back to the simpler `update` path for very small payloads to dodge the cost of buffer allocation.  
+4. Keep optional AAD handling minimal and skip needless work when absent.  
+
+```python
+from functools import lru_cache
+from typing import Any, Dict, Final
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+# --------------------------------------------------------------------------- #
+# Module-level singletons & constants
+# --------------------------------------------------------------------------- #
+_VALID_KEY_SIZES: Final = (16, 24, 32)   # AES-128 / 192 / 256
+_TAG_LEN:         Final = 16             # Authentication-tag length (bytes)
+_BACKEND                          = default_backend()     # Re-use global backend
+
+
+@lru_cache(maxsize=256)
+def _aes_algorithm(key: bytes) -> algorithms.AES:
+    """
+    Return (and cache) an algorithms.AES object for *key*.
+    Caching prevents rebuilding the key schedule whenever the same key
+    appears across multiple solve() invocations.
+    """
+    if len(key) not in _VALID_KEY_SIZES:
+        raise ValueError(f"Invalid AES key length: {len(key)} (expected 16/24/32 bytes)")
+    return algorithms.AES(key)
+
+
+class Solver:
+    """
+    High-performance AES-GCM encryption solver.
+
+    Input dictionary keys:
+        - 'key'             : bytes  (16/24/32)
+        - 'nonce'           : bytes  (12 bytes recommended)
+        - 'plaintext'       : bytes
+        - 'associated_data' : bytes | None
+
+    Output:
+        { 'ciphertext': bytes, 'tag': bytes }
+    """
+
+    __slots__ = ()  # no per-instance dict
+
+    # Threshold below which the simple .update() path is faster than
+    # allocating a separate buffer for update_into().
+    _SMALL_PAYLOAD_CUTOFF: Final = 2048
+
+    # ------------------------------------------------------------------ #
+    # Core API
+    # ------------------------------------------------------------------ #
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        # Fast local bindings
+        key: bytes        = problem["key"]
+        nonce: bytes      = problem["nonce"]
+        plaintext: bytes  = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data")
+
+        # Obtain cached Algorithm object & build encryptor
+        alg = _aes_algorithm(key)
+        encryptor = Cipher(alg, modes.GCM(nonce), backend=_BACKEND).encryptor()
+
+        # Supply AAD only if not empty/None (avoids extra C call)
+        if aad:
+            encryptor.authenticate_additional_data(aad)
+
+        pt_len = len(plaintext)
+
+        # Fast path selection: tiny payloads → simpler update(); large → zero-copy
+        if pt_len == 0:
+            encryptor.finalize()
+            ciphertext = b""
+        elif pt_len <= self._SMALL_PAYLOAD_CUTOFF:
+            ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+        else:
+            buf = bytearray(pt_len)                     # single allocation
+            written = encryptor.update_into(plaintext, buf)
+            encryptor.finalize()
+
+            # Sanity check – should always write full length
+            if written != pt_len:                       # extremely unlikely
+                ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+            else:
+                # Convert to immutable bytes (one copy)
+                ciphertext = bytes(buf)
+
+        tag = encryptor.tag  # 16-byte authentication tag
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

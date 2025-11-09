@@ -4,3 +4,6 @@ Traceback (most recent call last):
   File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 898, in extract_solver_py
     raise RuntimeError("MARKER_END not found in model output")
 RuntimeError: MARKER_END not found in model output
+
+=== [2025-11-05T19:48:19.470135] START job_shop_scheduling (GPU 2) ===
+=== END job_shop_scheduling -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/job_shop_scheduling/solver.py

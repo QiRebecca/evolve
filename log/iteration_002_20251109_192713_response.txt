@@ -1,0 +1,94 @@
+The original implementation wraps SciPy’s `affine_transform` in a large task-framework with extra logging and bookkeeping, which adds avoidable Python-level overhead.  
+I’ll provide a lean Solver that
+
+• keeps only the minimal logic needed for the benchmark  
+• removes the heavy framework / registration code  
+• converts a 2 × 3 matrix (with an embedded translation column) into the `(matrix, offset)` pair expected by `scipy.ndimage.affine_transform`, avoiding SciPy’s internal conversion overhead  
+• short-circuits the common “do-nothing” case (identity with zero offset) to skip the costly call entirely  
+• preserves the original fallback behaviour (return `[]` on any failure) to guarantee 100 % correctness.
+
+```python
+from typing import Any, Dict
+
+import numpy as np
+import scipy.ndimage as ndi
+
+
+class Solver:
+    """
+    Fast affine-transform solver.
+
+    It reproduces the baseline’s numerical results (order=3, mode='constant')
+    while eliminating superfluous overhead.  A 2 × 3 matrix with an embedded
+    translation column is transparently split into the (matrix, offset) pair
+    that SciPy expects, saving internal work.  An early-exit handles the
+    trivial identity-transform case in O(n²) copy time instead of calling the
+    heavier SciPy routine.
+    """
+
+    _ORDER = 3
+    _MODE = "constant"
+
+    @staticmethod
+    def _split_matrix(mat: np.ndarray):
+        """
+        Accept either:
+            • shape (d, d)    – pure linear part, zero offset
+            • shape (d, d + 1) – last column is translation (common 2 × 3 case)
+            • 1-D scale vector (delegated to SciPy as-is)
+        Return (linear_matrix, offset_vector)
+        """
+        mat = np.asarray(mat, dtype=float)
+        if mat.ndim == 2 and mat.shape[1] == mat.shape[0] + 1:
+            # Last column is the offset
+            offset = mat[:, -1]
+            linear = mat[:, :-1]
+            return linear, offset
+        # Square or 1-D scale vector
+        return mat, 0.0
+
+    @staticmethod
+    def _identity_shortcut(img: np.ndarray, linear: np.ndarray, offset) -> bool:
+        """
+        Detect the exact identity transform (no rotation/scale/shear, zero offset).
+        In that case we can skip the SciPy call and just copy the image.
+        """
+        try:
+            d = img.ndim
+            if isinstance(offset, np.ndarray):
+                offset_ok = np.allclose(offset, 0)
+            else:
+                offset_ok = float(offset) == 0.0
+            return (
+                offset_ok
+                and linear.ndim == 2
+                and linear.shape[0] == linear.shape[1] == d
+                and np.allclose(linear, np.eye(d))
+            )
+        except Exception:
+            return False
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        image = np.asarray(problem["image"], dtype=float, order="C")
+        matrix = problem["matrix"]
+
+        try:
+            linear, offset = self._split_matrix(matrix)
+
+            # Fast path for identity transform with zero offset
+            if self._identity_shortcut(image, linear, offset):
+                transformed = image.copy()
+            else:
+                transformed = ndi.affine_transform(
+                    image,
+                    linear,
+                    offset=offset,
+                    order=self._ORDER,
+                    mode=self._MODE,
+                )
+        except Exception:
+            # Mirror baseline behaviour: return empty list on failure
+            return {"transformed_image": []}
+
+        return {"transformed_image": transformed}
+```

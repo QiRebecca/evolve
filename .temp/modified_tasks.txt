@@ -1,0 +1,17 @@
+feedback_controller_design
+graph_coloring_assign
+job_shop_scheduling
+kd_tree
+kmeans
+max_clique_cpsat
+max_common_subgraph
+max_weighted_independent_set
+min_dominating_set
+minimum_volume_ellipsoid
+multi_dim_knapsack
+queens_with_obstacles
+rectanglepacking
+set_cover_conflicts
+spectral_clustering
+tsp
+vehicle_routing

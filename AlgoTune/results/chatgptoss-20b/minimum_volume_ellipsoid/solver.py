@@ -1,69 +1,74 @@
-from typing import Any
 import numpy as np
-import cvxpy as cp
-import logging
+from typing import Any
 
 class Solver:
     def solve(self, problem, **kwargs) -> Any:
         """
-        Solves the minimum volume covering ellipsoid problem using CVXPY.
-
-        Parameters
-        ----------
-        problem : dict
-            Dictionary containing the key "points" with an array-like of shape (n, d).
-
-        Returns
-        -------
-        dict
-            Dictionary with keys:
-                - "objective_value": float, optimal objective value.
-                - "ellipsoid": dict with keys "X" (d x d array) and "Y" (d array).
+        Solve the minimum volume covering ellipsoid problem using the Khachiyan algorithm.
         """
         points = np.array(problem["points"])
-        if points.ndim != 2:
-            raise ValueError("Points must be a 2D array.")
         n, d = points.shape
 
-        # Variables
-        X = cp.Variable((d, d), symmetric=True)
-        Y = cp.Variable(d)
+        # Compute center and shape matrix of the MVEE
+        c, A = self._mv_ellipsoid(points)
 
-        # Constraints: SOC for each point
-        constraints = [cp.SOC(1, X @ points[i] + Y) for i in range(n)]
+        # Compute symmetric positive definite X such that X^2 = A
+        eigvals, eigvecs = np.linalg.eigh(A)
+        # Ensure numerical non-negativity
+        eigvals = np.maximum(eigvals, 0.0)
+        sqrt_vals = np.sqrt(eigvals)
+        X = eigvecs @ np.diag(sqrt_vals) @ eigvecs.T
 
-        # Objective: minimize -log_det(X)
-        objective = cp.Minimize(-cp.log_det(X))
+        # Compute Y = -X * c
+        Y = -X @ c
 
-        prob = cp.Problem(objective, constraints)
-
-        try:
-            prob.solve(solver=cp.CLARABEL, verbose=False)
-        except Exception as e:
-            logging.error(f"Solver failed: {e}")
-            return {
-                "objective_value": float("inf"),
-                "ellipsoid": {"X": np.full((d, d), np.nan), "Y": np.full(d, np.nan)},
-            }
-
-        if prob.status not in ["optimal", "optimal_inaccurate"]:
-            logging.warning(f"Solver status: {prob.status}")
-            return {
-                "objective_value": float("inf"),
-                "ellipsoid": {"X": np.full((d, d), np.nan), "Y": np.full(d, np.nan)},
-            }
-
-        X_val = X.value
-        Y_val = Y.value
-
-        if X_val is None or Y_val is None:
-            logging.error("Solver returned None for variables.")
-            return {
-                "objective_value": float("inf"),
-                "ellipsoid": {"X": np.full((d, d), np.nan), "Y": np.full(d, np.nan)},
-            }
+        # Objective value: -log det X
+        obj = -np.log(np.linalg.det(X))
 
         return {
-            "objective_value": prob.value,
-            "ellipsoid": {"X": X_val, "Y": Y_val},
+            "objective_value": float(obj),
+            "ellipsoid": {"X": X.tolist(), "Y": Y.tolist()}
         }
+
+    @staticmethod
+    def _mv_ellipsoid(points: np.ndarray, tol: float = 1e-5, max_iter: int = 1000) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Compute the minimum volume enclosing ellipsoid (MVEE) of a set of points.
+        Returns the center c and the shape matrix A such that the ellipsoid is
+        {x | (x - c)^T A (x - c) <= 1}.
+        """
+        n, d = points.shape
+        # Augment points with a column of ones
+        Q = np.hstack((points, np.ones((n, 1))))  # n x (d+1)
+        u = np.full(n, 1.0 / n)  # initial weights
+
+        for _ in range(max_iter):
+            # Compute weighted covariance matrix
+            X_mat = (Q.T * u) @ Q  # (d+1) x (d+1)
+            # Solve X_mat * Y = Q.T for Y
+            invXQ = np.linalg.solve(X_mat, Q.T)  # (d+1) x n
+            # Compute M = diag(Q * invXQ.T)
+            M = np.sum(Q * invXQ.T, axis=1)
+            j = np.argmax(M)
+            step_size = (M[j] - d - 1) / ((d + 1) * (M[j] - 1))
+            if step_size <= 0:
+                break
+            new_u = (1 - step_size) * u
+            new_u[j] += step_size
+            if np.linalg.norm(new_u - u) < tol:
+                u = new_u
+                break
+            u = new_u
+
+        # Center of the ellipsoid
+        c = points.T @ u  # d
+
+        # Compute shape matrix A
+        diff = points - c  # n x d
+        S = diff.T @ (diff * u[:, None])  # d x d
+        # Regularize in case of numerical issues
+        if np.linalg.matrix_rank(S) < d:
+            S += 1e-12 * np.eye(d)
+        A = np.linalg.inv(S) / d
+
+        return c, A

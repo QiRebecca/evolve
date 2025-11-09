@@ -1,0 +1,113 @@
+The current implementation performs an extra memory-copy when it first encrypts into a `bytearray` and then converts it to `bytes`.  
+I remove this redundant copy by encrypting directly with `encryptor.update`, which already returns an immutable `bytes` object.  
+Additionally, I cache the AES key schedule with `functools.lru_cache` and reuse a global `default_backend()` instance to shave off per-call overhead.
+
+```python
+import hmac
+import logging
+import os
+from functools import lru_cache
+from typing import Any, Dict, Final
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+# --------------------------------------------------------------------------- #
+# Module-level constants & singletons
+# --------------------------------------------------------------------------- #
+_AES_KEY_SIZES: Final = (16, 24, 32)  # Valid AES key lengths in bytes
+_GCM_NONCE_SIZE: Final = 12           # Recommended nonce length for GCM
+_GCM_TAG_SIZE:  Final = 16            # Auth-tag length (bytes)
+_BACKEND = default_backend()          # Cached backend object
+
+
+@lru_cache(maxsize=256)
+def _get_algorithm(key: bytes) -> algorithms.AES:
+    """Return (and cache) an algorithms.AES instance for *key*."""
+    if len(key) not in _AES_KEY_SIZES:
+        raise ValueError(f"Invalid AES key length {len(key)}; "
+                         f"expected one of {_AES_KEY_SIZES}.")
+    return algorithms.AES(key)
+
+
+class Solver:
+    """
+    High-throughput AES-GCM encryption solver.
+
+    Expected `problem` keys:
+        key             : bytes  (16 / 24 / 32)
+        nonce           : bytes  (12 recommended)
+        plaintext       : bytes
+        associated_data : bytes | None
+
+    Returns:
+        {"ciphertext": bytes, "tag": bytes}
+    """
+
+    __slots__ = ()  # Stateless – no per-instance dict
+
+    # -------------------------- Core entry point ------------------------- #
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        key: bytes        = problem["key"]
+        nonce: bytes      = problem["nonce"]
+        plaintext: bytes  = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data")
+
+        # Fetch cached AES algorithm (contains key schedule)
+        algorithm = _get_algorithm(key)
+
+        # New cipher/Encryptor per call (nonce must be unique)
+        encryptor = Cipher(
+            algorithm,
+            modes.GCM(nonce),
+            backend=_BACKEND,
+        ).encryptor()
+
+        if aad:
+            encryptor.authenticate_additional_data(aad)
+
+        # Single pass encryption – avoids extra Python-side copies
+        ciphertext = encryptor.update(plaintext)
+        ciphertext += encryptor.finalize()  # Usually empty but included for completeness
+        tag = encryptor.tag  # 16-byte authentication tag
+
+        return {"ciphertext": ciphertext, "tag": tag}
+
+    # -------------------------- Optional helpers ------------------------- #
+    def is_solution(self, problem: Dict[str, Any], solution: Dict[str, bytes] | Any) -> bool:
+        """
+        Validate *solution* against reference encryption (constant-time compare).
+        """
+        if (
+            not isinstance(solution, dict)
+            or "ciphertext" not in solution
+            or "tag" not in solution
+            or not isinstance(solution["ciphertext"], bytes)
+            or not isinstance(solution["tag"], bytes)
+        ):
+            logging.error("Invalid solution format.")
+            return False
+
+        reference = self.solve(problem)
+        return (
+            hmac.compare_digest(reference["ciphertext"], solution["ciphertext"])
+            and hmac.compare_digest(reference["tag"], solution["tag"])
+        )
+
+    # For local experimentation (unused by evaluator)
+    _DEFAULT_KEY_SIZE:     Final = 16
+    _DEFAULT_PTXT_MULT:    Final = 1024
+
+    def generate_problem(self, n: int, random_seed: int = 1) -> Dict[str, Any]:
+        """Generate a random encryption problem of scale *n* (for local tests)."""
+        key       = os.urandom(self._DEFAULT_KEY_SIZE)
+        nonce     = os.urandom(_GCM_NONCE_SIZE)
+        plaintext = os.urandom(max(1, n * self._DEFAULT_PTXT_MULT))
+        aad       = os.urandom(32) if n % 2 == 0 else b""
+        return {
+            "key": key,
+            "nonce": nonce,
+            "plaintext": plaintext,
+            "associated_data": aad,
+        }
+```

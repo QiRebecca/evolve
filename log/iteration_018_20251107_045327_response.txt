@@ -1,0 +1,133 @@
+The current solver is already faster than baseline but still allocates a fresh ciphertext buffer for every call.  
+I'll introduce an internal reusable buffer to avoid repeated allocations and always use the zero-copy `update_into` path (which is efficient even for small payloads).  
+This reduces per-call Python-level overhead and memory churn, giving an extra speed boost while retaining full correctness.
+
+```python
+import hmac
+import logging
+import os
+from functools import lru_cache
+from typing import Any, Dict, Final
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+# --------------------------------------------------------------------------- #
+# Module-level constants and cached singletons
+# --------------------------------------------------------------------------- #
+_VALID_KEY_SIZES: Final = (16, 24, 32)   # AES-128 / 192 / 256
+_GCM_NONCE_LEN:  Final = 12              # Recommended nonce length for GCM
+_GCM_TAG_LEN:    Final = 16              # Authentication-tag length (bytes)
+_BACKEND = default_backend()             # Re-use global backend singleton
+
+
+@lru_cache(maxsize=128)
+def _aes_algorithm(key: bytes) -> algorithms.AES:
+    """
+    Return (and cache) an algorithms.AES object for *key*.
+    Caching avoids rebuilding the key schedule on repeated calls.
+    """
+    if len(key) not in _VALID_KEY_SIZES:
+        raise ValueError(f"Invalid AES key length {len(key)}.")
+    return algorithms.AES(key)
+
+
+class Solver:
+    """
+    High-throughput AES-GCM encryption solver.
+    Expected input keys:
+        • key             : bytes
+        • nonce           : bytes
+        • plaintext       : bytes
+        • associated_data : bytes | None
+    Returns:
+        {"ciphertext": bytes, "tag": bytes}
+    """
+
+    __slots__ = ("_buf",)  # store reusable buffer only
+
+    # Constants for optional local problem generation
+    DEFAULT_KEY_SIZE:      Final = 16
+    DEFAULT_PLAINTEXT_MULT: Final = 1024
+
+    def __init__(self) -> None:
+        # Reusable scratch buffer to minimise per-call allocations
+        self._buf = bytearray()
+
+    # ------------------------------------------------------------------ #
+    # Core routine – invoked by evaluation harness
+    # ------------------------------------------------------------------ #
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        key        = problem["key"]
+        nonce      = problem["nonce"]
+        plaintext  = problem["plaintext"]
+        aad        = problem["associated_data"]
+
+        # Build encryptor using cached algorithm object
+        encryptor = Cipher(
+            _aes_algorithm(key),
+            modes.GCM(nonce),
+            backend=_BACKEND,
+        ).encryptor()
+
+        if aad:
+            encryptor.authenticate_additional_data(aad)
+
+        pt_len = len(plaintext)
+        if pt_len:
+            # Ensure internal buffer is large enough; grow exponentially
+            if pt_len > len(self._buf):
+                # Grow to next power-of-two-ish size to limit realloc frequency
+                new_len = 1 << (pt_len - 1).bit_length()
+                self._buf = bytearray(new_len)
+            view = memoryview(self._buf)[:pt_len]
+
+            # Encrypt directly into the buffer
+            written = encryptor.update_into(plaintext, view)
+            if written != pt_len:  # Extremely unlikely, safeguard
+                ct = encryptor.update(plaintext[:written]) + encryptor.update(
+                    plaintext[written:]
+                )
+            else:
+                ct = bytes(view)  # immutable copy; required by validator
+        else:
+            ct = b""
+
+        encryptor.finalize()
+        return {"ciphertext": ct, "tag": encryptor.tag}
+
+    # ------------------------------------------------------------------ #
+    # Validation helper – mirrors baseline behaviour
+    # ------------------------------------------------------------------ #
+    def is_solution(self, problem: Dict[str, Any], solution: Dict[str, bytes] | Any) -> bool:
+        if (
+            not isinstance(solution, dict)
+            or "ciphertext" not in solution
+            or "tag" not in solution
+            or not isinstance(solution["ciphertext"], (bytes, bytearray))
+            or not isinstance(solution["tag"], (bytes, bytearray))
+        ):
+            logging.error("Solution format invalid.")
+            return False
+
+        reference = self.solve(problem)
+        return (
+            hmac.compare_digest(reference["ciphertext"], solution["ciphertext"])
+            and hmac.compare_digest(reference["tag"], solution["tag"])
+        )
+
+    # ------------------------------------------------------------------ #
+    # Optional: local problem generator (unused by judging harness)
+    # ------------------------------------------------------------------ #
+    def generate_problem(self, n: int, random_seed: int = 1) -> Dict[str, Any]:
+        key       = os.urandom(self.DEFAULT_KEY_SIZE)
+        nonce     = os.urandom(_GCM_NONCE_LEN)
+        plaintext = os.urandom(max(1, n * self.DEFAULT_PLAINTEXT_MULT))
+        aad       = os.urandom(32) if n % 2 == 0 else b""
+        return {
+            "key": key,
+            "nonce": nonce,
+            "plaintext": plaintext,
+            "associated_data": aad,
+        }
+```

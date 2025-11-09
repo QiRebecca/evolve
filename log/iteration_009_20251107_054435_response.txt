@@ -1,0 +1,74 @@
+The optimization focuses on simplifying the solution by:
+1. Removing the heavy `AlgoTuneTasks` framework and related overhead; providing only the minimal `Solver` class required by the evaluation harness.
+2. Using SciPy’s highly-optimized `affine_transform` directly, while gracefully handling 2 × 3 affine matrices (extracting the linear part and translation offset) to guarantee correctness and performance.
+
+```python
+from typing import Any
+
+import numpy as np
+from scipy.ndimage import affine_transform
+
+
+class Solver:
+    """
+    Fast 2-D affine transform solver.
+
+    It exactly reproduces SciPy’s reference behaviour (order=3, mode='constant')
+    while adding a lightweight pre-processing step that supports 2×3 affine
+    matrices (where the last column encodes translation).  By stripping all
+    extraneous scaffolding from the baseline implementation, we minimise Python
+    overhead and keep the core computation in highly-optimised SciPy code.
+    """
+
+    def __init__(self) -> None:
+        # Cubic spline interpolation & constant padding (to match baseline)
+        self._order: int = 3
+        self._mode: str = "constant"
+
+    # --------------------------------------------------------------------- #
+    # Public API                                                             #
+    # --------------------------------------------------------------------- #
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, Any]:
+        """
+        Apply the affine transformation defined in `problem["matrix"]` to the
+        input image `problem["image"]`.
+
+        Parameters
+        ----------
+        problem : dict
+            Keys:
+                • "image"  : (n, n) list/ndarray of floats
+                • "matrix" : (2×2) or (2×3) list/ndarray specifying the affine
+                              transform.  If 2×3, the last column is treated as
+                              translation (offset).
+
+        Returns
+        -------
+        dict
+            {"transformed_image": numpy.ndarray}
+        """
+        # Fast, minimal validation / conversion
+        image = np.asarray(problem["image"], dtype=float, order="C")
+        matrix_in = np.asarray(problem["matrix"], dtype=float)
+
+        # Handle common 2×3 form [A | t] ⇒ split into linear matrix & offset
+        if matrix_in.ndim == 2 and matrix_in.shape == (2, 3):
+            linear_part = matrix_in[:, :2]
+            offset = matrix_in[:, 2]
+        else:
+            # Fallback: assume `matrix_in` is just the linear part; zero offset.
+            linear_part = matrix_in
+            offset = 0.0
+
+        # Perform the affine transform (SciPy does heavy lifting in C)
+        transformed = affine_transform(
+            image,
+            linear_part,
+            offset=offset,
+            order=self._order,
+            mode=self._mode,
+            prefilter=True,  # ensures identical results to reference
+        )
+
+        return {"transformed_image": transformed}
+```

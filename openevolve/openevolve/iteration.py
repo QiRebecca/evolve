@@ -98,23 +98,34 @@ async def run_iteration_with_shared_db(
             # Log the LLM response for debugging
             logger.warning(f"LLM Response (length={len(llm_response)}): {llm_response[:1000]}")
             
-            # Save raw LLM response to file for inspection
+            # Save complete LLM interaction to log directory
             import datetime
             from pathlib import Path
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            # Use log_dir's parent as base output directory
+            # Save in log directory
             if config.log_dir:
-                base_dir = Path(config.log_dir).parent
+                log_dir = Path(config.log_dir)
             else:
-                base_dir = Path(".")
-            response_dir = base_dir / "llm_responses"
-            response_dir.mkdir(parents=True, exist_ok=True)
-            response_file = response_dir / f"iteration_{iteration:03d}_{timestamp}_raw.txt"
+                log_dir = Path(".") / "log"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Save raw response
+            response_file = log_dir / f"iteration_{iteration:03d}_{timestamp}_response.txt"
             try:
                 response_file.write_text(llm_response, encoding='utf-8')
-                logger.info(f"Saved raw LLM response to: {response_file}")
+                logger.info(f"Saved LLM response to: {response_file}")
             except Exception as e:
                 logger.warning(f"Failed to save LLM response: {e}")
+            
+            # Save prompt
+            prompt_file = log_dir / f"iteration_{iteration:03d}_{timestamp}_prompt.json"
+            try:
+                import json
+                with open(prompt_file, 'w', encoding='utf-8') as f:
+                    json.dump(prompt, f, indent=2, ensure_ascii=False)
+                logger.info(f"Saved prompt to: {prompt_file}")
+            except Exception as e:
+                logger.warning(f"Failed to save prompt: {e}")
             
             new_code = parse_full_rewrite(llm_response, config.language)
 

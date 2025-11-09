@@ -1,0 +1,88 @@
+The previous version relied on `AESGCM.encrypt`, which incurs extra Python-level overhead and copies.  
+We'll switch to Cryptography's lower-level `Cipher` API, encrypt directly into a pre-allocated
+`bytearray` via `update_into`, cache the AES key schedule across calls, and avoid unnecessary work
+(e.g., skipping empty AAD/plaintext handling). This minimises allocations and per-call setup,
+yielding faster runtimes while preserving correctness.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict, Final
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+# --------------------------------------------------------------------------- #
+# Module-level singletons & constants
+# --------------------------------------------------------------------------- #
+_BACKEND               = default_backend()   # re-use global backend
+_VALID_KEY_SIZES: Final = (16, 24, 32)       # AES-128/192/256 in bytes
+_TAG_LEN:          int  = 16                # GCM authentication tag length
+
+
+@lru_cache(maxsize=128)
+def _cached_algorithm(key: bytes) -> algorithms.AES:
+    """
+    Return an algorithms.AES object for *key*, caching to avoid rebuilding
+    the key schedule when the same key is reused across solve() calls.
+    """
+    if len(key) not in _VALID_KEY_SIZES:
+        raise ValueError(f"Invalid AES key length {len(key)}.")
+    return algorithms.AES(key)
+
+
+class Solver:
+    """
+    High-performance AES-GCM encryption solver.
+
+    Expected *problem* dict keys:
+        key             : bytes   (length 16/24/32)
+        nonce           : bytes   (recommended 12 bytes for GCM)
+        plaintext       : bytes
+        associated_data : bytes | None
+
+    Returns:
+        { "ciphertext": bytes, "tag": bytes }
+    """
+
+    __slots__ = ()  # eliminate per-instance __dict__
+
+    # --------------------------------------------------------------------- #
+    # Main entry point invoked by evaluation harness
+    # --------------------------------------------------------------------- #
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        # Fast local bindings
+        key: bytes        = problem["key"]
+        nonce: bytes      = problem["nonce"]
+        plaintext: bytes  = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data", None)
+
+        # Retrieve cached AES algorithm object (key schedule)
+        alg = _cached_algorithm(key)
+
+        # Create encryptor (nonce differs each call → new GCM mode object)
+        encryptor = Cipher(alg, modes.GCM(nonce), backend=_BACKEND).encryptor()
+
+        # Feed AAD only if present and non-empty (avoids unnecessary C call)
+        if aad:
+            encryptor.authenticate_additional_data(aad)
+
+        # Encrypt with minimal copies
+        pt_len = len(plaintext)
+        if pt_len:
+            buf = bytearray(pt_len)
+            # update_into writes ciphertext directly into 'buf'
+            written = encryptor.update_into(plaintext, buf)
+            if written != pt_len:
+                # Extremely unlikely fallback path
+                ciphertext = encryptor.update(plaintext)
+            else:
+                ciphertext = bytes(buf)
+        else:
+            ciphertext = b""
+
+        # Finalise to compute authentication tag
+        encryptor.finalize()
+        tag = encryptor.tag  # 16-byte tag
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

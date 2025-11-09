@@ -1,108 +1,292 @@
-analysisWe need to produce solver.py that implements solve method faster than baseline. We can use networkx or other libraries. But we need to produce maximum common subgraph. This is NP-hard. Baseline uses CP-SAT. We can try to use heuristics? But must produce optimal solution. We can use ILP with pulp? But CP-SAT is efficient. Maybe we can use networkx's isomorphism? But we need maximum common subgraph, not isomorphism. Could use maximum common subgraph algorithm like VF2? But that's for isomorphism. For maximum common subgraph, we can use maximum common induced subgraph problem. Could use maximum common subgraph via maximum clique in product graph. Indeed, maximum common induced subgraph corresponds to maximum clique in the graph of pairs (i,p) where edges exist if adjacency matches. But we also need mapping one-to-one. The product graph: vertices are pairs (i,p). Edge between (i,p) and (j,q) if i!=j, p!=q, and A[i][j]==B[p][q]. Then maximum clique corresponds to maximum common subgraph. So we can compute maximum clique. Use networkx's algorithm for maximum clique? networkx.algorithms.clique.find_cliques returns all maximal cliques; we can find largest. For small graphs, it's fine. But we need to handle up to maybe 20 nodes? Not specified. But baseline uses CP-SAT, which can handle moderate sizes. We can implement maximum clique via branch and bound using networkx's algorithm or use python-igraph? But we only have networkx. networkx's find_cliques uses Bron–Kerbosch algorithm with pivot. That is efficient for moderate graphs. So we can build product graph and find maximum clique. Complexity exponential but maybe fine for small graphs.
+analysisWe need to produce solver.py that implements solve function faster than baseline. Problem: maximum common subgraph (maximum common induced subgraph? Actually mapping preserving adjacency). We need to find maximum cardinality mapping between nodes of G and H such that adjacency matches. This is maximum common subgraph isomorphic mapping. Equivalent to maximum bipartite graph matching with constraints. This is NP-hard. Baseline uses CP-SAT with constraints for all pairs. We need to produce faster solution maybe using maximum bipartite matching with adjacency constraints? But we need optimal solution. Could use maximum clique in product graph: Build graph where vertices are pairs (i,p) where i in G, p in H. Edge between (i,p) and (j,q) if i!=j, p!=q, and A[i][j]==B[p][q]. Then maximum common subgraph corresponds to maximum clique in this product graph. So we need to find maximum clique. That's also NP-hard. But maybe input sizes small. We can use a branch and bound algorithm like Bron–Kerbosch with pivot and pruning. Use bitsets for speed. Use Python's bitarray or integers. Use networkx? But we can implement ourselves.
 
-We need to output list of pairs (i,p). The mapping must be one-to-one. The clique ensures that. Also need to ensure that mapping is maximal. The maximum clique ensures maximum size. So we can implement.
+We need to produce solver that returns list of pairs. Use bitset representation: For each vertex v = (i,p), we can compute adjacency bitmask of other vertices. Use integer bitmask if number of vertices <= 64? But could be larger. Use Python's int as arbitrary bitset. For n,m up to maybe 20? Not specified. But baseline uses CP-SAT with 24 workers, so maybe n,m up to 20-30. We'll implement bitset with Python int.
 
-Edge consistency: For each pair of selected nodes, adjacency must match. In product graph, edges exist only if adjacency matches. So clique ensures that.
+We need to generate all vertices: for i in range(n): for p in range(m): if mapping allowed? Actually mapping allowed for any pair; but we can restrict to pairs where degrees match? But we can just include all.
 
-We also need to ensure that mapping is one-to-one: In product graph, vertices are pairs (i,p). Two vertices share same i or same p cannot be in clique because we don't add edges between them? Wait we need to ensure that mapping is one-to-one: we cannot map two G nodes to same H node or vice versa. In product graph, we can add edges between vertices that share same i or same p? Actually we need to forbid them. In clique, all vertices must be pairwise adjacent. If we don't add edges between vertices that share same i or same p, then they cannot both be in clique because they are not adjacent. So we need to ensure that product graph has edges only between pairs with distinct i and distinct p and adjacency matches. That ensures one-to-one. So we can build graph accordingly.
+Compute adjacency: For each pair (i,p) and (j,q) with i<j, p<q, check A[i][j]==B[p][q]. If equal, then they can coexist. So we add edge between them. Build adjacency bitmask for each vertex.
 
-Implementation steps:
+Then run Bron–Kerbosch with pivot and bitset. Use recursion with bitset sets: R, P, X as ints. Use bit operations.
 
-- Input problem dict with A and B adjacency lists.
-- n = len(A), m = len(B)
-- Build adjacency matrix for A and B as lists of lists of ints.
-- Build product graph Gp: nodes are tuples (i,p). Use networkx.Graph()
-- For each pair of nodes (i,p) and (j,q) with i<j, p<q? Actually we need to consider all pairs. Add edge if i!=j, p!=q, and A[i][j]==B[p][q].
-- Then find maximum clique using networkx.algorithms.clique.find_cliques. Keep track of largest clique size and clique.
-- Return list of pairs sorted maybe by i? Not required but baseline returns unsorted. We can return sorted by i for consistency.
+We need to keep track of best clique found. Also need to map vertex index to pair.
 
-Edge case: If no mapping, return empty list.
+Implementation details:
 
-Complexities: For n,m up to maybe 20, product graph has n*m nodes, edges maybe many. find_cliques may be heavy but okay.
+- Map vertex index v = i*m + p. total V = n*m.
 
-We need to import networkx. Use from typing import Any.
+- adjacency list: list of ints adj[v] bitmask of neighbors.
 
-Implement solve method accordingly.
+- Bron–Kerbosch with pivot: choose pivot u from P|X maximizing |P & adj[u]|. Then iterate over vertices v in P & ~adj[u].
 
-We also need to ensure that we don't exceed time limit. For bigger graphs, this may be slow. But baseline CP-SAT also may be slow. But we can try to optimize by using bitset representation and use networkx's algorithm. But we can also use python's built-in algorithm for maximum clique from networkx. That uses recursion and pivot. Might be okay.
+- Use recursion.
 
-We can also use networkx.algorithms.clique.max_clique? There's networkx.algorithms.clique.find_cliques. There's also networkx.algorithms.clique.max_clique? Actually networkx.algorithms.clique.max_clique returns a maximum clique. Let's check: networkx.algorithms.clique.max_clique(G) returns a maximum clique. That uses a heuristic? Let's check docs: networkx.algorithms.clique.max_clique(G) returns a maximum clique. It uses a branch and bound algorithm. So we can use that.
+- Keep best_clique as list of vertex indices.
 
-Thus:
+- Use pruning: if len(R)+popcount(P) <= len(best_clique): prune.
 
-from networkx.algorithms.clique import max_clique
+- Use popcount via bit_count() in Python 3.8+.
 
-clique = max_clique(Gp)
+- For speed, we can precompute bit_count.
 
-Return list of pairs.
+- At end, convert best_clique indices to pairs.
 
-Edge consistency: Already satisfied.
+Edge consistency: we already ensured adjacency matches. But also need one-to-one mapping: we must ensure no two vertices share same i or same p. But adjacency graph ensures that if two vertices share same i or same p, they are not adjacent because A[i][j] vs B[p][q] may not match? Wait if i==j or p==q, we don't consider edges. But clique may include vertices with same i or same p if they are not adjacent? But we need to enforce one-to-one mapping: each i maps to at most one p. In clique, if two vertices share same i, they cannot both be in clique because they would have same i but different p. Are they adjacent? Let's check: Suppose vertices (i,p) and (i,q) with p!=q. For them to be adjacent, we need A[i][i]==B[p][q] and A[i][i]==B[q][p]. But A[i][i] is 0 (no self-loop). B[p][q] may be 0 or 1. If B[p][q]==0, then adjacency holds. So they could be adjacent, leading to clique containing two vertices with same i, violating mapping. So we need to enforce that vertices with same i or same p cannot both be in clique. We can incorporate this by adding edges between such vertices to forbid them being in same clique. That is, we add edges between any two vertices that share i or share p. Then clique will not contain them because they are adjacent? Wait clique requires all pairs to be adjacent. If we add edges between same i or same p, then clique could still include them because they are adjacent. Actually we want to forbid them: we need to ensure they are not both selected. In clique formulation, we need to add edges between vertices that cannot coexist, but clique requires adjacency, so we need to add edges between vertices that can coexist. So we need to add edges between vertices that can coexist. So we need to add edges between vertices that share i or share p? They cannot coexist, so we should NOT add edges between them. But we also need to ensure that clique cannot include them. In clique, all pairs must be adjacent. So if we don't add edge between them, they cannot both be in clique. So we should not add edges between vertices that share i or share p. But we also need to ensure that vertices that share i or share p are not adjacent. So we should not add edges between them. But we also need to ensure that vertices that share i or share p are not adjacent even if adjacency condition holds. So we need to modify adjacency building: only add edge if i!=j, p!=q, and A[i][j]==B[p][q]. That ensures no same i or same p. Good.
 
-Let's implement.
+Thus clique will automatically enforce one-to-one mapping.
 
-Potential issues: networkx's max_clique may return a clique but not necessarily maximum? It should be maximum. We'll trust.
+Edge consistency: we already ensure adjacency matches.
 
-Let's produce solver.py accordingly.
+Thus algorithm works.
 
-We need to ensure we import networkx.
+Complexity: For n,m up to maybe 20, V=400, clique search may be heavy but okay.
 
-Also we need to handle case where A or B may be empty. Then return [].
+We need to implement solve method accordingly.
 
-Let's produce final code.
+Also we need to import typing.Any.
 
-We need to wrap with sentinel lines.
+Let's craft code.
 
-Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
-from typing import Any
-import networkx as nx
-from networkx.algorithms.clique import max_clique
+Potential optimization: Use caching of adjacency bitmask.
+
+Implementation:
 
 class Solver:
     def solve(self, problem, **kwargs) -> Any:
-        """
-        Find the maximum common induced subgraph between two undirected graphs
-        represented by adjacency matrices A and B. The solution is a list of
-        tuples (i, p) indicating that node i in graph G is mapped to node p in
-        graph H. The mapping is one-to-one and preserves adjacency.
-        """
-        A = problem.get("A", [])
-        B = problem.get("B", [])
+        A = problem["A"]
+        B = problem["B"]
         n = len(A)
         m = len(B)
+        V = n*m
+        # Map index to pair
+        pairs = [(i, p) for i in range(n) for p in range(m)]
+        # Build adjacency bitmask
+        adj = [0]*V
+        for idx1 in range(V):
+            i, p = pairs[idx1]
+            mask = 0
+            for idx2 in range(idx1+1, V):
+                j, q = pairs[idx2]
+                if i==j or p==q:
+                    continue
+                if A[i][j] == B[p][q]:
+                    mask |= 1 << idx2
+                    adj[idx2] |= 1 << idx1
+            adj[idx1] = mask
+        # Bron–Kerbosch
+        best = []
+        def bk(R, P, X):
+            nonlocal best
+            if P == 0 and X == 0:
+                if len(R) > len(best):
+                    best = R
+                return
+            # pruning
+            if len(R) + P.bit_count() <= len(best):
+                return
+            # pivot
+            u = (P | X) & -(P | X)  # lowest set bit
+            # Actually choose pivot with max neighbors
+            # We'll just pick any
+            # iterate over vertices in P without neighbors of u
+            candidates = P & ~adj[u.bit_length()-1]  # wrong
+        # We'll implement pivot selection properly
 
-        # If either graph is empty, no mapping exists
-        if n == 0 or m == 0:
-            return []
+We need to implement pivot selection: choose u from P|X maximizing |P & adj[u]|. We can iterate over bits of P|X.
 
-        # Build the product graph where vertices are pairs (i, p)
-        # and edges exist only between pairs with distinct i, distinct p
-        # and matching adjacency in A and B.
-        Gp = nx.Graph()
-        # Add all possible pairs as nodes
-        for i in range(n):
-            for p in range(m):
-                Gp.add_node((i, p))
+Simpler: choose u as any vertex in P|X. Then candidates = P & ~adj[u]. That may be less efficient but okay.
 
-        # Add edges between compatible pairs
-        for i in range(n):
-            for j in range(i + 1, n):
-                a_ij = A[i][j]
-                for p in range(m):
-                    for q in range(p + 1, m):
-                        if a_ij == B[p][q]:
-                            Gp.add_edge((i, p), (j, q))
+Implement:
 
-        # Find a maximum clique in the product graph
-        # This clique corresponds to the maximum common subgraph.
-        try:
-            clique = max_clique(Gp)
-        except Exception:
-            # Fallback: if max_clique fails, return empty mapping
-            return []
+def bk(R, P, X):
+    nonlocal best
+    if P == 0 and X == 0:
+        if len(R) > len(best):
+            best = R
+        return
+    if len(R) + P.bit_count() <= len(best):
+        return
+    # choose pivot
+    u = (P | X) & -(P | X)  # lowest set bit
+    u_idx = (u.bit_length() - 1)
+    candidates = P & ~adj[u_idx]
+    while candidates:
+        v_bit = candidates & -candidates
+        v_idx = (v_bit.bit_length() - 1)
+        bk(R | {v_idx}, P & adj[v_idx], X & adj[v_idx])
+        P &= ~v_bit
+        X |= v_bit
+        candidates &= ~v_bit
 
-        # Convert clique nodes back to mapping pairs
-        mapping = [(i, p) for (i, p) in clique]
-        # Sort by G node index for deterministic output
-        mapping.sort(key=lambda x: x[0])
-        return mapping
+But we need R as set of indices? We can use list or set. For bit_count we need R length. We can maintain R as list or set. Use set.
+
+But we need to compute len(R) quickly. Use len(R). R is set of indices.
+
+But we also need to compute R | {v_idx} quickly. Use set copy? That may be heavy. Instead we can pass R as set and modify in recursion? But we need to backtrack. Use set copy.
+
+Given small size, okay.
+
+But we need to compute P & adj[v_idx] where adj[v_idx] is int bitmask. P is int bitmask. So we can compute newP = P & adj[v_idx].
+
+Similarly newX = X & adj[v_idx].
+
+We need to compute R as set of indices. So we can pass R as set.
+
+Implementation:
+
+def bk(R, P, X):
+    nonlocal best
+    if P == 0 and X == 0:
+        if len(R) > len(best):
+            best = set(R)
+        return
+    if len(R) + P.bit_count() <= len(best):
+        return
+    # pivot
+    u = (P | X) & -(P | X)
+    u_idx = (u.bit_length() - 1)
+    candidates = P & ~adj[u_idx]
+    while candidates:
+        v_bit = candidates & -candidates
+        v_idx = (v_bit.bit_length() - 1)
+        bk(R | {v_idx}, P & adj[v_idx], X & adj[v_idx])
+        P &= ~v_bit
+        X |= v_bit
+        candidates &= ~v_bit
+
+But we need to modify P and X inside loop; but we also need to preserve original P and X for recursion? We modify P and X after recursion. That's fine.
+
+But we also need to compute R | {v_idx} each time. Use set copy: newR = R | {v_idx}.
+
+Ok.
+
+Edge: we need to compute pivot u. If P|X == 0, we skip pivot. But we already handle base case.
+
+Now we need to call bk(set(), (1<<V)-1, 0).
+
+But we need to ensure V may be 0? Not.
+
+Now after best found, convert to list of pairs sorted maybe.
+
+Return list of tuples.
+
+We also need to ensure that best is set of indices. Convert to list of tuples.
+
+Return sorted list maybe.
+
+Edge: we need to ensure that best is set of indices. We set best = set(R) when found.
+
+Now we need to import typing.Any.
+
+Also we need to handle large V maybe > 63; bit operations fine.
+
+Potential optimization: Use adjacency list as int bitmask.
+
+Now we need to ensure that we don't exceed recursion depth. For V up to maybe 400, recursion depth may be up to clique size maybe 20. So fine.
+
+Now we need to produce solver.py content.
+
+Let's craft final code.
+
+Also we need to ensure we don't use any external packages.
+
+Let's produce final code.
+
+Potential bug: pivot selection: u = (P | X) & -(P | X) gives lowest set bit. That's fine.
+
+But we need to compute u_idx = (u.bit_length() - 1). Works.
+
+Now we need to compute candidates = P & ~adj[u_idx]. But if u_idx is not defined? If P|X==0, we skip. But we already base case.
+
+Now we need to compute adj[u_idx] bitmask.
+
+Now we need to compute candidates bitmask.
+
+Now we need to iterate over candidates bits.
+
+Now we need to update P and X after recursion.
+
+Now we need to ensure we don't modify P and X incorrectly: we modify P and X after recursion. That's fine.
+
+Now we need to ensure we don't modify P and X before recursion? We compute newP = P & adj[v_idx] etc. That's fine.
+
+Now we need to ensure we don't modify P and X inside recursion incorrectly. We pass newP and newX.
+
+Now we need to ensure we don't modify P and X inside recursion after recursion? We modify after recursion.
+
+Now we need to ensure we don't modify P and X inside recursion incorrectly due to bit operations.
+
+Now we need to ensure we don't use recursion too deep.
+
+Now we need to ensure we don't exceed time.
+
+Now we need to produce final code.
+
+Let's write final code.
+
+Also we need to import typing.Any.
+
+Also we need to define class Solver.
+
+Ok.
+
+Let's produce final answer.assistantfinal<<<SOLVER_PY_START>>>
+from typing import Any
+
+class Solver:
+    def solve(self, problem, **kwargs) -> Any:
+        A = problem["A"]
+        B = problem["B"]
+        n = len(A)
+        m = len(B)
+        V = n * m
+        # Map vertex index to (i, p)
+        pairs = [(i, p) for i in range(n) for p in range(m)]
+        # Build adjacency bitmask for each vertex
+        adj = [0] * V
+        for idx1 in range(V):
+            i, p = pairs[idx1]
+            mask = 0
+            for idx2 in range(idx1 + 1, V):
+                j, q = pairs[idx2]
+                if i == j or p == q:
+                    continue
+                if A[i][j] == B[p][q]:
+                    mask |= 1 << idx2
+                    adj[idx2] |= 1 << idx1
+            adj[idx1] = mask
+
+        best_clique = set()
+
+        def bk(R: set, P: int, X: int):
+            nonlocal best_clique
+            if P == 0 and X == 0:
+                if len(R) > len(best_clique):
+                    best_clique = set(R)
+                return
+            # Prune if even adding all remaining vertices cannot beat current best
+            if len(R) + P.bit_count() <= len(best_clique):
+                return
+            # Choose pivot u from P ∪ X with maximum degree in P
+            union = P | X
+            # Pick any pivot (lowest set bit)
+            u_bit = union & -union
+            u_idx = u_bit.bit_length() - 1
+            # Candidates are vertices in P not adjacent to pivot
+            candidates = P & ~adj[u_idx]
+            while candidates:
+                v_bit = candidates & -candidates
+                v_idx = v_bit.bit_length() - 1
+                bk(R | {v_idx}, P & adj[v_idx], X & adj[v_idx])
+                P &= ~v_bit
+                X |= v_bit
+                candidates &= ~v_bit
+
+        all_vertices = (1 << V) - 1
+        bk(set(), all_vertices, 0)
+
+        # Convert best clique indices to list of (i, p) pairs
+        result = [pairs[idx] for idx in best_clique]
+        # Sort for deterministic output
+        result.sort()
+        return result
 <<<SOLVER_PY_END>>>

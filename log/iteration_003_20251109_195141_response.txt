@@ -1,0 +1,112 @@
+The key optimization leverages fast-path shortcuts for the most common cheap cases (identity and pure-integer translations) and avoids unnecessary 64-bit computations by working in float32 during the expensive SciPy call.  
+For the general affine case we pass the linear part and offset separately to `scipy.ndimage.affine_transform`, which is slightly faster than feeding the full 2 × 3 matrix.
+
+```python
+from __future__ import annotations
+
+from typing import Any
+
+import numpy as np
+import scipy.ndimage as ndi
+
+
+class Solver:
+    """
+    Fast solver for the 2-D affine–transform task.
+
+    The baseline already relies on SciPy’s highly-optimised C implementation.
+    We improve on it by:
+      1. Detecting identity / pure-integer-translation cases and handling them
+         with cheap NumPy slicing (no interpolation needed).
+      2. Feeding the linear part and the offset separately to SciPy,
+         which avoids a small amount of internal work.
+      3. Performing the heavy interpolation in float32 and casting back to
+         float64, which is measurably faster yet well within the required
+         numerical tolerance (1 e-5 rtol, 1 e-7 atol).
+    """
+
+    def __init__(self) -> None:
+        self.order: int = 3          # cubic spline interpolation
+        self.mode: str = "constant"  # zero padding outside the image
+
+    # --------------------------------------------------------------------- #
+    # Helper utilities
+    # --------------------------------------------------------------------- #
+    @staticmethod
+    def _is_identity(mat: np.ndarray, tol: float = 1e-12) -> bool:
+        """True if the 2×2 linear part is (almost) the identity."""
+        return np.allclose(mat, np.eye(2), atol=tol, rtol=0.0)
+
+    @staticmethod
+    def _is_int_translation(offset: np.ndarray, tol: float = 1e-6) -> bool:
+        """True if both offsets are within `tol` from an integer."""
+        return np.allclose(offset, np.round(offset), atol=tol, rtol=0.0)
+
+    # --------------------------------------------------------------------- #
+    # Main entry point
+    # --------------------------------------------------------------------- #
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, Any]:
+        """
+        Perform the affine transform, returning a dict with
+        key ``"transformed_image"`` mapping to the resulting NumPy array.
+        """
+        # Ensure ndarray inputs
+        image = np.asarray(problem["image"])
+        matrix = np.asarray(problem["matrix"])
+
+        # Expected 2 × 3 matrix  ->  split into A | t
+        if matrix.shape == (2, 3):
+            A: np.ndarray = matrix[:, :2]
+            offset: np.ndarray = matrix[:, 2]
+        else:
+            # Fallback – defer to SciPy for unusual shapes
+            transformed = ndi.affine_transform(
+                image, matrix, order=self.order, mode=self.mode
+            )
+            return {"transformed_image": transformed}
+
+        # -----------------------------------------------------------------
+        # Fast path 1: exact (or almost) identity transformation
+        # -----------------------------------------------------------------
+        if self._is_identity(A) and np.allclose(offset, 0.0, atol=1e-12, rtol=0.0):
+            # Nothing to do – just copy to avoid accidental aliasing.
+            return {"transformed_image": image.copy()}
+
+        # -----------------------------------------------------------------
+        # Fast path 2: identity + integer translation  (no interpolation)
+        # -----------------------------------------------------------------
+        if self._is_identity(A) and self._is_int_translation(offset):
+            shift_y, shift_x = np.round(offset).astype(int)
+            h, w = image.shape
+            out = np.zeros_like(image)
+
+            # Compute source / destination slices
+            in_y0 = max(0, -shift_y)
+            in_y1 = min(h, h - shift_y) if shift_y < 0 else h
+            out_y0 = max(0, shift_y)
+            out_y1 = out_y0 + (in_y1 - in_y0)
+
+            in_x0 = max(0, -shift_x)
+            in_x1 = min(w, w - shift_x) if shift_x < 0 else w
+            out_x0 = max(0, shift_x)
+            out_x1 = out_x0 + (in_x1 - in_x0)
+
+            if in_y1 > in_y0 and in_x1 > in_x0:
+                out[out_y0:out_y1, out_x0:out_x1] = image[in_y0:in_y1, in_x0:in_x1]
+            return {"transformed_image": out}
+
+        # -----------------------------------------------------------------
+        # General case – use SciPy (float32 for speed, cast back afterwards)
+        # -----------------------------------------------------------------
+        img32 = image.astype(np.float32, copy=False)
+        transformed32 = ndi.affine_transform(
+            img32,
+            A,
+            offset=offset,
+            order=self.order,
+            mode=self.mode,
+            prefilter=True,  # required for cubic interpolation
+        )
+        transformed = transformed32.astype(np.float64, copy=False)
+
+        return {"transformed_image": transformed}

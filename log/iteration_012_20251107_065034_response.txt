@@ -1,0 +1,72 @@
+The current solver incurs unnecessary data-type conversions (float64 → float32 → float64) that cost more time than they save.  
+By processing the image in its original dtype, avoiding superfluous copies, and still pre-allocating the output array, we remove this overhead while preserving numerical fidelity. This yields a leaner, faster implementation with identical results.
+
+```python
+import numpy as np
+import scipy.ndimage
+from typing import Any
+
+
+class Solver:
+    """
+    High-performance 2-D affine-transform solver.
+
+    Optimisation tactics
+    --------------------
+    1. Work in the image’s native dtype – no costly float-format shuffles.
+    2. Ensure a C-contiguous view only when strictly necessary to let SciPy
+       stream through memory efficiently yet avoid needless copies.
+    3. Pre-allocate the destination array so `scipy.ndimage.affine_transform`
+       writes results directly, saving an internal allocation.
+    4. Keep all parameters (order=3, mode='constant', prefilter=True) exactly
+       as in the reference to guarantee bit-level agreement within tolerance.
+    """
+
+    _ORDER = 3
+    _MODE = "constant"
+    _CVAL = 0.0
+
+    @staticmethod
+    def _as_c_contiguous(arr: np.ndarray) -> np.ndarray:
+        """Return a C-contiguous view of *arr*, copying only if required."""
+        return arr if arr.flags.c_contiguous else np.ascontiguousarray(arr)
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, Any]:
+        """
+        Apply the affine transformation described in *problem*.
+
+        Parameters
+        ----------
+        problem : dict
+            Keys:
+                - "image": array-like (n×n) of floats in [0, 255]
+                - "matrix": 2×3 affine matrix (rotation/scale/shear + translation)
+
+        Returns
+        -------
+        dict
+            {"transformed_image": numpy.ndarray} – same shape as input image.
+        """
+        image_in = problem["image"]
+        matrix_in = problem["matrix"]
+
+        # Minimal, zero-copy conversions
+        img = self._as_c_contiguous(np.asarray(image_in, dtype=float))
+        mat = np.asarray(matrix_in, dtype=float)
+
+        # Pre-allocate output buffer
+        out = np.empty_like(img)
+
+        # Directly pass the (2×3) matrix; SciPy interprets last column as offset
+        scipy.ndimage.affine_transform(
+            img,
+            mat,
+            output=out,
+            order=self._ORDER,
+            mode=self._MODE,
+            cval=self._CVAL,
+            prefilter=True,
+        )
+
+        return {"transformed_image": out}
+```

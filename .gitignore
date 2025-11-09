@@ -6,3 +6,4 @@ dace_cache_*/
 __pycache__/
 *.pyc
 *.log
+log/

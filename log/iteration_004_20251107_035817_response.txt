@@ -1,0 +1,63 @@
+The current code repeatedly instantiates `AESGCM`, which is relatively expensive, and performs extra checks and logging that add overhead.  
+By caching `AESGCM` objects per-key (using `functools.lru_cache`) and trimming auxiliary logic, we can avoid redundant setup work and streamline execution while preserving full correctness.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Standard AES parameters
+_AES_KEY_SIZES = {16, 24, 32}          # valid key lengths in bytes
+_GCM_TAG_SIZE  = 16                    # bytes (128-bit tag recommended by GCM)
+
+class Solver:
+    """Fast AES-GCM encryption solver with cached key schedules."""
+
+    __slots__ = ()  # no per-instance dict → slightly lower overhead
+
+    # Re-use AESGCM objects for identical keys (up to 128 recent ones)
+    @staticmethod
+    @lru_cache(maxsize=128)
+    def _get_cipher(key: bytes) -> AESGCM:
+        if len(key) not in _AES_KEY_SIZES:
+            raise ValueError(f"Invalid AES key size {len(key)} (expected 16/24/32).")
+        return AESGCM(key)
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:
+        """
+        Encrypt the given plaintext with AES-GCM and return ciphertext and tag.
+
+        Parameters
+        ----------
+        problem : dict
+            Must contain:
+              • 'key'   : bytes – AES key (16/24/32 bytes)
+              • 'nonce' : bytes – 12-byte IV recommended for GCM
+              • 'plaintext' : bytes – data to encrypt
+              • 'associated_data' : bytes | None – optional AAD
+
+        Returns
+        -------
+        dict
+            {'ciphertext': bytes, 'tag': bytes}
+        """
+        key             = problem["key"]
+        nonce           = problem["nonce"]
+        plaintext       = problem["plaintext"]
+        associated_data = problem.get("associated_data", None)
+
+        # Fetch (or create) cached cipher for this key
+        aesgcm = self._get_cipher(key)
+
+        # Encrypt; cryptography appends 16-byte tag to ciphertext
+        out = aesgcm.encrypt(nonce, plaintext, associated_data)
+
+        # Split ciphertext and authentication tag
+        if len(out) < _GCM_TAG_SIZE:
+            raise ValueError("Ciphertext shorter than GCM tag length.")
+        return {
+            "ciphertext": out[:-_GCM_TAG_SIZE],
+            "tag":        out[-_GCM_TAG_SIZE:],
+        }
+```

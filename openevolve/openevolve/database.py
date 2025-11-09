@@ -985,7 +985,7 @@ class ProgramDatabase:
         try:
             content: str = asyncio.run(
                 self.novelty_llm.generate_with_context(
-                    system_msg=NOVELTY_SYSTEM_MSG,
+                    system_message=NOVELTY_SYSTEM_MSG,
                     messages=[{"role": "user", "content": user_msg}],
                 )
             )

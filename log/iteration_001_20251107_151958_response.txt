@@ -1,0 +1,55 @@
+The current implementation embeds the solver within a larger task-registration framework and performs extra logging and bookkeeping that aren’t needed for the evaluation harness.  
+I’ll provide a stripped-down, self-contained Solver that focuses solely on fast execution: minimal imports, no superfluous logic, direct NumPy conversion, and a single call to SciPy’s highly-optimized affine_transform.  This removes Python-level overhead and should yield further speed gains while preserving exact numerical behaviour.
+
+```python
+import numpy as np
+import scipy.ndimage
+from typing import Any, Dict
+
+
+class Solver:
+    """
+    Minimal, high-performance affine-transform solver.
+
+    It applies a 2-D affine transformation (order=3, cubic spline) with
+    'constant' boundary handling, identical to the reference but without
+    the extra overhead present in the baseline implementation.
+    """
+
+    # Constant parameters match the reference verifier
+    _ORDER: int = 3
+    _MODE: str = "constant"
+
+    def __init__(self) -> None:
+        # Cache local reference to the C-accelerated routine for micro-optimisation
+        self._affine = scipy.ndimage.affine_transform
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        """
+        Apply the affine transform defined in `problem["matrix"]`
+        to the 2-D image in `problem["image"]`.
+
+        Parameters
+        ----------
+        problem : dict
+            { "image": 2-D list/ndarray, "matrix": 2×3 list/ndarray }
+
+        Returns
+        -------
+        dict
+            { "transformed_image": ndarray }
+        """
+        # Minimal parsing / conversion
+        image = np.asarray(problem["image"], dtype=float, order="C")
+        matrix = np.asarray(problem["matrix"], dtype=float, order="C")
+
+        # Perform the affine transformation
+        transformed = self._affine(
+            image,
+            matrix,
+            order=self._ORDER,
+            mode=self._MODE,
+        )
+
+        return {"transformed_image": transformed}
+```

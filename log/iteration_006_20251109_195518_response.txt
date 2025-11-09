@@ -1,0 +1,147 @@
+The baseline always calls `scipy.ndimage.affine_transform`, which is costly even for trivial
+cases (identity or pure integer translations).  
+We add cheap fast-paths for these two common situations and fall back to the original SciPy
+routine only when necessary, guaranteeing identical numerical results while avoiding the
+heavy cubic–spline interpolation most of the time.
+
+```python
+from typing import Any, Tuple
+
+import numpy as np
+import scipy.ndimage
+
+
+class Solver:
+    """
+    Fast 2-D affine transformer.
+
+    Provides the same numerical results as the baseline but accelerates
+    the frequent cases of:
+      1. Exact identity transform.
+      2. Identity plus *integer* translation.
+
+    Those are executed with simple NumPy slicing (O(N²) and virtually
+    zero overhead) while all other transforms delegate to
+    scipy.ndimage.affine_transform with the original parameters
+    (order=3, mode="constant") to preserve full correctness.
+    """
+
+    # Constants must match the reference implementation
+    _ORDER = 3
+    _MODE = "constant"
+    _RTOL = 1e-12  # Tolerances for identifying “exact” integer/identity matrices
+    _ATOL = 1e-12
+
+    # ------------------------------------------------------------------ #
+    # Helper – recognise simple cases
+    # ------------------------------------------------------------------ #
+    @classmethod
+    def _fast_path_kind(cls, matrix: np.ndarray) -> Tuple[str, Tuple[int, int] | None]:
+        """
+        Determine whether `matrix` represents a fast-path transform.
+
+        Returns
+        -------
+        (kind, data)
+            kind:
+              "identity"     – exact identity (linear=I, offset≈0)
+              "translation"  – identity + integer translation; data=(dy, dx)
+              ""             – general case
+        """
+        m = np.asarray(matrix, dtype=float)
+        if m.shape != (2, 3):  # malformed => general case
+            return "", None
+
+        linear = m[:, :2]
+        offset = m[:, 2]
+
+        # Linear part must be (almost) identity
+        if not np.allclose(linear, np.eye(2), rtol=cls._RTOL, atol=cls._ATOL):
+            return "", None
+
+        # Check offset
+        if np.allclose(offset, 0, rtol=cls._RTOL, atol=cls._ATOL):
+            return "identity", None
+
+        # Pure integer translation?
+        rounded = np.rint(offset)
+        if np.allclose(offset, rounded, rtol=cls._RTOL, atol=cls._ATOL):
+            dy, dx = map(int, rounded)
+            return "translation", (dy, dx)
+
+        return "", None
+
+    # ------------------------------------------------------------------ #
+    # Helper – apply integer translation with zero padding
+    # ------------------------------------------------------------------ #
+    @staticmethod
+    def _apply_integer_translation(img: np.ndarray, dy: int, dx: int) -> np.ndarray:
+        """
+        Shift `img` by (dy, dx) pixels using zero padding (‘constant’ mode).
+        Positive `dy` shifts downward, positive `dx` shifts rightward.
+        """
+        h, w = img.shape
+        out = np.zeros_like(img)
+
+        # Compute source/destination slices along rows
+        if dy >= 0:
+            src_r = slice(0, max(0, h - dy))
+            dst_r = slice(dy, dy + max(0, h - dy))
+        else:
+            src_r = slice(-dy, h)
+            dst_r = slice(0, h + dy)
+
+        # Compute slices along columns
+        if dx >= 0:
+            src_c = slice(0, max(0, w - dx))
+            dst_c = slice(dx, dx + max(0, w - dx))
+        else:
+            src_c = slice(-dx, w)
+            dst_c = slice(0, w + dx)
+
+        # Copy data
+        if (dst_r.stop - dst_r.start) > 0 and (dst_c.stop - dst_c.start) > 0:
+            out[dst_r, dst_c] = img[src_r, src_c]
+        return out
+
+    # ------------------------------------------------------------------ #
+    # Public API
+    # ------------------------------------------------------------------ #
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, Any]:
+        """
+        Perform the 2-D affine transformation described in `problem`.
+
+        Parameters
+        ----------
+        problem : dict
+            Keys:
+              "image"  – 2-D array-like (H×W) of floats
+              "matrix" – 2×3 affine matrix (same convention as baseline)
+
+        Returns
+        -------
+        dict
+            {"transformed_image": np.ndarray of shape (H, W)}
+        """
+        # Ensure numpy arrays of type float
+        image = np.asarray(problem["image"], dtype=float)
+        matrix = np.asarray(problem["matrix"], dtype=float)
+
+        kind, data = self._fast_path_kind(matrix)
+
+        if kind == "identity":
+            transformed = image.copy()
+        elif kind == "translation":
+            dy, dx = data
+            transformed = self._apply_integer_translation(image, dy, dx)
+        else:
+            # General – delegate to SciPy (identical to baseline)
+            transformed = scipy.ndimage.affine_transform(
+                image,
+                matrix,
+                order=self._ORDER,
+                mode=self._MODE,
+            )
+
+        return {"transformed_image": transformed}
+```

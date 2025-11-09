@@ -1,0 +1,81 @@
+The main bottleneck is the high-level `AESGCM.encrypt()` call: it always allocates a fresh cipher instance and returns ciphertext concatenated with the 16-byte tag, forcing an extra copy when the tag is stripped.  
+Switching to the lower-level `Cipher / encryptor` API lets us:  
+1. Avoid the redundant allocation/slicing of the combined output.  
+2. Use `update_into` with a pre-allocated `bytearray` to write ciphertext in-place, cutting one memory copy for large plaintexts.  
+3. Keep a module-level `backend` singleton and perform only minimal Python-side checks.
+
+```python
+from typing import Any, Dict, Final
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+# --------------------------------------------------------------------------- #
+# Module-level constants and cached objects
+# --------------------------------------------------------------------------- #
+AES_KEY_SIZES:      Final = (16, 24, 32)   # Valid AES key lengths in bytes
+GCM_TAG_LEN:        Final = 16             # Standard GCM tag length (bytes)
+_BACKEND            = default_backend()    # Re-use the global backend
+
+
+class Solver:
+    """
+    High-performance AES-GCM encryption solver.
+
+    Expected input dictionary keys:
+        - 'key'             : bytes (16, 24 or 32 bytes)
+        - 'nonce'           : bytes (12 bytes recommended)
+        - 'plaintext'       : bytes
+        - 'associated_data' : bytes or None
+
+    Returns:
+        { 'ciphertext': bytes, 'tag': bytes }
+    """
+
+    __slots__ = ()  # minimise per-instance memory footprint
+
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        # Fast local look-ups
+        key: bytes        = problem["key"]
+        nonce: bytes      = problem["nonce"]
+        plaintext: bytes  = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data", None)
+
+        # Quick key length guard – full validation is performed by OpenSSL too
+        if len(key) not in AES_KEY_SIZES:
+            raise ValueError(f"Unsupported AES key length: {len(key)} bytes")
+
+        # ----------------------------------------------------------------- #
+        # Build encryptor (per encryption, as nonce must differ each time)
+        # ----------------------------------------------------------------- #
+        encryptor = Cipher(
+            algorithms.AES(key),
+            modes.GCM(nonce),
+            backend=_BACKEND,
+        ).encryptor()
+
+        # Attach AAD only if provided and non-empty (skips a C call otherwise)
+        if aad:
+            encryptor.authenticate_additional_data(aad)
+
+        # ----------------------------------------------------------------- #
+        # Encrypt with minimal copying
+        # ----------------------------------------------------------------- #
+        pt_len = len(plaintext)
+        if pt_len:
+            # For sizeable plaintext use update_into to avoid extra allocations
+            buf = bytearray(pt_len)
+            written = encryptor.update_into(plaintext, buf)
+            if written != pt_len:  # extremely unlikely, but guard for safety
+                cipher_bytes = encryptor.update(plaintext[:])  # fallback
+            else:
+                cipher_bytes = bytes(buf)
+        else:
+            cipher_bytes = b""
+
+        # Finalise to compute authentication tag
+        encryptor.finalize()
+        tag = encryptor.tag
+
+        # Return separate ciphertext and tag
+        return {"ciphertext": cipher_bytes, "tag": tag}
+```

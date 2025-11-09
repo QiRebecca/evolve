@@ -1,80 +1,102 @@
 from typing import Any
 import networkx as nx
-from ortools.sat.python import cp_model
 
 class Solver:
     def solve(self, problem, **kwargs) -> Any:
         """
-        Solves the graph coloring problem using a compact CP‑SAT formulation.
-        The model uses integer variables for vertex colors and a single variable
-        K for the maximum color used.  This approach is typically faster than
-        the binary matrix formulation used in the baseline.
+        Solves the graph coloring problem using an exact DSATUR algorithm
+        with a greedy upper bound. This implementation is typically faster
+        than the CP‑SAT baseline for moderate-sized graphs while guaranteeing
+        optimality.
         """
         n = len(problem)
         if n == 0:
             return []
 
-        # Build graph
-        G = nx.Graph()
-        G.add_nodes_from(range(n))
+        # Build adjacency list
+        adjacency = [set() for _ in range(n)]
         for i in range(n):
-            for j in range(i + 1, n):
-                if problem[i][j]:
-                    G.add_edge(i, j)
+            row = problem[i]
+            for j, val in enumerate(row):
+                if val and i != j:
+                    adjacency[i].add(j)
 
-        # Upper bound via greedy coloring
-        greedy = nx.greedy_color(G, strategy="largest_first")
-        ub = max(greedy.values()) + 1  # colors are 0-indexed
+        # Greedy upper bound (largest_first strategy)
+        greedy_colors = nx.greedy_color(problem, strategy="largest_first")
+        ub = max(greedy_colors.values()) + 1 if greedy_colors else 1
 
-        # Lower bound via maximum clique (approximate for speed)
-        try:
-            # Exact maximum clique (may be slow for very large graphs)
-            max_clique_size = max(len(c) for c in nx.find_cliques(G))
-        except Exception:
-            # Fallback to approximation
-            max_clique_size = len(nx.algorithms.approximation.clique.max_clique(G))
-        lb = max_clique_size
+        best_colors = ub
+        best_assignment = [0] * n
 
-        # If lower bound equals upper bound, greedy is optimal
-        if lb == ub:
-            return [c + 1 for c in greedy]
+        # DSATUR state
+        colors = [0] * n
+        neighbor_colors = [set() for _ in range(n)]
+        uncolored = set(range(n))
+        degrees = [len(adjacency[i]) for i in range(n)]
 
-        # CP‑SAT model
-        model = cp_model.CpModel()
+        def select_vertex():
+            # Choose uncolored vertex with highest saturation degree,
+            # breaking ties by degree.
+            best_v = None
+            best_sat = -1
+            best_deg = -1
+            for v in uncolored:
+                sat = len(neighbor_colors[v])
+                if sat > best_sat or (sat == best_sat and degrees[v] > best_deg):
+                    best_sat = sat
+                    best_deg = degrees[v]
+                    best_v = v
+            return best_v
 
-        # Color variables for each vertex (1..ub)
-        color = {}
-        for v in range(n):
-            color[v] = model.NewIntVar(1, ub, f"c_{v}")
+        def dfs(colored_count, used_colors):
+            nonlocal best_colors, best_assignment
+            if colored_count == n:
+                if used_colors < best_colors:
+                    best_colors = used_colors
+                    best_assignment = colors.copy()
+                return
+            if used_colors >= best_colors:
+                return
 
-        # K variable: maximum color used
-        K = model.NewIntVar(1, ub, "K")
+            v = select_vertex()
+            forbidden = neighbor_colors[v]
 
-        # Each color <= K
-        for v in range(n):
-            model.Add(color[v] <= K)
+            # Try existing colors
+            for c in range(1, used_colors + 1):
+                if c not in forbidden:
+                    colors[v] = c
+                    added = []
+                    for nb in adjacency[v]:
+                        if colors[nb] == 0 and c not in neighbor_colors[nb]:
+                            neighbor_colors[nb].add(c)
+                            added.append(nb)
+                    uncolored.remove(v)
+                    dfs(colored_count + 1, used_colors)
+                    uncolored.add(v)
+                    colors[v] = 0
+                    for nb in added:
+                        neighbor_colors[nb].remove(c)
 
-        # Adjacent vertices must have different colors
-        for u, v in G.edges():
-            model.Add(color[u] != color[v])
+            # Try a new color
+            new_color = used_colors + 1
+            if new_color < best_colors:
+                colors[v] = new_color
+                added = []
+                for nb in adjacency[v]:
+                    if colors[nb] == 0 and new_color not in neighbor_colors[nb]:
+                        neighbor_colors[nb].add(new_color)
+                        added.append(nb)
+                uncolored.remove(v)
+                dfs(colored_count + 1, new_color)
+                uncolored.add(v)
+                colors[v] = 0
+                for nb in added:
+                    neighbor_colors[nb].remove(new_color)
 
-        # Objective: minimize K
-        model.Minimize(K)
-
-        # Solve
-        solver = cp_model.CpSolver()
-        solver.parameters.max_time_in_seconds = 60.0  # safety limit
-        status = solver.Solve(model)
-
-        if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            return []
-
-        # Extract colors
-        colors = [solver.Value(color[v]) for v in range(n)]
+        dfs(0, 0)
 
         # Normalize colors to 1..k
-        used = sorted(set(colors))
+        used = sorted(set(best_assignment))
         remap = {old: new for new, old in enumerate(used, start=1)}
-        colors = [remap[c] for c in colors]
-
-        return colors
+        result = [remap[c] for c in best_assignment]
+        return result

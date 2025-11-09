@@ -92,7 +92,10 @@ def evaluate_solver_on_test(
     num_runs: int = 10
 ) -> Dict[str, Any]:
     """
-    Evaluate solver on TEST dataset with specified number of runs.
+    Evaluate solver on TEST dataset using AlgoTune official method (isolated execution).
+    
+    Uses evaluate_code_on_dataset() which uses isolated execution (subprocess) to match
+    AlgoTune official evaluation methodology.
     
     Args:
         solver_path: Path to solver.py
@@ -103,139 +106,84 @@ def evaluate_solver_on_test(
     Returns:
         Dictionary with solver times for each problem
     """
+    # Set up environment to match AlgoTune official evaluation
+    os.environ.setdefault("DATA_DIR", str(data_dir))
+    os.environ.setdefault("ALGO_TUNE_DATA_DIR", str(data_dir))
+    os.environ.setdefault("CURRENT_TASK_NAME", task_name)
+    os.environ.setdefault("SKIP_DATASET_GEN", "1")
+    # Note: evaluate_code_on_dataset uses hardcoded use_isolated_execution=True
+    
+    from AlgoTuneTasks.factory import TaskFactory
+    from AlgoTuner.utils.evaluator.main import evaluate_code_on_dataset
+    from AlgoTune.evaluate import _load_task_class, _load_solver_callable, _prepare_dataset, _load_per_problem_baselines
+    
     discover_and_import_tasks()
     
-    task_instance = TaskFactory(task_name, data_dir=str(data_dir))
-    task_instance.task_name = task_name
+    logging.info(f"Evaluating solver using AlgoTune official method (isolated execution)")
+    logging.info(f"Solver path: {solver_path}")
+    logging.info(f"Task: {task_name}")
+    logging.info(f"Data dir: {data_dir}")
+    logging.info(f"Num runs per problem: {num_runs}")
     
-    logging.info(f"Loading TEST dataset for {task_name}")
+    # Load task class and prepare dataset (same as evaluate.py)
+    task_class = _load_task_class(task_name)
+    baseline_task = task_class(data_dir=str(data_dir))
+    baseline_task.task_name = task_name
+    dataset_list = _prepare_dataset(baseline_task, split="test", max_samples=None)
     
-    dataset_split = os.environ.get('ALGO_TUNE_SPLIT', 'test').lower()
+    # Create BaselineManager (same as official method)
+    # This ensures we use the same baseline generation method
+    from AlgoTuner.utils.evaluator.baseline_manager import BaselineManager
     
-    data_files = glob.glob(str(data_dir / "**" / f"{task_name}*_{dataset_split}.jsonl"), recursive=True)
-    if not data_files:
-        data_files = glob.glob(str(data_dir / f"{task_name}" / f"*_{dataset_split}.jsonl"))
+    baseline_manager = BaselineManager(baseline_task)
     
-    if not data_files:
-        raise FileNotFoundError(f"No {dataset_split} JSONL file found for {task_name} in {data_dir}")
+    # Prepare candidate task with solver
+    candidate_task = task_class(data_dir=str(data_dir))
+    candidate_task.task_name = task_name
+    solver_callable = _load_solver_callable(solver_path, task_class, candidate_task)
+    candidate_task.solve = solver_callable  # type: ignore[attr-defined]
+    candidate_task.oracle = solver_callable  # type: ignore[attr-defined]
     
-    test_file = data_files[0]
-    logging.info(f"Loading {dataset_split.upper()} data from: {test_file}")
+    # Call evaluate_code_on_dataset directly to get problem-level results
+    # Use same parameters as official method (handlers.py:1779-1785)
+    from AlgoTuner.utils.timing_config import EVAL_RUNS
     
-    test_base_dir = os.path.dirname(test_file)
+    dataset_results = evaluate_code_on_dataset(
+        task_obj=candidate_task,
+        dataset_iterable=dataset_list,
+        baseline_manager=baseline_manager,  # Same as official: pass BaselineManager
+        data_subset="test",
+        test_mode=False,  # Same as official: False unless max_samples is set
+        default_num_eval_runs=EVAL_RUNS,  # Same as official: EVAL_RUNS for test
+        # default_num_warmup_runs not passed (use default WARMUPS=1, same as official)
+    )
     
-    test_dataset = []
-    with open(test_file, 'r') as f:
-        for line in f:
-            if line.strip():
-                raw_data = json.loads(line)
-                decoded_data = dataset_decoder(raw_data, base_dir=test_base_dir)
-                if 'problem' in decoded_data:
-                    test_dataset.append(decoded_data['problem'])
-                else:
-                    test_dataset.append(decoded_data)
-    
-    logging.info(f"Loaded {len(test_dataset)} test problems from file")
-    
-    logging.info(f"Loading solver from: {solver_path}")
-    spec = importlib.util.spec_from_file_location("solver_module", solver_path)
-    if spec is None:
-        raise ValueError(f"Could not load spec from {solver_path}")
-    
-    solver_module = importlib.util.module_from_spec(spec)
-    sys.modules['solver_module'] = solver_module
-    
-    try:
-        spec.loader.exec_module(solver_module)
-    except Exception as e:
-        logging.error(f"Failed to execute module: {e}")
-        raise
-    
-    logging.info(f"Module attributes: {[a for a in dir(solver_module) if not a.startswith('_')]}")
-    
-    if hasattr(solver_module, 'Solver'):
-        solver_instance = solver_module.Solver()
-        logging.info("Using standalone Solver class")
-    else:
-        task_classes = [
-            getattr(solver_module, attr) 
-            for attr in dir(solver_module) 
-            if not attr.startswith('_') and hasattr(getattr(solver_module, attr), 'solve')
-        ]
-        
-        if not task_classes:
-            raise AttributeError(
-                f"Module loaded from {solver_path} does not contain 'Solver' class or Task class with solve() method. "
-                f"Available attributes: {[a for a in dir(solver_module) if not a.startswith('_')]}"
-            )
-        
-        task_class = task_classes[0]
-        logging.info(f"Using Task class: {task_class.__name__}")
-        solver_instance = task_class(data_dir=str(data_dir))
-        solver_instance.task_name = task_name
-    
+    # Extract problem-level results from DatasetResults
     solver_results = []
     
-    for idx, problem_data in enumerate(test_dataset):
-        problem = problem_data.get('problem', problem_data)
-        problem_id = problem_data.get('id', f'problem_{idx+1}')
+    for prob_result in dataset_results.results:
+        solver_time_ms = prob_result.solver_time_ms
+        min_time_ms = None
         
-        logging.info(f"Evaluating problem {idx+1}/{len(test_dataset)} (ID: {problem_id})")
+        # Extract min_time_ms from timing if available
+        if prob_result.execution.timing:
+            min_time_ms = prob_result.execution.timing.min_ms
         
-        try:
-            times_ns = []
-            
-            # Warmup run
-            _ = solver_instance.solve(problem)
-            
-            # Timed runs
-            for run_idx in range(num_runs):
-                t0 = time.perf_counter_ns()
-                result = solver_instance.solve(problem)
-                elapsed_ns = time.perf_counter_ns() - t0
-                times_ns.append(elapsed_ns)
-            
-            min_ns = min(times_ns)
-            mean_ns = statistics.mean(times_ns)
-            min_time_ms = min_ns / 1e6
-            mean_time_ms = mean_ns / 1e6
-            
-            is_valid = task_instance.is_solution(problem, result)
-            
-            solver_results.append({
-                'problem_id': problem_id,
-                'min_time_ms': min_time_ms,
-                'mean_time_ms': mean_time_ms,
-                'times_ms': [t / 1e6 for t in times_ns],
-                'is_valid': is_valid,
-                'num_runs': num_runs,
-                'error': None,
-                'status': 'success'
-            })
-            
-            logging.info(
-                f"  Problem {problem_id}: min={min_time_ms:.2f}ms, "
-                f"mean={mean_time_ms:.2f}ms, valid={is_valid}"
-            )
-        
-        except Exception as e:
-            error_msg = f"{type(e).__name__}: {str(e)}"
-            logging.error(f"  Problem {problem_id} FAILED: {error_msg}")
-            
-            solver_results.append({
-                'problem_id': problem_id,
-                'min_time_ms': None,
-                'mean_time_ms': None,
-                'times_ms': [],
-                'is_valid': False,
-                'num_runs': 0,
-                'error': error_msg,
-                'status': 'failed'
-            })
+        solver_results.append({
+            'problem_id': prob_result.problem_id,
+            'min_time_ms': min_time_ms,
+            'mean_time_ms': prob_result.execution.timing.mean_ms if prob_result.execution.timing else None,
+            'times_ms': prob_result.execution.timing.times_ms if prob_result.execution.timing else [],
+            'is_valid': prob_result.is_valid,
+            'num_runs': num_runs,
+            'error': prob_result.execution.error,
+            'status': 'success' if prob_result.execution.success else 'failed'
+        })
     
     return {
         'results': solver_results,
-        'num_problems': len(test_dataset)
+        'num_problems': len(solver_results),
+        'dataset_results': dataset_results  # Keep reference for debugging
     }
 
 
@@ -511,18 +459,58 @@ def main():
     
     # Step 2: Evaluate solver on TEST dataset
     logging.info("Step 2: Evaluating solver on TEST dataset...")
-    eval_results = evaluate_solver_on_test(
-        solver_path=args.solver,
-        task_name=args.task,
-        data_dir=data_dir,
-        num_runs=args.num_runs
-    )
-    logging.info("")
-    
-    # Step 3: Calculate final metrics (AlgoTune official: per-problem speedup)
-    logging.info("Step 3: Calculating final metrics (AlgoTune official methodology)...")
-    metrics = calculate_final_metrics(per_problem_baselines, eval_results['results'])
-    logging.info("")
+    try:
+        eval_results = evaluate_solver_on_test(
+            solver_path=args.solver,
+            task_name=args.task,
+            data_dir=data_dir,
+            num_runs=args.num_runs
+        )
+        logging.info("")
+        
+        # Step 3: Calculate final metrics (AlgoTune official: per-problem speedup)
+        logging.info("Step 3: Calculating final metrics (AlgoTune official methodology)...")
+        metrics = calculate_final_metrics(per_problem_baselines, eval_results['results'])
+        logging.info("")
+        
+    except Exception as e:
+        # Solver loading or execution failed completely
+        error_msg = f"{type(e).__name__}: {str(e)}"
+        logging.error(f"Solver evaluation failed: {error_msg}")
+        
+        # Create metrics with all problems marked as failed
+        num_problems = len(per_problem_baselines)
+        problem_details = []
+        
+        for i in range(num_problems):
+            problem_details.append({
+                'problem_id': f'problem_{i+1}',
+                'baseline_time_ms': per_problem_baselines[i],
+                'solver_time_ms': None,
+                'speedup': None,
+                'is_valid': False,
+                'status': 'failed',
+                'error': error_msg
+            })
+        
+        metrics = {
+            'speedup': 0.0,
+            'baseline_avg_min_ms': statistics.mean(per_problem_baselines),
+            'solver_avg_min_ms': 0.0,
+            'solver_std_min_ms': 0.0,
+            'mean_per_problem_speedup': 0.0,
+            'median_per_problem_speedup': 0.0,
+            'num_problems': num_problems,
+            'num_success': 0,
+            'num_failed': num_problems,
+            'num_valid': 0,
+            'accuracy': 0.0,
+            'improvement_pct': -100.0,
+            'num_errors': num_problems,
+            'num_timeouts': 0,
+            'problem_results': problem_details,
+        }
+        logging.info("")
     
     # Step 4: Load existing summary
     logging.info("Step 4: Loading/updating summary JSON...")

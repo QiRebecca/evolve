@@ -1,108 +1,88 @@
 from typing import Any
-import logging
-
-try:
-    from ortools.sat.python import cp_model
-except ImportError:
-    cp_model = None
+import sys
 
 class Solver:
     def solve(self, problem, **kwargs) -> Any:
         """
-        Solves the Maximum Weighted Independent Set (MWIS) problem.
-        For graphs with up to 60 nodes, a branch-and-bound algorithm with
-        bitmask representation is used for speed. For larger graphs,
-        the CP-SAT solver from OR-Tools is employed as a fallback.
+        Solves the Maximum Weighted Independent Set problem using a branch and bound
+        algorithm with bitset representation. This implementation is typically faster
+        than the CP-SAT baseline for small to medium sized graphs.
         """
         adj_matrix = problem["adj_matrix"]
         weights = problem["weights"]
-        n = len(adj_matrix)
+        n = len(weights)
 
-        # If graph is large, use CP-SAT baseline
-        if n > 60 or cp_model is None:
-            return self._solve_with_cp_sat(adj_matrix, weights)
-
-        # Precompute adjacency masks
+        # Build adjacency bitmask for each node (including the node itself)
         adj_mask = [0] * n
         for i in range(n):
             mask = 1 << i
-            for j in range(n):
-                if adj_matrix[i][j]:
+            row = adj_matrix[i]
+            for j, val in enumerate(row):
+                if val:
                     mask |= 1 << j
             adj_mask[i] = mask
 
-        best_weight = 0
-        best_set = []
+        # Greedy initial solution to provide a lower bound
+        order = sorted(range(n), key=lambda i: -weights[i])
+        chosen = []
+        used = 0
+        for i in order:
+            if not (used & (1 << i)):
+                chosen.append(i)
+                used |= adj_mask[i]
+        best_weight = sum(weights[i] for i in chosen)
+        best_set = chosen
 
-        memo = {}
-
-        def dfs(mask: int, current_weight: int, current_set: list):
-            nonlocal best_weight, best_set
-
-            if mask == 0:
-                if current_weight > best_weight:
-                    best_weight = current_weight
-                    best_set = current_set.copy()
-                return
-
-            # Memoization prune
-            if mask in memo and memo[mask] >= current_weight:
-                return
-            memo[mask] = current_weight
-
-            # Upper bound: current weight + sum of remaining weights
-            ub = current_weight
-            m = mask
-            while m:
-                lsb = m & -m
-                i = (lsb.bit_length() - 1)
-                ub += weights[i]
-                m -= lsb
-            if ub <= best_weight:
-                return
-
-            # Choose node with maximum weight among remaining
-            best_candidate = None
-            best_candidate_weight = -1
-            m = mask
-            while m:
-                lsb = m & -m
-                i = (lsb.bit_length() - 1)
-                w = weights[i]
-                if w > best_candidate_weight:
-                    best_candidate_weight = w
-                    best_candidate = i
-                m -= lsb
-
-            # Branch: include candidate
-            new_mask = mask & ~adj_mask[best_candidate]
-            dfs(new_mask, current_weight + weights[best_candidate], current_set + [best_candidate])
-
-            # Branch: exclude candidate
-            mask_without = mask & ~(1 << best_candidate)
-            dfs(mask_without, current_weight, current_set)
+        # Branch and bound
+        sys.setrecursionlimit(10000)
+        best_weight_ref = [best_weight]
+        best_set_ref = [best_set]
 
         full_mask = (1 << n) - 1
-        dfs(full_mask, 0, [])
+        total_weight = sum(weights)
 
-        return sorted(best_set)
+        def dfs(mask: int, current_weight: int, current_set: list, remaining_weight: int):
+            # Prune if even taking all remaining nodes cannot beat best
+            if current_weight + remaining_weight <= best_weight_ref[0]:
+                return
+            if mask == 0:
+                if current_weight > best_weight_ref[0]:
+                    best_weight_ref[0] = current_weight
+                    best_set_ref[0] = current_set.copy()
+                return
 
-    def _solve_with_cp_sat(self, adj_matrix, weights):
-        n = len(adj_matrix)
-        model = cp_model.CpModel()
-        nodes = [model.NewBoolVar(f"x_{i}") for i in range(n)]
+            # Choose a node with maximum weight in the current mask
+            max_w = -1
+            node = None
+            m = mask
+            while m:
+                lsb = m & -m
+                i = (lsb.bit_length() - 1)
+                if weights[i] > max_w:
+                    max_w = weights[i]
+                    node = i
+                m -= lsb
 
-        for i in range(n):
-            for j in range(i + 1, n):
-                if adj_matrix[i][j]:
-                    model.Add(nodes[i] + nodes[j] <= 1)
+            # Include the chosen node
+            neighbor_mask = adj_mask[node] & mask
+            new_mask = mask & ~neighbor_mask
+            # Sum weights of nodes removed (node + its neighbors)
+            sum_removed = 0
+            mm = neighbor_mask
+            while mm:
+                lsb = mm & -mm
+                j = (lsb.bit_length() - 1)
+                sum_removed += weights[j]
+                mm -= lsb
+            new_remaining_weight = remaining_weight - sum_removed
+            current_set.append(node)
+            dfs(new_mask, current_weight + weights[node], current_set, new_remaining_weight)
+            current_set.pop()
 
-        model.Maximize(sum(weights[i] * nodes[i] for i in range(n)))
+            # Exclude the chosen node
+            mask_without_node = mask & ~(1 << node)
+            remaining_weight_excl = remaining_weight - weights[node]
+            dfs(mask_without_node, current_weight, current_set, remaining_weight_excl)
 
-        solver = cp_model.CpSolver()
-        status = solver.Solve(model)
-        if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-            return [i for i in range(n) if solver.Value(nodes[i])]
-        else:
-            logging.error("No solution found.")
-            return []
+        dfs(full_mask, 0, [], total_weight)
+        return sorted(best_set_ref[0])

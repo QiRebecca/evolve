@@ -1,0 +1,24 @@
+{
+  "id": "b9bcf318-3234-4b06-823e-47037f5a9a81",
+  "generation": 3,
+  "iteration": 17,
+  "timestamp": 1762690208.7422512,
+  "parent_id": "7d37f6ff-0f4c-4173-8aea-36d2f490a1d5",
+  "metrics": {
+    "score": 165150.1963840454,
+    "combined_score": 165150.1963840454,
+    "mean_speedup": 165150.1963840454,
+    "median_speedup": 165992.16795424157,
+    "accuracy": 1.0,
+    "success_rate": 1.0,
+    "num_evaluated": 10.0,
+    "num_valid": 10.0,
+    "num_errors": 0.0,
+    "num_timeouts": 0.0,
+    "avg_solver_time_ms": 0.0006541,
+    "avg_baseline_time_ms": 107.2089947,
+    "baseline_to_solver_ratio": 163903.06482189268
+  },
+  "language": "python",
+  "saved_at": 1762690375.0247614
+}

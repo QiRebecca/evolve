@@ -1,0 +1,65 @@
+The original implementation wrapped the solver in a bulky task-framework class and incurred unnecessary logging and validation overhead on every call.  
+I removed the framework, eliminated all superfluous checks, and bound the compiled SciPy routine once during initialisation.  
+The hot path now contains only inexpensive NumPy conversions plus a single call to `scipy.ndimage.affine_transform`, giving the same numerical result with less Python overhead.
+
+```python
+from typing import Any
+
+import numpy as np
+from scipy.ndimage import affine_transform
+
+
+class Solver:
+    """
+    Lightweight solver for the 2-D affine-transform task.
+
+    The computation is delegated to SciPy’s highly-optimised
+    `affine_transform` routine (order=3, mode="constant").
+    All we do in Python is:
+
+        1. Convert the inputs to NumPy arrays (fast, zero-copy when possible).
+        2. Call the compiled SciPy kernel.
+        3. Package the result in the requested dictionary format.
+
+    Binding `affine_transform` at import time avoids an
+    attribute lookup on every invocation and keeps the runtime
+    path extremely small.
+    """
+
+    def __init__(self) -> None:
+        # Fixed parameters required by the benchmark.
+        self._order: int = 3
+        self._mode: str = "constant"
+
+    # --------------------------------------------------------------------- #
+    # Public API
+    # --------------------------------------------------------------------- #
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, Any]:
+        """
+        Apply the supplied 2×3 affine matrix to the input image.
+
+        Parameters
+        ----------
+        problem : dict
+            Keys
+                - "image"  : 2-D list/ndarray of floats
+                - "matrix" : 2×3 list/ndarray describing the transform
+
+        Returns
+        -------
+        dict
+            {"transformed_image": ndarray}
+        """
+        # Fast, zero-copy conversion when the value is already an ndarray.
+        image = np.asarray(problem["image"], dtype=float)
+        matrix = np.asarray(problem["matrix"], dtype=float)
+
+        transformed = affine_transform(
+            image,
+            matrix,
+            order=self._order,
+            mode=self._mode,
+        )
+
+        return {"transformed_image": transformed}
+```

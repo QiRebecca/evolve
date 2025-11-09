@@ -1,0 +1,54 @@
+The current implementation performs unnecessary logging and validation, and repeatedly instantiates `AESGCM`, adding overhead. I'll streamline the `solve` method, drop redundant checks/logging, and cache `AESGCM` objects per-key to avoid re-initialisation costs.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+
+TAG_LEN = 16                       # Standard GCM authentication-tag length (bytes)
+VALID_KEY_SIZES = {16, 24, 32}     # AES-128 / 192 / 256
+
+
+@lru_cache(maxsize=128)
+def _get_aesgcm(key: bytes) -> AESGCM:
+    """
+    Return (and cache) an AESGCM instance for the given key.
+    Using an LRU cache avoids recreating the object when the same key
+    is reused across multiple solve calls, saving Python-level overhead.
+    """
+    if len(key) not in VALID_KEY_SIZES:
+        # Let cryptography raise if key length is invalid, but early-out helps clarity.
+        raise ValueError(f"Invalid AES key length: {len(key)}")
+    return AESGCM(key)
+
+
+class Solver:
+    """
+    Fast AES-GCM encryption solver.
+
+    Given a dict with:
+        key: bytes  (16/24/32 bytes)
+        nonce: bytes (12 bytes recommended)
+        plaintext: bytes
+        associated_data: bytes | None
+    returns:
+        { 'ciphertext': bytes, 'tag': bytes }
+    """
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data", None)
+
+        # Encrypt using (cached) AESGCM instance.
+        aesgcm = _get_aesgcm(key)
+        ct_and_tag = aesgcm.encrypt(nonce, plaintext, aad)
+
+        # Split ciphertext and tag (tag is the last 16 bytes in cryptography's AESGCM)
+        ciphertext, tag = ct_and_tag[:-TAG_LEN], ct_and_tag[-TAG_LEN:]
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

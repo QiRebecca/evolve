@@ -2,25 +2,23 @@ from typing import Any
 from ortools.sat.python import cp_model
 
 class Solver:
-    def solve(self, problem, **kwargs) -> Any:
+    def solve(self, problem: dict[str, Any], **kwargs) -> Any:
         """
-        Solve the Job Shop Scheduling Problem (JSSP) using OR-Tools CP-SAT solver.
-        The solver constructs interval variables for each operation, enforces
-        precedence constraints within jobs, no-overlap constraints on machines,
-        and minimizes the makespan.  The solution is returned as a list of
-        start times for each operation in each job.
+        Solve the Job Shop Scheduling Problem (JSSP) using OR-Tools CP-SAT.
+        This implementation is a lightweight variant of the baseline solver,
+        tuned for faster execution on typical benchmark instances.
         """
         M = problem["num_machines"]
         jobs_data = problem["jobs"]
 
-        # Compute a safe horizon: sum of all durations
+        # Compute a tight horizon: sum of all processing times
         horizon = sum(d for job in jobs_data for _, d in job)
 
         model = cp_model.CpModel()
 
-        # Store interval variables and map machine to its intervals
-        all_tasks = {}  # (job_id, op_id) -> (start, end, duration)
-        machine_to_intervals = {m: [] for m in range(M)}
+        # Create interval variables and precedence constraints
+        all_tasks = {}  # (j, k) -> (start_var, end_var, duration)
+        machine_to_intervals: dict[int, list[cp_model.IntervalVar]] = {m: [] for m in range(M)}
 
         for j, job in enumerate(jobs_data):
             for k, (m, p) in enumerate(job):
@@ -30,13 +28,11 @@ class Solver:
                 interval = model.NewIntervalVar(start, p, end, f"interval{suffix}")
                 all_tasks[(j, k)] = (start, end, p)
                 machine_to_intervals[m].append(interval)
-
-                # Precedence constraint within the same job
                 if k > 0:
                     prev_end = all_tasks[(j, k - 1)][1]
                     model.Add(start >= prev_end)
 
-        # No-overlap constraints on each machine
+        # No-overlap on each machine
         for m in range(M):
             model.AddNoOverlap(machine_to_intervals[m])
 
@@ -49,9 +45,9 @@ class Solver:
         model.AddMaxEquality(makespan, last_ends)
         model.Minimize(makespan)
 
-        # Solver configuration for speed
+        # Solver parameters tuned for speed
         solver = cp_model.CpSolver()
-        solver.parameters.num_search_workers = 8
+        solver.parameters.num_search_workers = 1  # single-threaded to reduce overhead
         solver.parameters.cp_model_presolve = True
         solver.parameters.cp_model_probing_level = 0
         solver.parameters.cp_model_use_sat = True
@@ -67,5 +63,4 @@ class Solver:
                 solution.append(starts)
             return solution
         else:
-            # If no optimal solution is found, return empty.
             return []

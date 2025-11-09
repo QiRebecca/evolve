@@ -1,0 +1,65 @@
+The previous solution incurred two unnecessary dtype conversions (to float32 and back to float64).  
+Eliminating these copies and simply ensuring a contiguous float-64 array, while still pre-allocating
+the output buffer, removes that overhead and yields a faster implementation.
+
+```python
+import numpy as np
+import scipy.ndimage
+from typing import Any
+
+
+class Solver:
+    """
+    Fast 2-D affine-transform solver.
+
+    Optimisations over baseline:
+    1. Work directly in float64 – avoids two extra dtype conversions present in
+       the prior version yet preserves numerical identity with the reference.
+    2. Ensure C-contiguous memory once; no further copies are made.
+    3. Pre-allocate the output array and pass it to ``scipy.ndimage.affine_transform``
+       so SciPy skips an internal allocation.
+    """
+
+    _ORDER = 3          # cubic spline (matches reference)
+    _MODE = "constant"  # zero padding (matches reference)
+    _CVAL = 0.0
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, Any]:
+        """
+        Apply the affine transform defined in *problem* to the image.
+
+        Parameters
+        ----------
+        problem : dict
+            Keys:
+              - "image"  : 2-D array-like of floats.
+              - "matrix" : 2×3 affine matrix.
+
+        Returns
+        -------
+        dict
+            {"transformed_image": ndarray}
+        """
+        # Convert inputs to numpy arrays (zero-copy when possible)
+        img = np.asarray(problem["image"], dtype=np.float64, order="C")
+        if not img.flags.c_contiguous:  # guarantee contiguous for fastest access
+            img = np.ascontiguousarray(img)
+
+        matrix = np.asarray(problem["matrix"], dtype=np.float64)
+
+        # Pre-allocate output to avoid internal SciPy allocation
+        out = np.empty_like(img)
+
+        # Perform the affine transformation
+        scipy.ndimage.affine_transform(
+            img,
+            matrix,
+            output=out,
+            order=self._ORDER,
+            mode=self._MODE,
+            cval=self._CVAL,
+            prefilter=True,   # retain exact behaviour of reference
+        )
+
+        return {"transformed_image": out}
+```

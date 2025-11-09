@@ -1,50 +1,79 @@
 llm:
   # Configure the primary evolution model (defaults to OPENAI_API_KEY for auth)
-  api_base: "https://api.shubiaobiao.cn/v1"
+  api_base: "https://api.shubiaobiao.cn/v1"  # 使用代理 API base（因为无法直接访问 api.openai.com）
+  # api_base: "https://api.openai.com/v1"  # 直接访问（如果网络允许）
   reasoning_effort: "medium"
+  max_tokens: 100000  # Maximum supported by API (was 128000 but API limit is 100000)
+  # Request parameters - o3 is a reasoning model that needs longer timeout
+  timeout: 600  # 10 minutes timeout for o3 reasoning model
+  retries: 3
+  retry_delay: 5
   models:
-    - name: "gpt-4o"  # 暂时改用gpt-4o，等o3 API key修复后再改回
+    - name: "o3"  # 暂时改用gpt-4o，等o3 API key修复后再改回
       weight: 1.0
+      timeout: 600  # Extended timeout for reasoning model
 
   # Reuse the same model for evaluator feedback unless overridden
   evaluator_models:
-    - name: "gpt-4o"  # 暂时改用gpt-4o
+    - name: "o3"  # 暂时改用gpt-4o
       weight: 1.0
+      timeout: 600  # Extended timeout for reasoning model
 
 # Evolution settings
 diff_based_evolution: false  # Use full code rewrites instead of diffs (better for o3 model)
+
+# Database settings
+database:
+  log_prompts: true  # Save prompts and LLM responses for each program
+
+# Evolution trace settings
+evolution_trace:
+  enabled: true                 # Enable evolution trace logging
+  format: 'jsonl'              # Output format (jsonl for streaming)
+  include_code: true           # Include full program code in traces
+  include_prompts: true        # Include prompts and LLM responses (including reasoning)
+  output_path: null            # Will default to output_dir/evolution_trace.jsonl
+  buffer_size: 1               # Write immediately (no buffering)
+  compress: false              # Don't compress for easier reading
 
 prompt:
   task_name: null  # Defaults to $ALGO_TUNE_TASK if unset
   task_library_root: null  # Defaults to repo/env fallbacks (e.g. AlgoTune/AlgoTuneTasks)
   evaluator_system_message: |-
-    You are the performance judge for OpenEvolve runs that target AlgoTune tasks.  Each
-    candidate solver has already been timed by the AlgoTune evaluator, which returns
-    metrics such as:
-
-    • score – the primary selection metric (falling back to accuracy if no speedup was
-      recorded)
-    • mean_speedup / median_speedup – higher values indicate the candidate ran faster
-      than the baseline (values > 1 are improvements)
-    • baseline_to_solver_ratio – higher is better; values > 1 mean the candidate solver
-      is faster than the AlgoTune baseline runtime, while values < 1 indicate a slowdown
-    • accuracy / success_rate – fraction of test cases that matched the baseline outputs
-    • num_valid / num_errors / num_timeouts – counts of successful runs, failures, or
-      timeouts (any non-zero errors or timeouts should be treated as serious regressions)
-    • avg_solver_time_ms / avg_baseline_time_ms – absolute runtimes that produced the
-      ratio above
-
-    When comparing candidates, reward higher score and speedup metrics, prioritize
-    baseline_to_solver_ratio values above 1, and require accuracy and success_rate to
-    remain at 1.0 (or the highest available).  Penalize any candidate with errors,
-    timeouts, or degraded correctness even if it is faster.  Summarize the trade-offs in
-    natural language and make a clear recommendation on whether the candidate should be
-    kept for future generations.
+    You are the performance judge for OpenEvolve runs that target AlgoTune tasks.
+    
+    Focus on these key metrics:
+    
+    • Speedup (mean_speedup) – Your PRIMARY metric. Higher is better. 
+      - Speedup = Baseline Time / Solver Time
+      - 1.0x = same speed as baseline
+      - 1.5x = 50% faster than baseline (GOOD!)
+      - 2.0x = 2x faster than baseline (EXCELLENT!)
+      - < 1.0x = slower than baseline (BAD!)
+    
+    • Accuracy (num_valid/num_evaluated) – Must be 100%. Any errors are unacceptable.
+    
+    When comparing candidates:
+    1. REQUIRE 100% accuracy (num_errors must be 0, num_timeouts must be 0)
+    2. SELECT the one with HIGHER speedup
+    3. Reject any candidate with errors or timeouts, even if faster
+    
+    Keep your feedback concise and focus on speedup improvements.
   system_message: |-
-    You're an evolutionary coding agent participating in OpenEvolve's population-based improvement loop. You will propose code edits ("mutations") that are automatically evaluated; promising candidates are retained for future generations.
-    You are to use the commands defined below to accomplish this task.
-    Every message you send incurs a cost--you will be informed of your usage and remaining budget by the system.
-    You will be evaluated based on the best-performing piece of code you produce across generations, even if the final code doesn't work or compile (as long as it worked at some point and achieved a score, you will be eligible).
+    You're an evolutionary coding agent optimizing algorithm performance. Your goal is to maximize SPEEDUP while maintaining 100% correctness.
+    
+    KEY METRIC: Speedup = Baseline Time / Your Time
+    - 1.0x = same speed (no improvement)
+    - 1.5x = 50% faster (good!)
+    - 2.0x = 2x faster (excellent!)
+    - < 1.0x = slower (bad!)
+    
+    CRITICAL RULES:
+    - Maintain 100% correctness (num_errors must be 0)
+    - Focus on SPEEDUP as your primary objective
+    - Faster is better, but only if all tests pass
+    
+    Every message you send incurs a cost--you will be informed of your usage and remaining budget.
     Apart from the default Python packages, you have access to the following additional packages:
 
     cryptography
@@ -139,7 +168,12 @@ prompt:
     - Focus on speed while maintaining correctness
 
     GOALS:
-    Your primary objective is to optimize the `solve` function to run as fast as possible and improve target evaluation metrics under OpenEvolve's automated evaluator, while returning a correct/optimal solution for the given inputs. You will receive better scores the quicker your solution runs (and for improvements on other tracked metrics), and you will be penalized for exceeding the time limit or returning non optimal solutions.
+    Your PRIMARY objective is to MAXIMIZE SPEEDUP (make your solver faster than baseline).
+    - You succeed when speedup > 1.0x (faster than baseline)
+    - You fail if speedup < 1.0x (slower than baseline) OR if any test fails
+    - Higher speedup = better performance = higher score
+    
+    After each evaluation, focus on the speedup metric to guide your optimizations.
 
     Below you find the description of the task you will have to solve. Read it carefully and understand what the problem is and what your solver should do.
     <task/description.txt>

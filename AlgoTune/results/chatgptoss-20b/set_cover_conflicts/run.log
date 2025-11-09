@@ -1,9 +1,6 @@
 Traceback (most recent call last):
-  File "/data/zq/evolve/AlgoTune/scripts/gen_all_tasks.py", line 80, in worker
-    txt = gen.run_inference(tok, mdl, prompt, max_new_tokens=args.max_new_tokens)
-  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 380, in run_inference
-    attention_mask = torch.cat([base["attention_mask"], pre["attention_mask"]], dim=1)
-KeyError: 'attention_mask'
-
-=== [2025-10-24T17:42:34.102089] START set_cover_conflicts (GPU 2) ===
-=== END set_cover_conflicts -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/set_cover_conflicts/solver.py
+  File "/data/zq/evolve/AlgoTune/scripts/gen_all_tasks.py", line 82, in worker
+    code = gen.extract_solver_py(txt)
+  File "/data/zq/evolve/AlgoTune/scripts/gen_solver.py", line 417, in extract_solver_py
+    raise RuntimeError("MARKER_END not found in model output")
+RuntimeError: MARKER_END not found in model output

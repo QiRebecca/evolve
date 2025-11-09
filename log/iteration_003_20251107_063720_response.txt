@@ -1,0 +1,77 @@
+Even though beating the highly-optimized SciPy implementation itself is difficult, the previous version spent time on an extensive task-framework wrapper and extra bookkeeping.  
+I remove all framework overhead and logging, keep only the essential computation, and still return exactly the same numerical result by delegating to `scipy.ndimage.affine_transform`.  
+Handling both 2×2 (matrix + offset = 0) and 2×3 (matrix | translation) inputs avoids shape errors while matching the baseline’s behavior.
+
+```python
+from typing import Any
+
+import numpy as np
+import scipy.ndimage
+
+
+class Solver:
+    """
+    Fast, lightweight solver for the 2-D affine-transform task.
+
+    The reference solution relies on SciPy’s highly-optimized
+    ndimage.affine_transform with cubic (order=3) interpolation and
+    constant padding.  We retain that core but strip all superfluous
+    framework / logging code from the baseline to avoid Python-level
+    overhead, yielding a modest speed-up while guaranteeing bit-for-bit
+    equality with the reference output.
+    """
+
+    # Constants chosen to replicate the reference behaviour
+    _ORDER: int = 3
+    _MODE: str = "constant"
+    _CVAL: float = 0.0
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, Any]:
+        """
+        Apply a 2-D affine transform (cubic spline, constant padding).
+
+        Parameters
+        ----------
+        problem : dict
+            Must contain:
+                - "image": 2-D list or numpy array
+                - "matrix": 2×2 or 2×3 list / numpy array describing the
+                             affine transform.  If 2×3, last column is
+                             interpreted as translation (offset).
+
+        Returns
+        -------
+        dict
+            {"transformed_image": numpy.ndarray}  – same shape as input image.
+        """
+        # Lightweight, allocation-minimal conversions
+        image = np.asarray(problem["image"], dtype=float)
+        matrix = np.asarray(problem["matrix"], dtype=float)
+
+        # Support both 2×2 (pure linear) and 2×3 (with translation) forms
+        if matrix.ndim != 2 or matrix.shape[0] != 2:
+            raise ValueError("Transformation matrix must have shape (2, 2) or (2, 3).")
+
+        if matrix.shape[1] == 3:
+            # Last column is translation vector
+            transform = matrix[:, :2]
+            offset = matrix[:, 2]
+        elif matrix.shape[1] == 2:
+            transform = matrix
+            offset = 0.0
+        else:
+            raise ValueError("Invalid transformation matrix shape.")
+
+        # Perform the affine transformation
+        transformed = scipy.ndimage.affine_transform(
+            image,
+            transform,
+            offset=offset,
+            order=self._ORDER,
+            mode=self._MODE,
+            cval=self._CVAL,
+            prefilter=True,  # required for cubic accuracy
+        )
+
+        return {"transformed_image": transformed}
+```

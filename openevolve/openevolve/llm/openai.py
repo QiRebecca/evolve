@@ -35,6 +35,10 @@ class OpenAILLM(LLMInterface):
         self.random_seed = getattr(model_cfg, "random_seed", None)
         self.reasoning_effort = getattr(model_cfg, "reasoning_effort", None)
         self.verbosity = getattr(model_cfg, "verbosity", None)
+        
+        # Thread-local storage for reasoning content from o3/o1 models
+        import threading
+        self._thread_local = threading.local()
 
         # Set up API client
         # OpenAI client requires max_retries to be int, not None
@@ -53,6 +57,14 @@ class OpenAILLM(LLMInterface):
         if self.model not in logger._initialized_models:
             logger.info(f"Initialized OpenAI LLM with model: {self.model}")
             logger._initialized_models.add(self.model)
+    
+    def get_last_reasoning(self) -> Optional[str]:
+        """Get the reasoning from the last API call (for o3/o1 models)"""
+        return getattr(self._thread_local, 'last_reasoning', None)
+    
+    def get_last_full_response(self) -> Optional[Any]:
+        """Get the full response object from the last API call"""
+        return getattr(self._thread_local, 'last_full_response', None)
 
     async def generate(self, prompt: str, **kwargs) -> str:
         """Generate text from a prompt"""
@@ -88,24 +100,36 @@ class OpenAILLM(LLMInterface):
             "gpt-oss-20b",
         )
 
-        # Check if this is an OpenAI reasoning model
+        # Check if this is a reasoning model (o3, o1, etc.)
+        # Reasoning models don't support temperature/top_p regardless of API provider
         model_lower = str(self.model).lower()
-        is_openai_reasoning_model = model_lower.startswith(OPENAI_REASONING_MODEL_PREFIXES)
+        is_reasoning_model = model_lower.startswith(OPENAI_REASONING_MODEL_PREFIXES)
+        
+        # Check if using official OpenAI API (for reasoning-specific parameters)
+        is_official_openai_api = (self.api_base == "https://api.openai.com/v1" or self.api_base is None)
 
-        if is_openai_reasoning_model:
-            # For OpenAI reasoning models
+        if is_reasoning_model:
+            # For reasoning models: don't use temperature/top_p (not supported)
+            # Use max_completion_tokens for official API, max_tokens for third-party APIs
             params = {
                 "model": self.model,
                 "messages": formatted_messages,
-                "max_completion_tokens": kwargs.get("max_tokens", self.max_tokens),
             }
-            # Add optional reasoning parameters if provided
-            reasoning_effort = kwargs.get("reasoning_effort", self.reasoning_effort)
-            if reasoning_effort is not None:
-                params["reasoning_effort"] = reasoning_effort
-            verbosity = kwargs.get("verbosity", self.verbosity)
-            if verbosity is not None:
-                params["verbosity"] = verbosity
+            
+            if is_official_openai_api:
+                # Official OpenAI API supports reasoning model parameters
+                params["max_completion_tokens"] = kwargs.get("max_tokens", self.max_tokens)
+                # Add optional reasoning parameters if provided
+                reasoning_effort = kwargs.get("reasoning_effort", self.reasoning_effort)
+                if reasoning_effort is not None:
+                    params["reasoning_effort"] = reasoning_effort
+                verbosity = kwargs.get("verbosity", self.verbosity)
+                if verbosity is not None:
+                    params["verbosity"] = verbosity
+            else:
+                # Third-party APIs: use max_tokens instead of max_completion_tokens
+                # Don't include reasoning_effort/verbosity as they may not be supported
+                params["max_tokens"] = kwargs.get("max_tokens", self.max_tokens)
         else:
             # Standard parameters for all other models
             params = {
@@ -166,8 +190,47 @@ class OpenAILLM(LLMInterface):
         response = await loop.run_in_executor(
             None, lambda: self.client.chat.completions.create(**params)
         )
+        
         # Logging of system prompt, user message and response content
         logger = logging.getLogger(__name__)
-        logger.debug(f"API parameters: {params}")
-        logger.debug(f"API response: {response.choices[0].message.content}")
-        return response.choices[0].message.content
+        logger.info(f"API parameters: {params}")
+        
+        # Extract the main content
+        content = response.choices[0].message.content
+        
+        # Log detailed response info for debugging empty responses
+        if content is None or (isinstance(content, str) and len(content.strip()) == 0):
+            logger.warning(f"Empty or None content detected!")
+            logger.warning(f"Response object type: {type(response)}")
+            logger.warning(f"Response choices length: {len(response.choices) if response.choices else 0}")
+            if response.choices:
+                logger.warning(f"Response choices[0] type: {type(response.choices[0])}")
+                logger.warning(f"Response choices[0].message type: {type(response.choices[0].message)}")
+                logger.warning(f"Content value: {repr(content)}")
+                # Try to get full response dump
+                try:
+                    if hasattr(response, 'model_dump'):
+                        full_response = response.model_dump()
+                        logger.warning(f"Full response dump (first 2000 chars): {str(full_response)[:2000]}")
+                    else:
+                        logger.warning(f"Full response str (first 2000 chars): {str(response)[:2000]}")
+                except Exception as e:
+                    logger.warning(f"Could not dump full response: {e}")
+        
+        logger.info(f"API response content length: {len(content) if content else 0}")
+        
+        # For reasoning models (o3, o1, etc.), also log reasoning if available
+        if hasattr(response.choices[0].message, 'reasoning_content'):
+            reasoning = response.choices[0].message.reasoning_content
+            if reasoning:
+                logger.info(f"O3 Reasoning Process (length={len(reasoning)}): {reasoning[:500]}...")
+                # Store reasoning in a thread-local for later retrieval
+                import threading
+                if not hasattr(self, '_thread_local'):
+                    self._thread_local = threading.local()
+                self._thread_local.last_reasoning = reasoning
+                self._thread_local.last_full_response = response.model_dump() if hasattr(response, 'model_dump') else str(response)
+        else:
+            logger.info("No reasoning_content attribute in response (第三方API可能不支持)")
+        
+        return content if content else ""

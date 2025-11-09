@@ -122,6 +122,13 @@ def main():
         help='Number of runs per problem (default: 10)'
     )
     parser.add_argument(
+        '--dataset-type',
+        type=str,
+        default='test',
+        choices=['test', 'train'],
+        help='Dataset type: test or train (default: test)'
+    )
+    parser.add_argument(
         '--timeout',
         type=int,
         default=600,
@@ -167,10 +174,11 @@ def main():
     root_logger.addHandler(console_handler)
     
     logging.info("="*80)
-    logging.info("BATCH GENERATE TEST BASELINES")
+    logging.info(f"BATCH GENERATE {args.dataset_type.upper()} BASELINES")
     logging.info("="*80)
     logging.info(f"Start time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logging.info(f"Data directory: {args.data_dir}")
+    logging.info(f"Dataset type: {args.dataset_type}")
     logging.info(f"Output file: {args.output}")
     logging.info(f"Log file: {args.log_file}")
     logging.info(f"Timeout per task: {args.timeout}s")
@@ -236,7 +244,8 @@ def main():
                 baseline_data = generate_test_baseline(
                     task_name=task_name,
                     data_dir=args.data_dir,
-                    num_runs=args.num_runs
+                    num_runs=args.num_runs,
+                    dataset_type=args.dataset_type
                 )
                 
                 # Cancel alarm

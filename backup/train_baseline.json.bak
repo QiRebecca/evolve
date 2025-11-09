@@ -1,0 +1,2822 @@
+{
+  "aes_gcm_encryption": {
+    "task_name": "aes_gcm_encryption",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      113.275675,
+      142.051733,
+      126.306937,
+      143.291897,
+      141.25758,
+      137.971587,
+      111.151354,
+      156.942258,
+      153.036884,
+      161.224494
+    ],
+    "avg_min_ms": 138.6510399,
+    "std_min_ms": 17.139813043800526
+  },
+  "affine_transform_2d": {
+    "task_name": "affine_transform_2d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      154.007007,
+      222.92119,
+      209.759925,
+      224.760894,
+      234.443672,
+      180.80558,
+      213.77554,
+      182.458184,
+      159.084336,
+      197.271785
+    ],
+    "avg_min_ms": 197.9288113,
+    "std_min_ms": 27.968243829158762
+  },
+  "aircraft_wing_design": {
+    "task_name": "aircraft_wing_design",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      152.878916,
+      153.522341,
+      153.482668,
+      155.610278,
+      150.317762,
+      142.49977,
+      146.298243,
+      154.898845,
+      153.837373,
+      153.877574
+    ],
+    "avg_min_ms": 151.722377,
+    "std_min_ms": 4.1959045564134145
+  },
+  "articulation_points": {
+    "task_name": "articulation_points",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      661.205334,
+      681.83116,
+      544.119976,
+      715.837101,
+      723.902595,
+      543.667178,
+      711.532079,
+      724.272213,
+      783.694149,
+      700.00882
+    ],
+    "avg_min_ms": 679.0070605,
+    "std_min_ms": 77.97123296136513
+  },
+  "base64_encoding": {
+    "task_name": "base64_encoding",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      103.825521,
+      400.407112,
+      217.039455,
+      208.896587,
+      226.54141,
+      240.508507,
+      216.412439,
+      230.09669,
+      303.454801,
+      197.91966
+    ],
+    "avg_min_ms": 234.5102182,
+    "std_min_ms": 76.08494506320524
+  },
+  "battery_scheduling": {
+    "task_name": "battery_scheduling",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      142.18615,
+      154.871551,
+      128.316313,
+      149.612561,
+      151.208388,
+      161.024155,
+      285.411369,
+      144.250093,
+      149.601646,
+      150.308096
+    ],
+    "avg_min_ms": 161.6790322,
+    "std_min_ms": 44.32665214018703
+  },
+  "chacha_encryption": {
+    "task_name": "chacha_encryption",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      132.774502,
+      119.832643,
+      162.054666,
+      296.056641,
+      152.92909,
+      192.442431,
+      150.717412,
+      166.258667,
+      149.05075,
+      144.881154
+    ],
+    "avg_min_ms": 166.69979560000002,
+    "std_min_ms": 49.43875553699053
+  },
+  "channel_capacity": {
+    "task_name": "channel_capacity",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      335.597251,
+      412.702049,
+      361.365242,
+      362.578006,
+      358.751322,
+      328.331412,
+      339.797578,
+      395.588971,
+      245.013588,
+      275.024402
+    ],
+    "avg_min_ms": 341.47498210000003,
+    "std_min_ms": 50.631178164046204
+  },
+  "chebyshev_center": {
+    "task_name": "chebyshev_center",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      438.995194,
+      531.2367,
+      596.534293,
+      566.546869,
+      565.859467,
+      591.937184,
+      577.401751,
+      526.162607,
+      562.966262,
+      596.948265
+    ],
+    "avg_min_ms": 555.4588592,
+    "std_min_ms": 47.74581673134151
+  },
+  "cholesky_factorization": {
+    "task_name": "cholesky_factorization",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      475.220762,
+      347.497243,
+      467.121161,
+      423.159113,
+      427.100954,
+      231.519806,
+      427.62675,
+      349.939914,
+      422.851356,
+      402.779722
+    ],
+    "avg_min_ms": 397.4816781,
+    "std_min_ms": 71.73413581861371
+  },
+  "clustering_outliers": {
+    "task_name": "clustering_outliers",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      202.214868,
+      188.697434,
+      183.378188,
+      162.75775,
+      173.655038,
+      143.377893,
+      167.385144,
+      174.447219,
+      195.848663,
+      184.551066
+    ],
+    "avg_min_ms": 177.63132629999998,
+    "std_min_ms": 17.20802287034362
+  },
+  "communicability": {
+    "task_name": "communicability",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      209.60926,
+      218.952053,
+      166.493574,
+      181.585262,
+      210.950596,
+      193.2812,
+      209.192506,
+      207.014254,
+      197.806792,
+      207.697163
+    ],
+    "avg_min_ms": 200.258266,
+    "std_min_ms": 15.9005610236752
+  },
+  "convex_hull": {
+    "task_name": "convex_hull",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      213.48687,
+      164.176391,
+      178.168634,
+      170.216164,
+      173.874644,
+      175.752971,
+      172.121628,
+      169.120246,
+      177.951826,
+      178.267157
+    ],
+    "avg_min_ms": 177.3136531,
+    "std_min_ms": 13.506634630320018
+  },
+  "convolve2d_full_fill": {
+    "task_name": "convolve2d_full_fill",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      63.978794,
+      64.684683,
+      65.365203,
+      64.091953,
+      64.448076,
+      63.380657,
+      62.915655,
+      63.855108,
+      65.112977,
+      65.537839
+    ],
+    "avg_min_ms": 64.3370945,
+    "std_min_ms": 0.8556979144797213
+  },
+  "convolve_1d": {
+    "task_name": "convolve_1d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      156.875619,
+      153.440065,
+      158.977256,
+      160.958176,
+      177.704758,
+      160.494342,
+      159.301529,
+      162.526752,
+      156.671823,
+      160.262472
+    ],
+    "avg_min_ms": 160.7212792,
+    "std_min_ms": 6.508771811805269
+  },
+  "correlate2d_full_fill": {
+    "task_name": "correlate2d_full_fill",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      68.064274,
+      67.480077,
+      68.840075,
+      68.426356,
+      68.327929,
+      65.184617,
+      68.244162,
+      70.36836,
+      69.498185,
+      69.775858
+    ],
+    "avg_min_ms": 68.4209893,
+    "std_min_ms": 1.4333538594725652
+  },
+  "correlate_1d": {
+    "task_name": "correlate_1d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      162.34177,
+      151.560105,
+      162.707422,
+      151.064361,
+      150.92275,
+      147.823866,
+      154.324744,
+      150.521664,
+      150.129601,
+      163.806325
+    ],
+    "avg_min_ms": 154.5202608,
+    "std_min_ms": 6.039049343286826
+  },
+  "count_connected_components": {
+    "task_name": "count_connected_components",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      323.581054,
+      164.188338,
+      100.273496,
+      87.296841,
+      167.469026,
+      122.107472,
+      169.113764,
+      175.084183,
+      102.268327,
+      194.757885
+    ],
+    "avg_min_ms": 160.6140386,
+    "std_min_ms": 68.28764123850453
+  },
+  "count_riemann_zeta_zeros": {
+    "task_name": "count_riemann_zeta_zeros",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      165.041336,
+      166.325781,
+      197.784387,
+      103.164395,
+      166.430308,
+      167.161692,
+      102.535238,
+      99.21355,
+      164.389237,
+      351.635006
+    ],
+    "avg_min_ms": 168.368093,
+    "std_min_ms": 72.92019813215848
+  },
+  "cumulative_simpson_1d": {
+    "task_name": "cumulative_simpson_1d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      112.192297,
+      111.259741,
+      114.278342,
+      112.562796,
+      111.95808,
+      113.636975,
+      112.78939,
+      114.8989,
+      112.034914,
+      120.778615
+    ],
+    "avg_min_ms": 113.639005,
+    "std_min_ms": 2.748791082849291
+  },
+  "cumulative_simpson_multid": {
+    "task_name": "cumulative_simpson_multid",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      119.203507,
+      117.331828,
+      116.38956,
+      114.600205,
+      116.231395,
+      116.43485,
+      116.130542,
+      115.09033,
+      114.567307,
+      113.071217
+    ],
+    "avg_min_ms": 115.90507410000001,
+    "std_min_ms": 1.6922980652840385
+  },
+  "cvar_projection": {
+    "task_name": "cvar_projection",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      127.973777,
+      218.187421,
+      104.243586,
+      208.975948,
+      254.073452,
+      193.061601,
+      116.025545,
+      144.154124,
+      214.959884,
+      140.063758
+    ],
+    "avg_min_ms": 172.1719096,
+    "std_min_ms": 51.621585901441655
+  },
+  "cyclic_independent_set": {
+    "task_name": "cyclic_independent_set",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      237.486228,
+      240.572875,
+      244.243895,
+      242.471196,
+      243.983062,
+      243.302996,
+      243.734101,
+      249.718157,
+      263.734372,
+      245.807462
+    ],
+    "avg_min_ms": 245.5054344,
+    "std_min_ms": 7.14822659351841
+  },
+  "dct_type_I_scipy_fftpack": {
+    "task_name": "dct_type_I_scipy_fftpack",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      148.815711,
+      150.735803,
+      148.697481,
+      149.308683,
+      148.423235,
+      149.266914,
+      151.819852,
+      147.184899,
+      148.802948,
+      148.108481
+    ],
+    "avg_min_ms": 149.1164007,
+    "std_min_ms": 1.3158005467465244
+  },
+  "delaunay": {
+    "task_name": "delaunay",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      124.547564,
+      135.428514,
+      135.532598,
+      131.534981,
+      127.56972,
+      128.644755,
+      128.141133,
+      143.999913,
+      125.235333,
+      131.891122
+    ],
+    "avg_min_ms": 131.2525633,
+    "std_min_ms": 5.868454047197742
+  },
+  "dijkstra_from_indices": {
+    "task_name": "dijkstra_from_indices",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      45.120322,
+      34.612934,
+      33.163175,
+      34.476552,
+      44.840873,
+      33.521534,
+      33.609325,
+      45.791247,
+      43.022262,
+      33.209402
+    ],
+    "avg_min_ms": 38.1367626,
+    "std_min_ms": 5.703823531962752
+  },
+  "discrete_log": {
+    "task_name": "discrete_log",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      52.704717,
+      1616.302149,
+      729.630649,
+      1.07258,
+      2.605649,
+      12.36505,
+      1.486252,
+      2.223992,
+      3.223443,
+      3.623018
+    ],
+    "avg_min_ms": 242.5237499,
+    "std_min_ms": 533.2901150808326
+  },
+  "dst_type_II_scipy_fftpack": {
+    "task_name": "dst_type_II_scipy_fftpack",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      90.540232,
+      89.887235,
+      89.273404,
+      91.571907,
+      91.109465,
+      91.08894,
+      90.8037,
+      98.325351,
+      89.373742,
+      95.162752
+    ],
+    "avg_min_ms": 91.7136728,
+    "std_min_ms": 2.8549560891234886
+  },
+  "earth_movers_distance": {
+    "task_name": "earth_movers_distance",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      175.137931,
+      122.303948,
+      168.92027,
+      181.127143,
+      167.720442,
+      169.832491,
+      158.269,
+      192.783558,
+      159.809237,
+      178.592181
+    ],
+    "avg_min_ms": 167.4496201,
+    "std_min_ms": 18.858699755339305
+  },
+  "edge_expansion": {
+    "task_name": "edge_expansion",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      128.357202,
+      125.989509,
+      127.93326,
+      126.869606,
+      82.734363,
+      80.608052,
+      82.174365,
+      128.982225,
+      127.269341,
+      140.776881
+    ],
+    "avg_min_ms": 115.1694804,
+    "std_min_ms": 23.378385905954637
+  },
+  "eigenvalues_complex": {
+    "task_name": "eigenvalues_complex",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      359.772796,
+      358.612027,
+      303.986803,
+      254.761266,
+      234.6797,
+      315.204573,
+      353.88513,
+      235.4408,
+      312.851176,
+      321.91605
+    ],
+    "avg_min_ms": 305.1110321,
+    "std_min_ms": 48.332473734496695
+  },
+  "eigenvalues_real": {
+    "task_name": "eigenvalues_real",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      285.948385,
+      402.988374,
+      395.582045,
+      423.782379,
+      344.302407,
+      384.378074,
+      479.489086,
+      457.100654,
+      316.99524,
+      462.389842
+    ],
+    "avg_min_ms": 395.2956486,
+    "std_min_ms": 64.19420223503724
+  },
+  "eigenvectors_complex": {
+    "task_name": "eigenvectors_complex",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      400.268654,
+      322.66733,
+      308.787759,
+      322.094144,
+      235.780463,
+      276.103938,
+      313.29485,
+      330.478865,
+      393.778167,
+      380.356668
+    ],
+    "avg_min_ms": 328.3610838,
+    "std_min_ms": 51.792212677501865
+  },
+  "eigenvectors_real": {
+    "task_name": "eigenvectors_real",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      246.410345,
+      237.150985,
+      312.695538,
+      239.214756,
+      392.402336,
+      512.260892,
+      413.295575,
+      336.339259,
+      371.950473,
+      423.216627
+    ],
+    "avg_min_ms": 348.4936786,
+    "std_min_ms": 91.45127330713115
+  },
+  "elementwise_integration": {
+    "task_name": "elementwise_integration",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      151.75353,
+      161.477567,
+      163.764934,
+      179.631422,
+      164.861625,
+      187.039112,
+      169.715974,
+      150.073443,
+      177.784355,
+      177.684943
+    ],
+    "avg_min_ms": 168.3786905,
+    "std_min_ms": 12.222277184761591
+  },
+  "feedback_controller_design": {
+    "task_name": "feedback_controller_design",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      13.645234,
+      13.599384,
+      16.023806,
+      17.305907,
+      17.405461,
+      17.324315,
+      17.318379,
+      17.570252,
+      17.316059,
+      17.225783
+    ],
+    "avg_min_ms": 16.473458,
+    "std_min_ms": 1.5613283433708331
+  },
+  "fft_cmplx_scipy_fftpack": {
+    "task_name": "fft_cmplx_scipy_fftpack",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      131.563495,
+      107.313939,
+      136.852982,
+      92.81062,
+      127.403437,
+      108.86502,
+      126.462964,
+      130.361124,
+      126.482685,
+      105.181554
+    ],
+    "avg_min_ms": 119.329782,
+    "std_min_ms": 14.541041631642376
+  },
+  "fft_convolution": {
+    "task_name": "fft_convolution",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      100.410825,
+      54.406609,
+      79.822221,
+      70.43213,
+      69.011888,
+      83.727524,
+      82.766029,
+      84.717301,
+      71.758821,
+      82.786751
+    ],
+    "avg_min_ms": 77.9840099,
+    "std_min_ms": 12.305269508226822
+  },
+  "fft_real_scipy_fftpack": {
+    "task_name": "fft_real_scipy_fftpack",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      96.875562,
+      101.159347,
+      90.930142,
+      97.323158,
+      97.431181,
+      102.888193,
+      100.788083,
+      121.980489,
+      103.040038,
+      117.448153
+    ],
+    "avg_min_ms": 102.9864346,
+    "std_min_ms": 9.566895611787107
+  },
+  "firls": {
+    "task_name": "firls",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      2607.547197,
+      2231.101876,
+      901.894921,
+      4063.494521,
+      4324.663111,
+      3540.08657,
+      4342.871624,
+      3947.202158,
+      4503.799752,
+      4411.926831
+    ],
+    "avg_min_ms": 3487.4588561,
+    "std_min_ms": 1197.404635038654
+  },
+  "generalized_eigenvalues_complex": {
+    "task_name": "generalized_eigenvalues_complex",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      261.045402,
+      160.980034,
+      218.908083,
+      177.083908,
+      187.672522,
+      153.53259,
+      161.687597,
+      243.244202,
+      175.279404,
+      231.479035
+    ],
+    "avg_min_ms": 197.0912777,
+    "std_min_ms": 38.43939056114643
+  },
+  "generalized_eigenvalues_real": {
+    "task_name": "generalized_eigenvalues_real",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      6400.443607,
+      4714.808888,
+      4941.573298,
+      4476.767711,
+      4244.462049,
+      4399.094658,
+      3511.028098,
+      3790.108808,
+      3861.378414,
+      3281.072127
+    ],
+    "avg_min_ms": 4362.0737658,
+    "std_min_ms": 889.0840584716238
+  },
+  "generalized_eigenvectors_complex": {
+    "task_name": "generalized_eigenvectors_complex",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      138.639245,
+      140.551712,
+      154.263799,
+      128.168553,
+      139.343733,
+      150.599568,
+      138.113728,
+      143.400333,
+      128.894873,
+      136.746977
+    ],
+    "avg_min_ms": 139.8722521,
+    "std_min_ms": 8.214078457292965
+  },
+  "graph_global_efficiency": {
+    "task_name": "graph_global_efficiency",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      101.827018,
+      99.958438,
+      202.732762,
+      101.050069,
+      104.371923,
+      100.753034,
+      109.124114,
+      108.38217,
+      100.543237,
+      104.493875
+    ],
+    "avg_min_ms": 113.32366400000001,
+    "std_min_ms": 31.582244574808854
+  },
+  "graph_isomorphism": {
+    "task_name": "graph_isomorphism",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      99.867908,
+      92.070062,
+      95.292271,
+      192.486551,
+      94.428274,
+      104.262984,
+      94.66541,
+      100.207225,
+      97.17864,
+      102.943181
+    ],
+    "avg_min_ms": 107.34025059999999,
+    "std_min_ms": 30.174260088517983
+  },
+  "graph_laplacian": {
+    "task_name": "graph_laplacian",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      82.653343,
+      75.175454,
+      75.552174,
+      59.49749,
+      82.984066,
+      66.356423,
+      70.741178,
+      42.374328,
+      56.028592,
+      60.918818
+    ],
+    "avg_min_ms": 67.2281866,
+    "std_min_ms": 12.799518653753639
+  },
+  "group_lasso": {
+    "task_name": "group_lasso",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      63.376166,
+      120.116017,
+      187.573019,
+      134.654125,
+      79.197826,
+      56.676473,
+      88.668973,
+      57.458273,
+      311.732386,
+      119.6223
+    ],
+    "avg_min_ms": 121.9075558,
+    "std_min_ms": 78.37231545230395
+  },
+  "gzip_compression": {
+    "task_name": "gzip_compression",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      100.800364,
+      102.080012,
+      99.099917,
+      115.916447,
+      118.210428,
+      118.347575,
+      116.000921,
+      113.467381,
+      106.257092,
+      98.378931
+    ],
+    "avg_min_ms": 108.8559068,
+    "std_min_ms": 8.315124771101766
+  },
+  "integer_factorization": {
+    "task_name": "integer_factorization",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      1.303545,
+      1.301088,
+      1.322744,
+      1.329375,
+      1.394992,
+      1.381825,
+      1.3555,
+      1.283374,
+      1.301143,
+      1.294647
+    ],
+    "avg_min_ms": 1.3268233,
+    "std_min_ms": 0.03844835254973728
+  },
+  "job_shop_scheduling": {
+    "task_name": "job_shop_scheduling",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      102.881394,
+      94.074154,
+      156.289085,
+      112.546769,
+      102.080725,
+      191.450819,
+      71.729522,
+      58.155192,
+      113.556495,
+      99.478864
+    ],
+    "avg_min_ms": 110.2243019,
+    "std_min_ms": 38.62321815504439
+  },
+  "kalman_filter": {
+    "task_name": "kalman_filter",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      139.14335,
+      138.935802,
+      157.214709,
+      91.144029,
+      95.002335,
+      94.110932,
+      94.082401,
+      95.811266,
+      98.313322,
+      101.888827
+    ],
+    "avg_min_ms": 110.5646973,
+    "std_min_ms": 24.50091876378646
+  },
+  "kcenters": {
+    "task_name": "kcenters",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      123.780818,
+      189.380809,
+      77.73139,
+      63.127554,
+      72.538995,
+      125.994403,
+      60.753305,
+      111.070857,
+      173.861266,
+      60.249171
+    ],
+    "avg_min_ms": 105.84885680000001,
+    "std_min_ms": 47.37103085256673
+  },
+  "kernel_density_estimation": {
+    "task_name": "kernel_density_estimation",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      2.651603,
+      51.805719,
+      12.86735,
+      8.275032,
+      4.535991,
+      22.240135,
+      5.555411,
+      92.544192,
+      342.174995,
+      13.534259
+    ],
+    "avg_min_ms": 55.6184687,
+    "std_min_ms": 104.54566254793617
+  },
+  "ks_test_2samp": {
+    "task_name": "ks_test_2samp",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      70.051423,
+      79.329331,
+      68.373627,
+      70.795405,
+      70.545825,
+      410.461818,
+      71.683879,
+      76.398298,
+      76.593242,
+      74.839412
+    ],
+    "avg_min_ms": 106.907226,
+    "std_min_ms": 106.71566341580913
+  },
+  "l0_pruning": {
+    "task_name": "l0_pruning",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      86.666062,
+      84.201896,
+      88.222484,
+      84.247612,
+      83.07209,
+      86.241087,
+      90.889524,
+      86.030808,
+      90.635045,
+      84.86454
+    ],
+    "avg_min_ms": 86.5071148,
+    "std_min_ms": 2.6755590644117624
+  },
+  "l1_pruning": {
+    "task_name": "l1_pruning",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      138.56325,
+      53.2038,
+      113.086716,
+      94.448315,
+      62.722367,
+      105.696983,
+      129.019013,
+      60.599209,
+      124.250464,
+      91.26824
+    ],
+    "avg_min_ms": 97.2858357,
+    "std_min_ms": 30.343142497752382
+  },
+  "lasso": {
+    "task_name": "lasso",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      183.911532,
+      139.993202,
+      151.021235,
+      148.01336,
+      131.991848,
+      119.823145,
+      112.074257,
+      115.911026,
+      139.961917,
+      219.98762
+    ],
+    "avg_min_ms": 146.2689142,
+    "std_min_ms": 33.25038674118473
+  },
+  "least_squares": {
+    "task_name": "least_squares",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      190.063347,
+      31.100205,
+      103.544806,
+      203.416735,
+      103.275591,
+      305.652883,
+      54.796046,
+      79.64421,
+      87.356659,
+      175.682515
+    ],
+    "avg_min_ms": 133.4532997,
+    "std_min_ms": 83.68209214911633
+  },
+  "lp_centering": {
+    "task_name": "lp_centering",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      287.701076,
+      296.43655,
+      315.105414,
+      358.389244,
+      272.85764,
+      278.753212,
+      301.083887,
+      295.599834,
+      315.480348,
+      319.092231
+    ],
+    "avg_min_ms": 304.0499436,
+    "std_min_ms": 24.608587164584854
+  },
+  "lp_mdp": {
+    "task_name": "lp_mdp",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      70.022798,
+      70.317923,
+      70.904604,
+      105.666789,
+      105.43771,
+      105.380252,
+      72.321106,
+      72.190334,
+      72.025689,
+      77.527841
+    ],
+    "avg_min_ms": 82.1795046,
+    "std_min_ms": 16.221339996382873
+  },
+  "lti_simulation": {
+    "task_name": "lti_simulation",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      218.376739,
+      226.25365,
+      229.180213,
+      227.26907,
+      228.242806,
+      234.061156,
+      222.177278,
+      217.253752,
+      236.257178,
+      228.62274
+    ],
+    "avg_min_ms": 226.7694582,
+    "std_min_ms": 6.120938733192468
+  },
+  "lyapunov_stability": {
+    "task_name": "lyapunov_stability",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      96.478876,
+      103.214969,
+      118.051593,
+      100.301669,
+      105.817173,
+      92.326542,
+      106.66522,
+      87.479043,
+      119.486388,
+      101.492662
+    ],
+    "avg_min_ms": 103.13141350000001,
+    "std_min_ms": 10.146133293057751
+  },
+  "markowitz": {
+    "task_name": "markowitz",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      90.811736,
+      122.192737,
+      91.718492,
+      139.861652,
+      86.836715,
+      144.106009,
+      125.331523,
+      124.534256,
+      119.940204,
+      124.72466
+    ],
+    "avg_min_ms": 117.0057984,
+    "std_min_ms": 20.313249858003722
+  },
+  "matrix_completion": {
+    "task_name": "matrix_completion",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      87.328829,
+      86.08813,
+      87.14742,
+      85.956041,
+      87.801554,
+      88.897542,
+      89.142868,
+      87.284437,
+      88.259972,
+      90.43392
+    ],
+    "avg_min_ms": 87.8340713,
+    "std_min_ms": 1.3900338628825686
+  },
+  "matrix_exponential": {
+    "task_name": "matrix_exponential",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      295.647615,
+      300.350389,
+      315.514121,
+      301.272192,
+      304.824745,
+      285.126969,
+      300.388491,
+      299.482563,
+      307.883878,
+      285.384357
+    ],
+    "avg_min_ms": 299.587532,
+    "std_min_ms": 9.311567396327716
+  },
+  "matrix_multiplication": {
+    "task_name": "matrix_multiplication",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      6.095124,
+      5.437852,
+      6.715264,
+      5.04449,
+      3.947927,
+      4.95551,
+      7.630554,
+      5.714908,
+      8.781295,
+      6.079103
+    ],
+    "avg_min_ms": 6.0402027,
+    "std_min_ms": 1.3951226247437136
+  },
+  "matrix_sqrt": {
+    "task_name": "matrix_sqrt",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      188.224955,
+      176.568079,
+      215.823378,
+      206.940917,
+      191.323519,
+      193.416021,
+      170.339399,
+      208.039427,
+      164.078514,
+      203.840801
+    ],
+    "avg_min_ms": 191.859501,
+    "std_min_ms": 17.293877002181237
+  },
+  "max_clique_cpsat": {
+    "task_name": "max_clique_cpsat",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      32.543622,
+      17.083653,
+      17.646865,
+      20.764424,
+      20.254258,
+      29.238452,
+      17.836287,
+      17.568715,
+      19.134862,
+      19.722034
+    ],
+    "avg_min_ms": 21.1793172,
+    "std_min_ms": 5.321793792633349
+  },
+  "max_common_subgraph": {
+    "task_name": "max_common_subgraph",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      30.861196,
+      27.879285,
+      39.598468,
+      135.523943,
+      30.131108,
+      44.851269,
+      36.363095,
+      24.117342,
+      111.072677,
+      40.872838
+    ],
+    "avg_min_ms": 52.1271221,
+    "std_min_ms": 38.47545608141409
+  },
+  "max_flow_min_cost": {
+    "task_name": "max_flow_min_cost",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      145.640726,
+      139.745754,
+      144.426284,
+      141.040022,
+      144.207088,
+      146.49607,
+      139.660021,
+      141.620289,
+      139.923806,
+      141.805631
+    ],
+    "avg_min_ms": 142.4565691,
+    "std_min_ms": 2.541091084475041
+  },
+  "max_weighted_independent_set": {
+    "task_name": "max_weighted_independent_set",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      26.971534,
+      13.193712,
+      26.881677,
+      28.847761,
+      33.831637,
+      34.187702,
+      39.82417,
+      35.537724,
+      18.059883,
+      39.477435
+    ],
+    "avg_min_ms": 29.6813235,
+    "std_min_ms": 8.777788446879812
+  },
+  "min_dominating_set": {
+    "task_name": "min_dominating_set",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      78.238879,
+      93.64087,
+      133.061405,
+      73.113193,
+      120.774671,
+      188.968477,
+      101.061989,
+      182.268244,
+      139.620655,
+      314.820848
+    ],
+    "avg_min_ms": 142.5569231,
+    "std_min_ms": 72.30566787356088
+  },
+  "min_weight_assignment": {
+    "task_name": "min_weight_assignment",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      117.997123,
+      122.247187,
+      55.681437,
+      137.520806,
+      111.008317,
+      123.324157,
+      105.786892,
+      109.776359,
+      115.507614,
+      145.6635
+    ],
+    "avg_min_ms": 114.4513392,
+    "std_min_ms": 24.088433392404596
+  },
+  "minimum_spanning_tree": {
+    "task_name": "minimum_spanning_tree",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      382.627107,
+      328.753012,
+      328.905748,
+      356.065371,
+      366.043241,
+      180.459817,
+      184.59386,
+      184.555067,
+      183.982684,
+      183.263745
+    ],
+    "avg_min_ms": 267.92496520000003,
+    "std_min_ms": 90.51077873850605
+  },
+  "minimum_volume_ellipsoid": {
+    "task_name": "minimum_volume_ellipsoid",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      77.182905,
+      78.80482,
+      79.997659,
+      78.986833,
+      79.067057,
+      79.144226,
+      140.675528,
+      143.278994,
+      125.876595,
+      77.893547
+    ],
+    "avg_min_ms": 96.09081640000001,
+    "std_min_ms": 28.31901577990561
+  },
+  "multi_dim_knapsack": {
+    "task_name": "multi_dim_knapsack",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      10.609648,
+      9.663813,
+      9.508671,
+      11.841982,
+      10.824198,
+      12.779461,
+      16.690365,
+      23.795444,
+      9.71392,
+      13.330623
+    ],
+    "avg_min_ms": 12.8758125,
+    "std_min_ms": 4.4230566985148085
+  },
+  "nmf": {
+    "task_name": "nmf",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      139.852226,
+      136.303266,
+      142.003601,
+      110.601969,
+      101.759491,
+      106.507945,
+      114.060228,
+      109.850467,
+      124.834732,
+      104.880662
+    ],
+    "avg_min_ms": 119.0654587,
+    "std_min_ms": 15.379169793927922
+  },
+  "ode_brusselator": {
+    "task_name": "ode_brusselator",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      142.985159,
+      123.845984,
+      114.270662,
+      143.486347,
+      140.663099,
+      134.307669,
+      131.983852,
+      114.010835,
+      114.920168,
+      106.268909
+    ],
+    "avg_min_ms": 126.6742684,
+    "std_min_ms": 13.774322978340695
+  },
+  "ode_fitzhughnagumo": {
+    "task_name": "ode_fitzhughnagumo",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      46.646158,
+      320.456498,
+      19.503681,
+      350.660212,
+      327.5096,
+      411.528207,
+      425.432492,
+      26.847689,
+      33.648512,
+      26.690627
+    ],
+    "avg_min_ms": 198.8923676,
+    "std_min_ms": 180.3717423532477
+  },
+  "ode_hires": {
+    "task_name": "ode_hires",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      143.894212,
+      133.277238,
+      128.024161,
+      177.676263,
+      138.326551,
+      147.578578,
+      150.699552,
+      146.495998,
+      137.3721,
+      135.301331
+    ],
+    "avg_min_ms": 143.8645984,
+    "std_min_ms": 13.823601996150588
+  },
+  "ode_hodgkinhuxley": {
+    "task_name": "ode_hodgkinhuxley",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      179.18211,
+      183.50363,
+      110.58641,
+      165.980127,
+      180.995694,
+      174.478323,
+      116.895309,
+      94.054136,
+      168.622378,
+      121.136627
+    ],
+    "avg_min_ms": 149.5434744,
+    "std_min_ms": 34.55505915407826
+  },
+  "ode_lorenz96_nonchaotic": {
+    "task_name": "ode_lorenz96_nonchaotic",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      153.033049,
+      152.167321,
+      149.789927,
+      145.704701,
+      149.438285,
+      152.323982,
+      150.974975,
+      154.147044,
+      157.165924,
+      195.24104
+    ],
+    "avg_min_ms": 155.9986248,
+    "std_min_ms": 14.120601691334652
+  },
+  "ode_lotkavolterra": {
+    "task_name": "ode_lotkavolterra",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      228.923898,
+      227.780055,
+      217.103479,
+      124.870879,
+      251.943812,
+      138.569663,
+      122.560382,
+      233.832957,
+      223.569639,
+      116.750798
+    ],
+    "avg_min_ms": 188.5905562,
+    "std_min_ms": 55.1189117673999
+  },
+  "ode_nbodyproblem": {
+    "task_name": "ode_nbodyproblem",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      251.791448,
+      97.880447,
+      116.890111,
+      106.002583,
+      92.843046,
+      92.935822,
+      158.735765,
+      173.975802,
+      158.118679,
+      163.736831
+    ],
+    "avg_min_ms": 141.2910534,
+    "std_min_ms": 50.31073508372634
+  },
+  "ode_seirs": {
+    "task_name": "ode_seirs",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      206.530117,
+      157.629629,
+      137.707793,
+      158.497627,
+      139.456615,
+      190.932098,
+      178.670386,
+      138.76282,
+      123.442261,
+      109.483266
+    ],
+    "avg_min_ms": 154.1112612,
+    "std_min_ms": 30.53219210790683
+  },
+  "ode_stiff_robertson": {
+    "task_name": "ode_stiff_robertson",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      150.299178,
+      101.209792,
+      130.808063,
+      144.645099,
+      154.334413,
+      149.532754,
+      98.224592,
+      98.490273,
+      104.650159,
+      107.440135
+    ],
+    "avg_min_ms": 123.9634458,
+    "std_min_ms": 24.081939429555288
+  },
+  "ode_stiff_vanderpol": {
+    "task_name": "ode_stiff_vanderpol",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      160.348782,
+      160.505531,
+      125.173546,
+      154.766143,
+      193.821417,
+      188.800185,
+      230.087568,
+      227.601967,
+      300.633456,
+      193.38621
+    ],
+    "avg_min_ms": 193.5124805,
+    "std_min_ms": 49.841781752273214
+  },
+  "odr": {
+    "task_name": "odr",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      778.480124,
+      506.58617,
+      831.980305,
+      833.558759,
+      1004.000921,
+      3205.299683,
+      2128.015136,
+      1200.790686,
+      1508.012234,
+      1031.974444
+    ],
+    "avg_min_ms": 1302.8698462,
+    "std_min_ms": 807.3520966124521
+  },
+  "optimal_advertising": {
+    "task_name": "optimal_advertising",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      109.236411,
+      87.188978,
+      86.087578,
+      88.341552,
+      101.085484,
+      98.687905,
+      88.756701,
+      87.912435,
+      146.022225,
+      158.94807
+    ],
+    "avg_min_ms": 105.2267339,
+    "std_min_ms": 26.191733249289708
+  },
+  "outer_product": {
+    "task_name": "outer_product",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      118.444345,
+      105.761228,
+      105.964409,
+      134.619027,
+      126.389479,
+      109.130147,
+      111.646105,
+      116.471987,
+      125.108963,
+      109.665027
+    ],
+    "avg_min_ms": 116.3200717,
+    "std_min_ms": 9.744425677962141
+  },
+  "pagerank": {
+    "task_name": "pagerank",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      58.56357,
+      58.869535,
+      59.307969,
+      102.579872,
+      102.106144,
+      103.147932,
+      60.03824,
+      73.85116,
+      112.995442,
+      101.708718
+    ],
+    "avg_min_ms": 83.3168582,
+    "std_min_ms": 22.984943017261553
+  },
+  "pca": {
+    "task_name": "pca",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      539.837013,
+      431.539556,
+      488.178029,
+      611.713835,
+      499.21751,
+      436.372261,
+      452.40538,
+      376.238296,
+      507.913068,
+      516.076634
+    ],
+    "avg_min_ms": 485.9491582,
+    "std_min_ms": 65.71967561799292
+  },
+  "pde_burgers1d": {
+    "task_name": "pde_burgers1d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      142.101163,
+      140.568709,
+      134.898908,
+      142.992445,
+      160.349065,
+      143.970842,
+      135.609739,
+      138.074127,
+      138.32954,
+      144.845491
+    ],
+    "avg_min_ms": 142.1740029,
+    "std_min_ms": 7.238446173990157
+  },
+  "pde_heat1d": {
+    "task_name": "pde_heat1d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      154.722082,
+      138.328076,
+      186.036199,
+      200.760839,
+      139.946142,
+      108.706919,
+      101.824995,
+      115.596656,
+      123.352248,
+      136.818714
+    ],
+    "avg_min_ms": 140.609287,
+    "std_min_ms": 32.225621531288695
+  },
+  "polynomial_mixed": {
+    "task_name": "polynomial_mixed",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      245.822522,
+      228.569014,
+      266.517393,
+      232.590669,
+      239.327572,
+      223.056954,
+      211.123621,
+      212.641306,
+      175.025264,
+      192.60507
+    ],
+    "avg_min_ms": 222.7279385,
+    "std_min_ms": 26.409713097108046
+  },
+  "polynomial_real": {
+    "task_name": "polynomial_real",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      122.992751,
+      165.380561,
+      121.830745,
+      140.58078,
+      122.128761,
+      157.014305,
+      199.777086,
+      199.54699,
+      151.337118,
+      167.160193
+    ],
+    "avg_min_ms": 154.774929,
+    "std_min_ms": 29.20257099301466
+  },
+  "power_control": {
+    "task_name": "power_control",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      81.488369,
+      81.858805,
+      82.009332,
+      80.671512,
+      80.200097,
+      80.383325,
+      80.752721,
+      81.247809,
+      82.953895,
+      154.577739
+    ],
+    "avg_min_ms": 88.61436040000001,
+    "std_min_ms": 23.19234053121412
+  },
+  "procrustes": {
+    "task_name": "procrustes",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      125.421492,
+      144.837266,
+      182.80071,
+      94.810678,
+      76.164938,
+      72.301192,
+      73.321995,
+      54.043512,
+      55.67263,
+      55.373561
+    ],
+    "avg_min_ms": 93.4747974,
+    "std_min_ms": 43.753374856055565
+  },
+  "psd_cone_projection": {
+    "task_name": "psd_cone_projection",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      90.645418,
+      101.548398,
+      100.718794,
+      119.282445,
+      149.143888,
+      117.242918,
+      120.329958,
+      108.818382,
+      124.951596,
+      128.461774
+    ],
+    "avg_min_ms": 116.1143571,
+    "std_min_ms": 16.67225162343318
+  },
+  "qp": {
+    "task_name": "qp",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      117.246267,
+      117.12705,
+      99.433721,
+      106.375697,
+      103.670651,
+      106.077742,
+      101.532555,
+      106.693922,
+      107.674584,
+      115.34445
+    ],
+    "avg_min_ms": 108.1176639,
+    "std_min_ms": 6.365675384206531
+  },
+  "qr_factorization": {
+    "task_name": "qr_factorization",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      145.765475,
+      192.167753,
+      158.530173,
+      216.301623,
+      145.132946,
+      157.635771,
+      140.517817,
+      92.641517,
+      110.770197,
+      101.033993
+    ],
+    "avg_min_ms": 146.0497265,
+    "std_min_ms": 38.7401900363802
+  },
+  "quantile_regression": {
+    "task_name": "quantile_regression",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      96.546923,
+      102.34001,
+      114.445652,
+      114.567709,
+      102.403166,
+      98.945862,
+      105.184547,
+      118.398047,
+      103.485004,
+      94.738388
+    ],
+    "avg_min_ms": 105.1055308,
+    "std_min_ms": 8.094674763618812
+  },
+  "queens_with_obstacles": {
+    "task_name": "queens_with_obstacles",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      44.206166,
+      106.466536,
+      58.903119,
+      56.440091,
+      161.629866,
+      193.805729,
+      75.680187,
+      51.905704,
+      46.058048,
+      58.736887
+    ],
+    "avg_min_ms": 85.3832333,
+    "std_min_ms": 52.40794795656694
+  },
+  "queuing": {
+    "task_name": "queuing",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      21.424301,
+      26.003819,
+      27.032899,
+      24.064382,
+      26.119676,
+      13.036316,
+      15.998812,
+      13.694593,
+      19.991316,
+      13.036849
+    ],
+    "avg_min_ms": 20.0402963,
+    "std_min_ms": 5.7177661401016096
+  },
+  "qz_factorization": {
+    "task_name": "qz_factorization",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      1869.52492,
+      2068.858119,
+      1451.898002,
+      1454.833908,
+      1584.399972,
+      1417.365424,
+      1755.088917,
+      1308.374097,
+      1427.964704,
+      1826.340845
+    ],
+    "avg_min_ms": 1616.4648908,
+    "std_min_ms": 248.61648240859975
+  },
+  "rbf_interpolation": {
+    "task_name": "rbf_interpolation",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      129.994469,
+      20.621579,
+      346.544985,
+      1.084382,
+      37.690008,
+      1330.434198,
+      43.416521,
+      5.989538,
+      35.384262,
+      177.337068
+    ],
+    "avg_min_ms": 212.84970099999998,
+    "std_min_ms": 406.9487415582219
+  },
+  "robust_kalman_filter": {
+    "task_name": "robust_kalman_filter",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      90.442677,
+      108.884917,
+      110.934978,
+      111.24378,
+      90.836626,
+      90.324761,
+      89.680882,
+      89.965352,
+      89.574683,
+      89.937065
+    ],
+    "avg_min_ms": 96.1825721,
+    "std_min_ms": 9.805094326548698
+  },
+  "robust_linear_program": {
+    "task_name": "robust_linear_program",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      96.315035,
+      93.796231,
+      93.928574,
+      93.225803,
+      92.948076,
+      93.574143,
+      92.742544,
+      93.862152,
+      94.561687,
+      95.602494
+    ],
+    "avg_min_ms": 94.0556739,
+    "std_min_ms": 1.1424131840941334
+  },
+  "rocket_landing_optimization": {
+    "task_name": "rocket_landing_optimization",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      98.235,
+      101.217208,
+      101.599081,
+      108.450691,
+      104.00868,
+      96.310379,
+      104.350166,
+      102.592028,
+      104.688344,
+      98.813574
+    ],
+    "avg_min_ms": 102.0265151,
+    "std_min_ms": 3.593419482489547
+  },
+  "rotate_2d": {
+    "task_name": "rotate_2d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      105.716742,
+      103.110515,
+      108.012945,
+      105.596461,
+      110.810582,
+      109.431989,
+      112.28587,
+      99.780927,
+      110.018447,
+      110.771676
+    ],
+    "avg_min_ms": 107.5536154,
+    "std_min_ms": 3.951554241308408
+  },
+  "set_cover": {
+    "task_name": "set_cover",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      72.255253,
+      12.027925,
+      317.493567,
+      30.77556,
+      16.344781,
+      87.519701,
+      71.218925,
+      62.060752,
+      150.783568,
+      40.265064
+    ],
+    "avg_min_ms": 86.0745096,
+    "std_min_ms": 90.81976205684349
+  },
+  "set_cover_conflicts": {
+    "task_name": "set_cover_conflicts",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      69.260875,
+      81.49226,
+      97.341868,
+      61.132686,
+      31.809726,
+      13.487632,
+      17.15375,
+      41.48847,
+      19.461693,
+      18.093233
+    ],
+    "avg_min_ms": 45.0722193,
+    "std_min_ms": 30.27851094366131
+  },
+  "sha256_hashing": {
+    "task_name": "sha256_hashing",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      99.134009,
+      99.153221,
+      99.127004,
+      99.15577,
+      99.110087,
+      99.067893,
+      99.134273,
+      99.068275,
+      99.254578,
+      99.049889
+    ],
+    "avg_min_ms": 99.1254999,
+    "std_min_ms": 0.0587322913404548
+  },
+  "shift_2d": {
+    "task_name": "shift_2d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      103.359942,
+      104.743627,
+      104.924013,
+      107.850187,
+      106.973518,
+      103.885839,
+      104.832721,
+      106.206326,
+      109.380482,
+      106.483365
+    ],
+    "avg_min_ms": 105.864002,
+    "std_min_ms": 1.8686950213540872
+  },
+  "shortest_path_dijkstra": {
+    "task_name": "shortest_path_dijkstra",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      102.9835,
+      102.374118,
+      102.146074,
+      101.652379,
+      102.187776,
+      101.680121,
+      101.592695,
+      102.176878,
+      101.617202,
+      101.623862
+    ],
+    "avg_min_ms": 102.0034605,
+    "std_min_ms": 0.4560792383655012
+  },
+  "sinkhorn": {
+    "task_name": "sinkhorn",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      42.986833,
+      72.230458,
+      79.241311,
+      79.558035,
+      49.879125,
+      43.378993,
+      41.761927,
+      42.240713,
+      42.080714,
+      38.478836
+    ],
+    "avg_min_ms": 53.1836945,
+    "std_min_ms": 16.793277114674858
+  },
+  "sparse_eigenvectors_complex": {
+    "task_name": "sparse_eigenvectors_complex",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      135.971744,
+      155.95422,
+      131.984602,
+      128.003787,
+      507.964471,
+      168.034792,
+      227.967682,
+      164.000726,
+      164.580949,
+      171.980837
+    ],
+    "avg_min_ms": 195.644381,
+    "std_min_ms": 113.35347602357885
+  },
+  "sparse_lowest_eigenvalues_posdef": {
+    "task_name": "sparse_lowest_eigenvalues_posdef",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      77.266992,
+      82.567664,
+      115.769042,
+      83.459651,
+      88.058749,
+      117.192184,
+      90.781549,
+      93.193745,
+      90.216367,
+      93.938984
+    ],
+    "avg_min_ms": 93.2444927,
+    "std_min_ms": 13.285238402541287
+  },
+  "sparse_lowest_eigenvectors_posdef": {
+    "task_name": "sparse_lowest_eigenvectors_posdef",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      74.769243,
+      84.583989,
+      119.722722,
+      84.386765,
+      87.043276,
+      119.804026,
+      87.863896,
+      91.338139,
+      95.59925,
+      96.188966
+    ],
+    "avg_min_ms": 94.1300272,
+    "std_min_ms": 14.827591162300267
+  },
+  "sparse_pca": {
+    "task_name": "sparse_pca",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      229.531767,
+      150.885706,
+      198.859279,
+      215.98152,
+      273.517362,
+      275.210118,
+      227.741876,
+      152.436876,
+      195.745407,
+      185.145765
+    ],
+    "avg_min_ms": 210.5055676,
+    "std_min_ms": 43.165516754145656
+  },
+  "stable_matching": {
+    "task_name": "stable_matching",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      99.353936,
+      96.907602,
+      98.871224,
+      97.306402,
+      96.810928,
+      96.669459,
+      96.544716,
+      98.449162,
+      98.595219,
+      95.241907
+    ],
+    "avg_min_ms": 97.4750555,
+    "std_min_ms": 1.2899659985550234
+  },
+  "svd": {
+    "task_name": "svd",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      330.301524,
+      207.573957,
+      181.344854,
+      107.121064,
+      107.062483,
+      69.810644,
+      179.136805,
+      84.381871,
+      99.670087,
+      110.572622
+    ],
+    "avg_min_ms": 147.6975911,
+    "std_min_ms": 78.95692634323335
+  },
+  "svm": {
+    "task_name": "svm",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      67.843093,
+      75.432206,
+      56.651701,
+      114.099444,
+      59.631853,
+      48.763938,
+      100.18417,
+      105.011733,
+      72.013876,
+      67.643524
+    ],
+    "avg_min_ms": 76.7275538,
+    "std_min_ms": 22.1346445375476
+  },
+  "sylvester_solver": {
+    "task_name": "sylvester_solver",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      231.386923,
+      242.785813,
+      231.907791,
+      128.699798,
+      244.801766,
+      274.890037,
+      148.047414,
+      178.210988,
+      142.496063,
+      196.924348
+    ],
+    "avg_min_ms": 202.0150941,
+    "std_min_ms": 50.53348190306829
+  },
+  "tensor_completion_3d": {
+    "task_name": "tensor_completion_3d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      71.716225,
+      79.950831,
+      66.545623,
+      55.809316,
+      127.570137,
+      66.772381,
+      58.181657,
+      167.784095,
+      146.857422,
+      47.910693
+    ],
+    "avg_min_ms": 88.90983800000001,
+    "std_min_ms": 42.374775557443854
+  },
+  "toeplitz_solver": {
+    "task_name": "toeplitz_solver",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      99.934904,
+      99.931113,
+      99.977698,
+      99.939086,
+      99.93844,
+      99.874976,
+      99.775223,
+      99.787569,
+      99.792855,
+      99.734227
+    ],
+    "avg_min_ms": 99.8686091,
+    "std_min_ms": 0.08766838957552835
+  },
+  "tsp": {
+    "task_name": "tsp",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      62.196717,
+      108.17087,
+      81.174788,
+      125.812016,
+      66.450388,
+      74.093563,
+      68.193803,
+      73.009624,
+      89.558281,
+      58.549959
+    ],
+    "avg_min_ms": 80.7210009,
+    "std_min_ms": 21.50884039999605
+  },
+  "two_eigenvalues_around_0": {
+    "task_name": "two_eigenvalues_around_0",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      239.084663,
+      71.315249,
+      142.576469,
+      68.770393,
+      57.245001,
+      59.752018,
+      88.334699,
+      117.189577,
+      55.865227,
+      190.310653
+    ],
+    "avg_min_ms": 109.0443949,
+    "std_min_ms": 63.3515190811785
+  },
+  "unit_simplex_projection": {
+    "task_name": "unit_simplex_projection",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      45.993498,
+      46.229818,
+      46.882988,
+      46.139172,
+      46.162834,
+      46.853787,
+      46.073203,
+      46.094512,
+      46.03767,
+      46.119523
+    ],
+    "avg_min_ms": 46.2587005,
+    "std_min_ms": 0.32797338688790184
+  },
+  "upfirdn1d": {
+    "task_name": "upfirdn1d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      52.731968,
+      20.583465,
+      88.144668,
+      24.280629,
+      51.310054,
+      38.633224,
+      175.460836,
+      148.098089,
+      180.178509,
+      14.128187
+    ],
+    "avg_min_ms": 79.3549629,
+    "std_min_ms": 65.06404272388458
+  },
+  "vectorized_newton": {
+    "task_name": "vectorized_newton",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      54.96857,
+      54.51792,
+      54.380952,
+      51.400991,
+      51.551832,
+      52.505715,
+      53.610952,
+      52.301742,
+      52.305858,
+      52.344276
+    ],
+    "avg_min_ms": 52.9888808,
+    "std_min_ms": 1.280456198749996
+  },
+  "vehicle_routing": {
+    "task_name": "vehicle_routing",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      83.489589,
+      85.936701,
+      85.809828,
+      83.908401,
+      79.211332,
+      82.237701,
+      96.208668,
+      86.778901,
+      113.147188,
+      79.586482
+    ],
+    "avg_min_ms": 87.6314791,
+    "std_min_ms": 10.150355258734418
+  },
+  "vertex_cover": {
+    "task_name": "vertex_cover",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      82.667153,
+      96.019117,
+      93.939157,
+      111.581702,
+      56.724499,
+      58.339756,
+      156.465724,
+      62.692428,
+      68.702999,
+      69.880173
+    ],
+    "avg_min_ms": 85.7012708,
+    "std_min_ms": 30.764142490797898
+  },
+  "voronoi_diagram": {
+    "task_name": "voronoi_diagram",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      67.364361,
+      61.984771,
+      31.917648,
+      48.305832,
+      54.597553,
+      46.909265,
+      63.251559,
+      47.065493,
+      49.179673,
+      52.513969
+    ],
+    "avg_min_ms": 52.3090124,
+    "std_min_ms": 10.239250761993208
+  },
+  "water_filling": {
+    "task_name": "water_filling",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      90.794106,
+      102.87912,
+      93.584324,
+      91.329138,
+      116.30552,
+      107.806469,
+      94.115876,
+      105.249571,
+      94.878161,
+      98.585664
+    ],
+    "avg_min_ms": 99.5527949,
+    "std_min_ms": 8.330720066060657
+  },
+  "zoom_2d": {
+    "task_name": "zoom_2d",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      39.252882,
+      151.16261,
+      40.659002,
+      86.848183,
+      195.285081,
+      125.883303,
+      126.386626,
+      95.680257,
+      229.625405,
+      71.390762
+    ],
+    "avg_min_ms": 116.21741109999999,
+    "std_min_ms": 62.76715832739146
+  },
+  "generalized_eigenvectors_real": {
+    "task_name": "generalized_eigenvectors_real",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      105.192173,
+      105.789057,
+      109.07663,
+      112.803811,
+      102.529395,
+      109.12879,
+      103.382537,
+      105.777161,
+      100.441096,
+      99.161716
+    ],
+    "avg_min_ms": 105.3282366,
+    "std_min_ms": 4.19444943398469
+  },
+  "linear_system_solver": {
+    "task_name": "linear_system_solver",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      35.882042,
+      35.887739,
+      35.895647,
+      36.309358,
+      35.930327,
+      36.001174,
+      35.583558,
+      35.423891,
+      35.677467,
+      36.464021
+    ],
+    "avg_min_ms": 35.9055224,
+    "std_min_ms": 0.3115146906862963
+  },
+  "lqr": {
+    "task_name": "lqr",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      98.333341,
+      99.144992,
+      82.641512,
+      79.194114,
+      97.622846,
+      97.367435,
+      98.096088,
+      97.957145,
+      98.398788,
+      98.83658
+    ],
+    "avg_min_ms": 94.7592841,
+    "std_min_ms": 7.358718037413633
+  },
+  "lu_factorization": {
+    "task_name": "lu_factorization",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      94.368877,
+      92.440951,
+      90.129154,
+      88.606675,
+      85.65014,
+      86.655637,
+      106.789361,
+      101.872121,
+      98.726355,
+      98.436208
+    ],
+    "avg_min_ms": 94.3675479,
+    "std_min_ms": 6.964221576318547
+  },
+  "randomized_svd": {
+    "task_name": "randomized_svd",
+    "dataset": "train",
+    "dataset_size": 10,
+    "num_runs": 10,
+    "problem_min_times": [
+      173.393079,
+      53.363411,
+      47.209306,
+      55.301902,
+      55.332407,
+      55.266974,
+      54.540719,
+      54.407889,
+      54.42736,
+      53.665443
+    ],
+    "avg_min_ms": 65.690849,
+    "std_min_ms": 37.918473035398
+  }
+}

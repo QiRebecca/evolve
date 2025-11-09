@@ -131,35 +131,6 @@
     "n": 3,
     "dataset_size": 10
   },
-  "btsp": {
-    "target_time_ms": 100,
-    "baseline_runs": {
-      "0": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      },
-      "1": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      },
-      "2": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      }
-    },
-    "n": 17,
-    "dataset_size": 10
-  },
-  "capacitated_facility_location": {
-    "target_time_ms": 100,
-    "baseline_runs": {}
-  },
   "chacha_encryption": {
     "target_time_ms": 100,
     "baseline_runs": {
@@ -1150,31 +1121,6 @@
     "n": 631,
     "dataset_size": 10
   },
-  "lp_box": {
-    "target_time_ms": 100,
-    "baseline_runs": {
-      "0": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      },
-      "1": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      },
-      "2": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: CRITICAL ERROR: No baseline time found for 43. Available baseline keys: ['42']..."
-      }
-    },
-    "n": 167,
-    "dataset_size": 10
-  },
   "lp_mdp": {
     "target_time_ms": 100,
     "baseline_runs": {
@@ -1327,31 +1273,6 @@
       }
     },
     "n": 506,
-    "dataset_size": 10
-  },
-  "matrix_exponential_sparse": {
-    "target_time_ms": 100,
-    "baseline_runs": {
-      "0": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      },
-      "1": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      },
-      "2": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      }
-    },
-    "n": 261,
     "dataset_size": 10
   },
   "matrix_multiplication": {
@@ -2304,22 +2225,19 @@
     "target_time_ms": 100,
     "baseline_runs": {
       "0": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
+        "success": true,
+        "avg_min_ms": 41.682818000000005,
+        "std_min_ms": 1.1882863634975362
       },
       "1": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: [Errno 28] No space left on device: '/tmp/tmpiii469o3.json'"
+        "success": true,
+        "avg_min_ms": 42.3883542,
+        "std_min_ms": 1.4007224958584625
       },
       "2": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: [Errno 28] No space left on device: '/tmp/tmp1ivcng7y.json'"
+        "success": true,
+        "avg_min_ms": 43.763760999999995,
+        "std_min_ms": 1.7356018985729424
       }
     },
     "n": 1543,
@@ -2677,31 +2595,6 @@
     "n": 5341,
     "dataset_size": 10
   },
-  "wasserstein_dist": {
-    "target_time_ms": 100,
-    "baseline_runs": {
-      "0": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      },
-      "1": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      },
-      "2": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: 0"
-      }
-    },
-    "n": 67744,
-    "dataset_size": 10
-  },
   "water_filling": {
     "target_time_ms": 100,
     "baseline_runs": {
@@ -2944,35 +2837,6 @@
     "n": 30,
     "dataset_size": 10
   },
-  "dynamic_assortment_planning": {
-    "target_time_ms": 100,
-    "baseline_runs": {
-      "0": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: CRITICAL ERROR: No baseline time found for 45. Available baseline keys: ['42', '43', '44', '46', '49', '50', '51']..."
-      },
-      "1": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: CRITICAL ERROR: No baseline time found for 43. Available baseline keys: ['42', '45', '47', '48', '51']..."
-      },
-      "2": {
-        "success": false,
-        "avg_min_ms": null,
-        "std_min_ms": null,
-        "error": "Evaluation failed: CRITICAL ERROR: No baseline time found for 42. Available baseline keys: ['44', '45', '47']..."
-      }
-    },
-    "n": 20,
-    "dataset_size": 10
-  },
-  "max_independent_set_cpsat": {
-    "target_time_ms": 100,
-    "baseline_runs": {}
-  },
   "feedback_controller_design": {
     "target_time_ms": 100,
     "baseline_runs": {
@@ -2994,10 +2858,6 @@
     },
     "n": 1390,
     "dataset_size": 10
-  },
-  "rectanglepacking": {
-    "target_time_ms": 100,
-    "baseline_runs": {}
   },
   "job_shop_scheduling": {
     "target_time_ms": 100,

@@ -1,0 +1,114 @@
+The current solver already leverages `update_into`, but still recreates the AES `Algorithm` object on every call.  
+Caching that object (key schedule) and selecting the fastest encryption path based on plaintext size trims additional Python overhead and can slightly improve overall runtime without affecting correctness.
+
+```python
+import hmac
+import logging
+import os
+from functools import lru_cache
+from typing import Any, Final
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+# --------------------------------------------------------------------------- #
+# Module-level constants & singletons
+# --------------------------------------------------------------------------- #
+_AES_KEY_SIZES:  Final = (16, 24, 32)   # Valid AES key lengths (bytes)
+_GCM_NONCE_SIZE: Final = 12             # Recommended nonce length
+_GCM_TAG_SIZE:   Final = 16             # Authentication-tag length (bytes)
+_BACKEND = default_backend()            # Re-use global backend
+
+# --------------------------------------------------------------------------- #
+# Lightweight cache for Algorithm objects – avoids rebuilding key schedule
+# --------------------------------------------------------------------------- #
+@lru_cache(maxsize=128)
+def _alg_for_key(key: bytes) -> algorithms.AES:
+    if len(key) not in _AES_KEY_SIZES:           # Early sanity guard
+        raise ValueError(f"Invalid AES key length {len(key)}.")
+    return algorithms.AES(key)
+
+
+class Solver:
+    """
+    High-throughput AES-GCM encryption solver.
+    Expected problem dict keys:
+        key, nonce, plaintext, associated_data
+    Returns:
+        {"ciphertext": bytes, "tag": bytes}
+    """
+
+    # Helpers for optional local testing (unused by judge)
+    DEFAULT_KEY_SIZE:      Final = 16
+    DEFAULT_PLAINTEXT_MULT: Final = 1024
+
+    # ------------------------------------------------------------------ #
+    # Core routine – called by evaluation harness
+    # ------------------------------------------------------------------ #
+    def solve(self, problem: dict[str, Any], **__) -> dict[str, bytes]:
+        key        = problem["key"]
+        nonce      = problem["nonce"]
+        plaintext  = problem["plaintext"]
+        aad        = problem["associated_data"]
+
+        # Obtain (possibly cached) Algorithm object, then build cipher
+        alg = _alg_for_key(key)
+        encryptor = Cipher(alg, modes.GCM(nonce), backend=_BACKEND).encryptor()
+
+        if aad:                                          # Skip empty/None AAD
+            encryptor.authenticate_additional_data(aad)
+
+        # Heuristic: for small payloads avoid the extra bookkeeping
+        # cost of update_into(); for large ones use zero-copy path.
+        pt_len = len(plaintext)
+        if pt_len == 0:
+            encryptor.finalize()
+            ciphertext = b""
+        elif pt_len < 4096:                               # small → simpler path
+            ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+        else:                                             # large → zero-copy
+            buf = bytearray(pt_len)
+            written = encryptor.update_into(plaintext, buf)
+            encryptor.finalize()
+            if written != pt_len:                         # extremely unlikely
+                ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+            else:
+                ciphertext = bytes(buf)
+
+        return {"ciphertext": ciphertext, "tag": encryptor.tag}
+
+    # ------------------------------------------------------------------ #
+    # Validation helper (mirrors baseline behaviour, constant-time checks)
+    # ------------------------------------------------------------------ #
+    def is_solution(self, problem: dict[str, Any], solution: dict[str, bytes] | Any) -> bool:
+        if (
+            not isinstance(solution, dict)
+            or "ciphertext" not in solution
+            or "tag" not in solution
+            or not isinstance(solution["ciphertext"], bytes)
+            or not isinstance(solution["tag"], bytes)
+        ):
+            logging.error("Solution format invalid.")
+            return False
+
+        reference = self.solve(problem)
+        return (
+            hmac.compare_digest(reference["ciphertext"], solution["ciphertext"])
+            and hmac.compare_digest(reference["tag"], solution["tag"])
+        )
+
+    # ------------------------------------------------------------------ #
+    # Optional problem generator for local experiments
+    # ------------------------------------------------------------------ #
+    def generate_problem(self, n: int, random_seed: int = 1) -> dict[str, Any]:
+        key       = os.urandom(self.DEFAULT_KEY_SIZE)
+        nonce     = os.urandom(_GCM_NONCE_SIZE)
+        plaintext = os.urandom(max(1, n * self.DEFAULT_PLAINTEXT_MULT))
+        aad       = os.urandom(32) if n % 2 == 0 else b""
+        return {
+            "key": key,
+            "nonce": nonce,
+            "plaintext": plaintext,
+            "associated_data": aad,
+        }
+```

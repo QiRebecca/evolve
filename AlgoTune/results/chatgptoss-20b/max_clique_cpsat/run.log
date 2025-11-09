@@ -1,3 +1,6 @@
 
 === [2025-10-23T22:53:03.877146] START max_clique_cpsat (GPU 2) ===
 === END max_clique_cpsat -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/max_clique_cpsat/solver.py
+
+=== [2025-11-05T19:49:30.174513] START max_clique_cpsat (GPU 6) ===
+=== END max_clique_cpsat -> /data/zq/evolve/AlgoTune/results/chatgptoss-20b/max_clique_cpsat/solver.py

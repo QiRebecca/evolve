@@ -86,8 +86,8 @@ class BaselineManager:
         Returns:
             Dictionary mapping problem IDs to baseline times
         """
-        # Determine number of runs based on subset
-        num_runs = DEV_RUNS if subset == "train" else EVAL_RUNS
+        # Use 10 runs for both train and test (matching train_baseline.json generation)
+        num_runs = EVAL_RUNS  # Always use 10 runs for consistency
         
         # Check for JSONL files first (memory efficient)
         data_dir = self.task_instance.data_dir or self.task_instance.get_task_directory()

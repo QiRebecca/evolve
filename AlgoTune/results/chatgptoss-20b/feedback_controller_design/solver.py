@@ -1,62 +1,65 @@
 from typing import Any
 import numpy as np
-import scipy.linalg
-import scipy.signal
+from scipy.linalg import solve_discrete_are
 
 class Solver:
     def solve(self, problem, **kwargs) -> Any:
         """
         Solves the static state feedback controller design problem for a discrete-time LTI system.
-        Returns a dictionary with keys:
-            - is_stabilizable: bool
-            - K: list of lists (m x n) or None
-            - P: list of lists (n x n) or None
+        Uses controllability test for stabilizability and discrete-time LQR (Q=I, R=I) to obtain
+        a stabilizing gain K and Lyapunov matrix P.
+
+        Parameters
+        ----------
+        problem : dict
+            Dictionary containing 'A' and 'B' matrices.
+
+        Returns
+        -------
+        dict
+            Dictionary with keys:
+                - 'is_stabilizable': bool
+                - 'K': list of lists (m x n) or None
+                - 'P': list of lists (n x n) or None
         """
-        # Parse input matrices
-        A = np.array(problem["A"], dtype=float)
-        B = np.array(problem["B"], dtype=float)
-        n, m = A.shape[0], B.shape[1]
-
-        # Helper: check stabilizability
-        def is_stabilizable(A, B):
-            eigs = np.linalg.eigvals(A)
-            for lam in eigs:
-                if abs(lam) >= 1.0:
-                    # Check rank of [A - lam*I, B]
-                    M = np.hstack((A - lam * np.eye(n), B))
-                    if np.linalg.matrix_rank(M) < n:
-                        return False
-            return True
-
-        if not is_stabilizable(A, B):
+        try:
+            A = np.array(problem["A"], dtype=float)
+            B = np.array(problem["B"], dtype=float)
+        except Exception as e:
             return {"is_stabilizable": False, "K": None, "P": None}
 
-        # Attempt to compute a stabilizing K via pole placement
+        n = A.shape[0]
+        m = B.shape[1]
+
+        # Check stabilizability via controllability matrix rank
         try:
-            # Desired poles: all inside unit circle, e.g., 0.5
-            desired_poles = 0.5 * np.ones(n, dtype=complex)
-            result = scipy.signal.place_poles(A, B, desired_poles, method="discrete")
-            K = result.gain_matrix
+            # Build controllability matrix [B, AB, A^2B, ..., A^(n-1)B]
+            ctrb = B
+            for i in range(1, n):
+                ctrb = np.hstack((ctrb, np.linalg.matrix_power(A, i) @ B))
+            rank_ctrb = np.linalg.matrix_rank(ctrb)
+            is_stabilizable = rank_ctrb == n
         except Exception:
-            # Fallback: use a simple LQR with Q=I, R=I to get K
-            # Solve discrete-time Riccati equation
+            return {"is_stabilizable": False, "K": None, "P": None}
+
+        if not is_stabilizable:
+            return {"is_stabilizable": False, "K": None, "P": None}
+
+        # Use discrete-time LQR with Q=I, R=I to obtain stabilizing K and P
+        try:
             Q = np.eye(n)
             R = np.eye(m)
-            # Solve Riccati: X = A^T X A - A^T X B (R + B^T X B)^-1 B^T X A + Q
-            # Use scipy.linalg.solve_discrete_are
-            X = scipy.linalg.solve_discrete_are(A, B, Q, R)
-            K = -np.linalg.inv(R + B.T @ X @ B) @ (B.T @ X @ A)
-
-        # Compute Lyapunov matrix P for closed-loop system
-        A_cl = A + B @ K
-        try:
-            P = scipy.linalg.solve_discrete_lyapunov(A_cl, np.eye(n))
+            P = solve_discrete_are(A, B, Q, R)
+            # Compute K = -(R + B^T P B)^-1 B^T P A
+            BT_P = B.T @ P
+            inv_term = np.linalg.inv(R + BT_P @ B)
+            K = -inv_term @ BT_P @ A
         except Exception:
-            # If Lyapunov solver fails, fallback to identity
-            P = np.eye(n)
+            return {"is_stabilizable": False, "K": None, "P": None}
 
-        # Ensure symmetry
-        P = (P + P.T) / 2.0
+        # Ensure P is symmetric
+        if not np.allclose(P, P.T, rtol=1e-5, atol=1e-8):
+            return {"is_stabilizable": False, "K": None, "P": None}
 
         return {
             "is_stabilizable": True,

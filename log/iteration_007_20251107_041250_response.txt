@@ -1,0 +1,89 @@
+The main cost is encrypting and then slicing a huge `bytes` object to separate the tag, which duplicates the entire ciphertext.  
+I'll switch to the lower-level `Cipher / GCM` API with `update_into`, allowing encryption to be written directly into a pre-allocated `bytearray`; this removes the large copy and reduces set-up overhead.  
+Additionally, I cache the compiled AES `Algorithm` objects (per key) and reuse the `default_backend` singleton. This keeps key-schedule work incremental while still creating a fresh `Cipher` per nonce as required by GCM.
+
+```python
+from typing import Any, Dict
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+
+# --------------------------------------------------------------------------- #
+# Constants – module-level for fastest access
+# --------------------------------------------------------------------------- #
+_VALID_KEY_SIZES = {16, 24, 32}  # AES-128 / 192 / 256 key lengths (bytes)
+_TAG_LEN = 16                    # Auth-tag length for GCM (bytes)
+_BACKEND = default_backend()     # Cached OpenSSL backend instance
+
+
+class Solver:
+    """
+    AES-GCM encryption solver.
+
+    Input dictionary keys:
+        - key             : bytes (length 16/24/32)
+        - nonce           : bytes (recommended 12)
+        - plaintext       : bytes
+        - associated_data : bytes | None
+
+    Output:
+        {"ciphertext": <bytes>, "tag": <16-byte bytes>}
+    """
+
+    __slots__ = ("_alg_cache",)
+
+    def __init__(self) -> None:
+        # Cache Algorithm objects keyed by raw key to avoid rebuilding key schedule
+        self._alg_cache: Dict[bytes, algorithms.AES] = {}
+
+    # --------------------------------------------------------------------- #
+    # Internal helpers
+    # --------------------------------------------------------------------- #
+    def _get_algorithm(self, key: bytes) -> algorithms.AES:
+        """Return (and cache) an algorithms.AES object for *key*."""
+        alg = self._alg_cache.get(key)
+        if alg is None:
+            if len(key) not in _VALID_KEY_SIZES:
+                raise ValueError(f"Invalid AES key length {len(key)}.")
+            alg = algorithms.AES(key)
+            self._alg_cache[key] = alg
+        return alg
+
+    # --------------------------------------------------------------------- #
+    # Public API expected by the evaluation harness
+    # --------------------------------------------------------------------- #
+    def solve(self, problem: dict[str, Any], **__) -> dict[str, bytes]:
+        # Fast local variable bindings
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data")
+
+        alg = self._get_algorithm(key)
+        # Instantiate cipher with current nonce (required by GCM)
+        cipher = Cipher(alg, modes.GCM(nonce), backend=_BACKEND)
+        encryptor = cipher.encryptor()
+
+        if aad:
+            encryptor.authenticate_additional_data(aad)
+
+        # Encrypt directly into a pre-allocated buffer to avoid extra copies
+        if plaintext:
+            out_buf = bytearray(len(plaintext))
+            written = encryptor.update_into(plaintext, out_buf)
+            # For GCM, update_into writes exactly len(plaintext) bytes
+            if written != len(plaintext):
+                # Fallback (shouldn't happen, but be safe)
+                ciphertext_bytes = encryptor.update(plaintext[:]) + encryptor.finalize()
+            else:
+                encryptor.finalize()
+                ciphertext_bytes = bytes(out_buf)
+        else:
+            # Empty plaintext edge case
+            encryptor.finalize()
+            ciphertext_bytes = b""
+
+        tag = encryptor.tag  # 16-byte authentication tag
+
+        return {"ciphertext": ciphertext_bytes, "tag": tag}
+```

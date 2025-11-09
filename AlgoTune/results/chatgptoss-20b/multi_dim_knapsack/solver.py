@@ -1,37 +1,56 @@
 from typing import Any
-from ortools.sat.python import cp_model
 
 class Solver:
     def solve(self, problem, **kwargs) -> Any:
         """
-        Solves a multi-dimensional knapsack problem.
-        Returns a list of selected item indices.
+        Solve a multi-dimensional knapsack problem.
+
+        Parameters
+        ----------
+        problem : tuple or list or object
+            Either a tuple/list of (value, demand, supply) or an object
+            with attributes `value`, `demand`, and `supply`.
+
+        Returns
+        -------
+        list[int]
+            List of selected item indices that maximize total value
+            while respecting all resource constraints.
         """
-        # Ensure problem is a MultiDimKnapsackInstance
-        if not isinstance(problem, MultiDimKnapsackInstance):
+        # Parse problem input
+        if isinstance(problem, (list, tuple)):
+            if len(problem) != 3:
+                return []
+            value, demand, supply = problem
+        else:
             try:
-                problem = MultiDimKnapsackInstance(*problem)
+                value = problem.value
+                demand = problem.demand
+                supply = problem.supply
             except Exception:
                 return []
 
-        n = len(problem.value)
-        k = len(problem.supply)
+        n = len(value)
+        k = len(supply)
+
+        # Build CP-SAT model
+        from ortools.sat.python import cp_model
 
         model = cp_model.CpModel()
         x = [model.NewBoolVar(f"x_{i}") for i in range(n)]
 
         # Resource constraints
         for r in range(k):
-            model.Add(sum(x[i] * problem.demand[i][r] for i in range(n)) <= problem.supply[r])
+            model.Add(sum(x[i] * demand[i][r] for i in range(n)) <= supply[r])
 
         # Objective: maximize total value
-        model.Maximize(sum(x[i] * problem.value[i] for i in range(n)))
+        model.Maximize(sum(x[i] * value[i] for i in range(n)))
 
+        # Solve
         solver = cp_model.CpSolver()
-        # Optional: enable parallel search workers for speed
-        solver.parameters.num_search_workers = 8
+        solver.parameters.num_threads = 24  # Use up to 24 threads
         status = solver.Solve(model)
 
         if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            return [i for i in range(n) if solver.Value(x[i])]
+            return [i for i in range(n) if solver.Value(x[i]) == 1]
         return []

@@ -152,20 +152,48 @@ class Evaluator:
 
         # Retry logic for evaluation
         last_exception = None
+        
+        # Ensure CODE_DIR exists and save code to CODE_DIR/solver.py for AlgoTune evaluator
+        # AlgoTune evaluator expects to load solver code from CODE_DIR/solver.py
+        code_dir = os.environ.get("CODE_DIR", "/tmp/openevolve_code")
+        os.makedirs(code_dir, exist_ok=True)
+        
+        # Save code to CODE_DIR/solver.py
+        solver_path = os.path.join(code_dir, "solver.py")
+        try:
+            with open(solver_path, 'w', encoding='utf-8') as f:
+                f.write(program_code)
+            logger.debug(f"Saved program code to {solver_path} for AlgoTune evaluator")
+        except Exception as e:
+            logger.warning(f"Failed to save code to CODE_DIR/solver.py: {e}")
+            # Fallback to temp file if CODE_DIR write fails
+            solver_path = None
+        
+        # Set CODE_DIR environment variable if not already set
+        if "CODE_DIR" not in os.environ:
+            os.environ["CODE_DIR"] = code_dir
+            logger.debug(f"Set CODE_DIR environment variable to {code_dir}")
+        
         for attempt in range(self.config.max_retries + 1):
-            # Create a temporary file for the program
-            with tempfile.NamedTemporaryFile(suffix=self.program_suffix, delete=False) as temp_file:
-                temp_file.write(program_code.encode("utf-8"))
-                temp_file_path = temp_file.name
+            # Use solver_path if available (for AlgoTune), otherwise create temp file (for other evaluators)
+            if solver_path and os.path.exists(solver_path):
+                program_path = solver_path
+            else:
+                # Create a temporary file for the program (fallback for non-AlgoTune evaluators)
+                with tempfile.NamedTemporaryFile(suffix=self.program_suffix, delete=False) as temp_file:
+                    temp_file.write(program_code.encode("utf-8"))
+                    program_path = temp_file.name
 
             try:
                 # Run evaluation
+                # For AlgoTune: uses CODE_DIR/solver.py (set above)
+                # For other evaluators: uses temp file path
                 if self.config.cascade_evaluation:
                     # Run cascade evaluation
-                    result = await self._cascade_evaluate(temp_file_path)
+                    result = await self._cascade_evaluate(program_path)
                 else:
                     # Run direct evaluation
-                    result = await self._direct_evaluate(temp_file_path)
+                    result = await self._direct_evaluate(program_path)
 
                 # Process the result based on type
                 eval_result = self._process_evaluation_result(result)
@@ -285,9 +313,9 @@ class Evaluator:
                     await asyncio.sleep(1.0)  # Wait 1 second before retry
 
             finally:
-                # Clean up temporary file
-                if os.path.exists(temp_file_path):
-                    os.unlink(temp_file_path)
+                # Clean up temporary file (only if it's a temp file, not CODE_DIR/solver.py)
+                if program_path != solver_path and os.path.exists(program_path):
+                    os.unlink(program_path)
 
         # All retries failed
         logger.error(

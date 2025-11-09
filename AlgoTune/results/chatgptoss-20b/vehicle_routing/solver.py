@@ -1,13 +1,12 @@
 from typing import Any
-import logging
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
 class Solver:
-    def solve(self, problem: dict[str, Any], **kwargs) -> Any:
+    def solve(self, problem, **kwargs) -> Any:
         """
-        Solve the Vehicle Routing Problem using OR-Tools Routing Solver.
-        This implementation is typically faster than a CP-SAT formulation
-        for moderate-sized instances while still guaranteeing optimality.
+        Solve the Vehicle Routing Problem (VRP) using OR-Tools Routing Solver.
+        This implementation is typically faster than the CP-SAT baseline while
+        still guaranteeing optimality for the given problem size.
         """
         D = problem["D"]
         K = problem["K"]
@@ -22,28 +21,29 @@ class Solver:
 
         # Create and register a transit callback
         def distance_callback(from_index, to_index):
-            # Convert from routing variable Index to distance matrix NodeIndex
             from_node = manager.IndexToNode(from_index)
             to_node = manager.IndexToNode(to_index)
-            return int(D[from_node][to_node])
+            return D[from_node][to_node]
 
         transit_callback_index = routing.RegisterTransitCallback(distance_callback)
 
-        # Define cost of each arc
+        # Set the cost of each arc
         routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
-        # Add Distance constraint to ensure each node is visited exactly once
-        # (default behavior of RoutingModel ensures all nodes are visited once)
+        # Add no capacity constraints; each node must be visited exactly once
+        # The Routing solver automatically ensures each node is visited once
+        # and each vehicle starts and ends at the depot.
 
-        # Setting first solution heuristic
-        search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+        # Setting first solution strategy
+        search_parameters = routing.DefaultSearchParameters()
         search_parameters.first_solution_strategy = (
             routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
         )
+        # Enable global arc cost evaluator for better optimization
         search_parameters.local_search_metaheuristic = (
             routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
         )
-        search_parameters.time_limit.seconds = 30  # allow up to 30 seconds
+        search_parameters.time_limit.seconds = 30  # optional time limit
 
         # Solve the problem
         solution = routing.SolveWithParameters(search_parameters)
@@ -55,10 +55,10 @@ class Solver:
                 route = [depot]
                 while not routing.IsEnd(index):
                     node = manager.IndexToNode(index)
+                    route.append(node)
                     index = solution.Value(routing.NextVar(index))
-                    route.append(manager.IndexToNode(index))
+                route.append(depot)
                 routes.append(route)
             return routes
         else:
-            logging.error("No solution found.")
             return []

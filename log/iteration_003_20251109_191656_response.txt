@@ -1,0 +1,84 @@
+The previous program relied on an external task framework and contained a lot of unused, slow-path code.  
+I provide a minimal, self-contained Solver that performs the exact same cubic-spline affine
+transformation but removes all framework overhead.  This both simplifies the code-path and avoids
+unnecessary object construction, delivering faster execution while preserving bit-for-bit
+compatibility with the SciPy reference used by the grader.
+
+```python
+import numpy as np
+from typing import Any, Dict
+
+# SciPy is available in the evaluation environment
+from scipy.ndimage import affine_transform
+
+
+class Solver:
+    """
+    Fast, self-contained 2-D affine-transform solver.
+
+    The task: apply a 2-D affine transformation (rotation / scale / shear /
+    translation) to an image using cubic–spline interpolation (order=3) and
+    ‘constant’ boundary handling (cval=0).
+
+    The transformation is supplied as a 2 × 3 matrix
+        [[a, b, tx],
+         [c, d, ty]]
+    representing the linear part [[a, b], [c, d]] and translation (tx, ty).
+    """
+
+    # These are constants requested by the task description / reference solver
+    _ORDER: int = 3
+    _MODE: str = "constant"
+    _CVAL: float = 0.0
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        """
+        Parameters
+        ----------
+        problem : dict
+            Must contain
+              • "image"  : 2-D array-like of floats
+              • "matrix" : 2 × 3 (or 2 × 2) array-like affine matrix
+
+        Returns
+        -------
+        dict with single key "transformed_image" containing the transformed
+        NumPy array (same shape as input image).
+        """
+        # --- Fast, safe parsing ------------------------------------------------
+        try:
+            image = np.asarray(problem["image"], dtype=float, order="C")
+            matrix_raw = np.asarray(problem["matrix"], dtype=float)
+        except Exception:
+            # If inputs are malformed we propagate the error as the baseline
+            return {"transformed_image": []}
+
+        # --- Split linear part and offset -------------------------------------
+        # Accept both 2×3 (with translation) and 2×2 (no translation) matrices.
+        if matrix_raw.shape == (2, 3):
+            matrix = matrix_raw[:, :2]
+            offset = matrix_raw[:, 2]
+        elif matrix_raw.shape == (2, 2):
+            matrix = matrix_raw
+            offset = 0.0  # no explicit translation
+        else:
+            # Unsupported shape: mimic baseline failure mode
+            return {"transformed_image": []}
+
+        # --- Perform the affine transform (SciPy’s C backend – very fast) ------
+        try:
+            transformed = affine_transform(
+                image,
+                matrix,
+                offset=offset,
+                order=self._ORDER,
+                mode=self._MODE,
+                cval=self._CVAL,
+                prefilter=True,   # default; included for clarity
+            )
+        except Exception:
+            # Keep failure semantics identical to baseline
+            return {"transformed_image": []}
+
+        return {"transformed_image": transformed}
+```

@@ -277,16 +277,65 @@ class PromptSampler:
 
     def _format_metrics(self, metrics: Dict[str, float]) -> str:
         """Format metrics for the prompt using safe formatting"""
-        # Use safe formatting to handle mixed numeric and string values
+        # Prioritize key metrics for AlgoTune tasks
         formatted_parts = []
-        for name, value in metrics.items():
-            if isinstance(value, (int, float)):
-                try:
-                    formatted_parts.append(f"- {name}: {value:.4f}")
-                except (ValueError, TypeError):
+        
+        # Primary metric: Speedup (most important!)
+        if "mean_speedup" in metrics:
+            speedup = metrics["mean_speedup"]
+            if isinstance(speedup, (int, float)):
+                formatted_parts.append(f"Speedup: {speedup:.2f}x")
+                formatted_parts.append("  (Speedup = Baseline Time / Your Time; Higher is better)")
+                formatted_parts.append("")
+        
+        # Accuracy metrics (critical for correctness)
+        num_evaluated = metrics.get("num_evaluated", 0)
+        num_valid = metrics.get("num_valid", 0)
+        num_invalid = metrics.get("num_invalid", 0)  # May not be present in all evaluators
+        num_errors = metrics.get("num_errors", 0)
+        num_timeouts = metrics.get("num_timeouts", 0)
+        
+        if num_evaluated > 0:
+            # Calculate percentages (matching AlgoTuner's calculation exactly)
+            # AlgoTuner counts num_invalid + num_errors as "Invalid Solutions"
+            total_invalid = num_invalid + num_errors
+            
+            valid_pct = round(num_valid / num_evaluated * 100)
+            invalid_pct = round(total_invalid / num_evaluated * 100)
+            timeout_pct = round(num_timeouts / num_evaluated * 100)
+            
+            # Ensure percentages add up to 100% (AlgoTuner does this)
+            total_pct = valid_pct + invalid_pct + timeout_pct
+            if total_pct != 100:
+                invalid_pct += (100 - total_pct)
+            
+            # Always show all three metrics (matching AlgoTuner)
+            formatted_parts.append(f"  Valid Solutions: {valid_pct}%")
+            formatted_parts.append(f"  Invalid Solutions: {invalid_pct}%")
+            formatted_parts.append(f"  Timeouts: {timeout_pct}%")
+            formatted_parts.append("")
+        
+        # Timing details (useful for understanding performance)
+        # Note: Use avg_oracle_time_ms which is what evaluate.py sets as avg_baseline_time_ms
+        avg_solver = metrics.get("avg_solver_time_ms")
+        avg_baseline = metrics.get("avg_baseline_time_ms")
+        if avg_solver is not None and avg_baseline is not None:
+            # Match AlgoTuner's exact format and precision
+            formatted_parts.append(f"Average time for your solve() [on valid examples]: {avg_solver:.3f} ms")
+            formatted_parts.append(f"Average time for the baseline solve() [on valid examples]: {avg_baseline:.3f} ms")
+            formatted_parts.append("")
+        
+        # If no AlgoTune metrics, fall back to original format
+        if not formatted_parts:
+            for name, value in metrics.items():
+                if isinstance(value, (int, float)):
+                    try:
+                        formatted_parts.append(f"- {name}: {value:.4f}")
+                    except (ValueError, TypeError):
+                        formatted_parts.append(f"- {name}: {value}")
+                else:
                     formatted_parts.append(f"- {name}: {value}")
-            else:
-                formatted_parts.append(f"- {name}: {value}")
+        
         return "\n".join(formatted_parts)
 
     def _identify_improvement_areas(

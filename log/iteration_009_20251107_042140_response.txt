@@ -1,0 +1,87 @@
+The primary cost is in the actual encryption; Python-side overhead should therefore be minimised.  
+I switch from the high-level AESGCM helper (which allocates a new buffer and then we slice it, causing extra copies) to Cryptography’s lower-level `Cipher/Encryptor` API.  
+This lets us:
+1. Avoid the extra “ciphertext‖tag” concatenation and the subsequent slicing copy.
+2. Re-use the parsed key schedule via `functools.lru_cache`, eliminating repeated key-initialisation overhead.
+3. Reuse the shared OpenSSL backend instance and keep the class entirely slot-based to avoid per-instance `__dict__`.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict, Final
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+# --------------------------------------------------------------------------- #
+# Module-level constants (fast attribute access)
+# --------------------------------------------------------------------------- #
+_AES_KEY_SIZES: Final = (16, 24, 32)   # Valid AES key lengths (bytes)
+_GCM_TAG_LEN:   Final = 16             # Authentication tag length (bytes)
+_BACKEND = default_backend()           # Cached cryptography backend singleton
+
+
+# --------------------------------------------------------------------------- #
+# Helpers – cached per-key AES algorithm objects to skip re-parsing key bytes
+# --------------------------------------------------------------------------- #
+@lru_cache(maxsize=256)
+def _get_algorithm(key: bytes) -> algorithms.AES:
+    """
+    Return a cached cryptography AES algorithm object for *key*.
+
+    The object encapsulates the key schedule and is safe to reuse to build
+    new Cipher instances (each with its own fresh GCM nonce).
+    """
+    if len(key) not in _AES_KEY_SIZES:
+        raise ValueError(
+            f"Invalid AES key size {len(key)}; expected one of {_AES_KEY_SIZES}"
+        )
+    return algorithms.AES(key)
+
+
+class Solver:
+    """
+    Fast AES-GCM encryption solver.
+
+    Input `problem` dict keys:
+        • key             : bytes (16/24/32 length)
+        • nonce           : bytes (12 bytes recommended)
+        • plaintext       : bytes
+        • associated_data : bytes | None
+
+    Output:
+        {"ciphertext": bytes, "tag": bytes}
+    """
+
+    __slots__ = ()  # No per-instance attributes; everything is stateless
+
+    # --------------------------------------------------------------------- #
+    # Core entry point used by the evaluation harness
+    # --------------------------------------------------------------------- #
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:
+        # Local-variable bindings for micro-optimisation
+        key: bytes             = problem["key"]
+        nonce: bytes           = problem["nonce"]
+        plaintext: bytes       = problem["plaintext"]
+        associated_data: bytes | None = problem.get("associated_data")
+
+        # Fetch cached AES algorithm object (includes key schedule)
+        algorithm = _get_algorithm(key)
+
+        # Create a new GCM Cipher for the current nonce
+        encryptor = Cipher(
+            algorithm,
+            modes.GCM(nonce),
+            backend=_BACKEND,
+        ).encryptor()
+
+        # Feed AAD if provided (skip function call if empty / None)
+        if associated_data:
+            encryptor.authenticate_additional_data(associated_data)
+
+        # Single-pass encryption without redundant copies
+        ciphertext = encryptor.update(plaintext)
+        encryptor.finalize()  # Completes encryption, computes tag
+        tag = encryptor.tag  # 16-byte authentication tag
+
+        # Return result
+        return {"ciphertext": ciphertext, "tag": tag}

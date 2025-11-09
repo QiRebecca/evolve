@@ -1,13 +1,12 @@
 from typing import Any
-from ortools.constraint_solver import pywrapcp, routing_enums_pb2
+from ortools.sat.python import cp_model
 
 class Solver:
     def solve(self, problem, **kwargs) -> Any:
         """
-        Solve the TSP problem using OR-Tools Routing Solver.
+        Solve the TSP problem using CP-SAT solver with minimal overhead.
 
         :param problem: Distance matrix as a list of lists.
-        :param kwargs: Optional parameters, e.g. time_limit (seconds).
         :return: A list representing the optimal tour, starting and ending at city 0.
         """
         n = len(problem)
@@ -15,41 +14,35 @@ class Solver:
         if n <= 1:
             return [0, 0]
 
-        # Create the routing index manager and model
-        manager = pywrapcp.RoutingIndexManager(n, 1, 0)
-        routing = pywrapcp.RoutingModel(manager)
+        model = cp_model.CpModel()
 
-        # Distance callback
-        def distance_callback(from_index, to_index):
-            from_node = manager.IndexToNode(from_index)
-            to_node = manager.IndexToNode(to_index)
-            return problem[from_node][to_node]
+        # Create variables
+        x = {(i, j): model.NewBoolVar(f"x[{i},{j}]") for i in range(n) for j in range(n) if i != j}
 
-        transit_callback_index = routing.RegisterTransitCallback(distance_callback)
-        routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+        # Circuit constraint
+        model.AddCircuit([(u, v, var) for (u, v), var in x.items()])
 
-        # No capacity constraints for TSP
-        # Set search parameters
-        search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-        search_parameters.first_solution_strategy = (
-            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
-        search_parameters.local_search_metaheuristic = (
-            routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
-        search_parameters.time_limit.seconds = kwargs.get('time_limit', 60)
-        search_parameters.use_cp = True  # use CP-SAT for exact solution
+        # Add objective
+        model.Minimize(sum(problem[i][j] * x[i, j] for i in range(n) for j in range(n) if i != j))
 
-        # Solve the problem
-        solution = routing.SolveWithParameters(search_parameters)
+        # Solve the model
+        solver = cp_model.CpSolver()
+        # Reduce overhead: single worker, no logging
+        solver.parameters.num_search_workers = 1
+        solver.parameters.log_search_progress = False
 
-        if solution:
-            index = routing.Start(0)
+        status = solver.Solve(model)
+
+        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
             path = []
-            while not routing.IsEnd(index):
-                node = manager.IndexToNode(index)
-                path.append(node)
-                index = solution.Value(routing.NextVar(index))
-            # Append the end node (depot)
-            path.append(manager.IndexToNode(index))
+            current_city = 0
+            while len(path) < n:
+                path.append(current_city)
+                for next_city in range(n):
+                    if current_city != next_city and solver.Value(x[current_city, next_city]) == 1:
+                        current_city = next_city
+                        break
+            path.append(0)  # Return to the starting city
             return path
         else:
             return []

@@ -1,0 +1,92 @@
+The previous submission failed due to non-ASCII quotes outside the Python block, causing a SyntaxError. I provide a clean, fully ASCII implementation that mirrors the best-performing variant: it
+
+1. Caches per-key AES algorithm objects (avoids rebuilding key schedules).
+2. Uses the low-level `Cipher` / `encryptor.update_into` path to minimise Python-side allocations.
+3. Employs a fixed backend singleton and `__slots__` to trim overhead.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict, Final
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+# --------------------------------------------------------------------------- #
+# Module-level constants & cached objects
+# --------------------------------------------------------------------------- #
+_VALID_KEY_SIZES: Final = (16, 24, 32)  # AES-128 / 192 / 256
+_TAG_LEN: Final = 16                    # GCM authentication-tag length (bytes)
+_BACKEND = default_backend()            # Re-used OpenSSL backend instance
+
+
+@lru_cache(maxsize=256)
+def _cached_algorithm(key: bytes) -> algorithms.AES:
+    """
+    Return (and cache) an algorithms.AES object for *key*.
+    Caching avoids rebuilding the key schedule when the same key reappears.
+    """
+    if len(key) not in _VALID_KEY_SIZES:
+        raise ValueError(f"Invalid AES key length {len(key)} (expected 16/24/32).")
+    return algorithms.AES(key)
+
+
+class Solver:
+    """
+    AES-GCM encryption solver.
+
+    Expected input dictionary:
+        {
+            "key": bytes,             # 16/24/32 bytes
+            "nonce": bytes,           # 12-byte nonce recommended
+            "plaintext": bytes,
+            "associated_data": bytes | None
+        }
+
+    Returns:
+        {"ciphertext": bytes, "tag": bytes}
+    """
+
+    __slots__ = ()  # minimise per-instance overhead
+
+    # --------------------------------------------------------------------- #
+    # Main entry point
+    # --------------------------------------------------------------------- #
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, bytes]:
+        # Local bindings (faster attribute access)
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data")
+
+        # Fetch cached AES algorithm (contains key schedule)
+        algorithm = _cached_algorithm(key)
+
+        # Create encryptor for this nonce
+        encryptor = Cipher(
+            algorithm,
+            modes.GCM(nonce),
+            backend=_BACKEND,
+        ).encryptor()
+
+        # Supply AAD only if provided and non-empty
+        if aad:
+            encryptor.authenticate_additional_data(aad)
+
+        # Fast path: encrypt directly into a pre-allocated buffer
+        if plaintext:
+            out_buf = bytearray(len(plaintext))
+            written = encryptor.update_into(plaintext, out_buf)
+            # For GCM, the entire plaintext must be processed
+            if written != len(plaintext):
+                # Fallback (should rarely happen)
+                ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+            else:
+                encryptor.finalize()
+                ciphertext = bytes(out_buf)  # convert to immutable bytes
+        else:
+            # Handle empty plaintext
+            encryptor.finalize()
+            ciphertext = b""
+
+        return {"ciphertext": ciphertext, "tag": encryptor.tag}
+```

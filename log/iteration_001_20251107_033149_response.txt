@@ -1,0 +1,62 @@
+The main cost lies in encryption and unnecessary memory copies caused by concatenating and then slicing ciphertext + tag.  
+I’ll use the lower-level `Cipher`/`encryptor` API, which already returns the ciphertext and tag separately, eliminating an extra allocation and copy. I’ll also remove logging and other overhead to reduce per-call latency.
+
+```python
+from typing import Any
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+
+# Supported AES key lengths (bytes) and GCM tag length
+_AES_KEY_SIZES = (16, 24, 32)
+_GCM_TAG_SIZE = 16  # bytes
+
+
+class Solver:
+    """
+    AES-GCM encryption solver.
+
+    Given a dictionary with keys:
+        • key : bytes  (length 16, 24 or 32)
+        • nonce : bytes (recommended 12 bytes for GCM, but cryptography allows 8-16)
+        • plaintext : bytes
+        • associated_data : bytes or None
+    returns a dictionary:
+        • ciphertext : bytes  (encrypted plaintext)
+        • tag        : bytes  (GCM authentication tag, 16 bytes)
+    The implementation uses cryptography’s low-level Cipher API to avoid the
+    extra memory copy incurred by AESGCM.encrypt() concatenating ciphertext
+    and tag before we slice them apart.
+    """
+
+    def solve(self, problem: dict[str, Any], **kwargs) -> dict[str, bytes]:
+        key: bytes = problem["key"]
+        nonce: bytes = problem["nonce"]
+        plaintext: bytes = problem["plaintext"]
+        associated_data: bytes | None = problem.get("associated_data", None)
+
+        # Basic key-length validation (fast path – avoid heavy work if invalid)
+        if len(key) not in _AES_KEY_SIZES:
+            raise ValueError(
+                f"Invalid AES key length {len(key)}. "
+                f"Supported lengths are {_AES_KEY_SIZES}"
+            )
+
+        # Set up AES-GCM cipher
+        cipher = Cipher(algorithms.AES(key), modes.GCM(nonce))
+        encryptor = cipher.encryptor()
+
+        # Add AAD only when present and non-empty to skip Python→C overhead
+        if associated_data:
+            encryptor.authenticate_additional_data(associated_data)
+
+        # Encrypt in a single call – cryptography handles chunking internally
+        ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+        tag = encryptor.tag  # 16-byte GCM tag
+
+        # Sanity check (debug safety, negligible cost)
+        if len(tag) != _GCM_TAG_SIZE:
+            raise ValueError("Unexpected GCM tag length")
+
+        return {"ciphertext": ciphertext, "tag": tag}
+```

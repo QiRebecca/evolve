@@ -1,53 +1,130 @@
-analysisWe need to produce solver.py that implements a fast maximum clique solver. Baseline uses CP-SAT. We can use networkx's algorithm? But we need to return list of indices. We can implement a branch and bound algorithm with bitsets. For up to maybe 100 nodes? We need to be fast. Use Bron–Kerbosch with pivot and degeneracy ordering. That is efficient for moderate graphs. Use bitset representation via Python integers for speed. Let's implement.
+analysisWe need to produce solver.py that implements a fast maximum clique solver. Baseline uses CP-SAT. We can use networkx's algorithm? But we need to produce same output: list of node indices of maximum clique. We can use a simple branch and bound algorithm with bitsets. For up to maybe 100 nodes? Not specified. We need to be fast. Use Bron–Kerbosch with pivot and degeneracy ordering. That is efficient for moderate graphs. We'll implement a function that returns maximum clique. Use bitset representation via Python integers for speed. For n <= 64, we can use 64-bit ints. But n could be larger. Use Python's int as arbitrary bitset. We'll convert adjacency matrix to adjacency bitsets.
 
-We need to read adjacency matrix as list of lists. We'll convert to adjacency bitmask list: for each node i, bitmask of neighbors including itself? For clique, we need neighbors. In Bron–Kerbosch, we maintain sets R, P, X as bitsets. Use recursion. Use pivot to reduce branching: choose pivot u from P|X, then iterate over vertices in P & ~N(u). For each v, recursively call with R|{v}, P & N(v), X & N(v). After recursion, remove v from P, add to X.
+Implement Bron–Kerbosch with pivot and pruning: maintain current clique size, best clique. Use recursion. Use bitset operations: intersection, difference. Use pivot to reduce branching.
 
-We need to track best clique found. Use global variable best_clique. Use bitset operations.
-
-We need to handle up to maybe 200 nodes? Python int bit operations are fine.
+We need to return list of indices. We'll maintain best_clique as list.
 
 Implementation details:
 
-- n = len(problem)
-- adjacency = [0]*n
-- For each i, set bit j if problem[i][j]==1. Also set bit i? For clique, we need adjacency including self? In Bron–Kerbosch, we use adjacency for neighbors. For intersection, we need neighbors of v. We can include self to simplify? Usually we don't include self. But when we compute P & N(v), we don't want v itself. So adjacency bitmask should not include self. So adjacency[i] = sum(1<<j for j in range(n) if problem[i][j]==1). That excludes self.
+- Build adjacency list as list of ints: adj[i] bitmask of neighbors.
 
-- P initial = (1<<n)-1
-- R=0, X=0
+- Use recursion function bronk(R, P, X):
 
-- best_clique_mask = 0
+    if not P and not X: update best.
 
-- In recursion, if P==0 and X==0: maximal clique found. If popcount(R) > popcount(best_clique_mask): update.
+    if len(R) + len(P) <= len(best): prune.
 
-- Use bit_count() method (Python 3.8+). Use int.bit_count().
+    choose pivot u from P|X maximizing |P & adj[u]|.
 
-- For pivot: choose u from P|X. We can pick any. For speed, choose u = (P|X).bit_length()-1? Actually we need a vertex with maximum degree in P? But we can just pick any. For better pruning, choose u with max neighbors in P. We can compute u = max((P|X) & adjacency[v] for v in vertices). But simpler: choose u = (P|X).bit_length()-1? That picks highest index. Then compute candidates = P & ~adjacency[u].
+    for each v in P & ~adj[u]:
 
-- Iterate over candidates: while candidates: v = candidates & -candidates (lowest set bit). Then remove v from candidates. Recursively call.
+        bronk(R|{v}, P & adj[v], X & adj[v])
 
-- After recursion, P &= ~v; X |= v.
+        P -= {v}
 
-- Use recursion depth maybe up to n.
+        X += {v}
 
-- For speed, we can implement recursion as function inside solve.
+We need to convert bitset to list of indices quickly. Use bit_length and bit operations.
 
-- At end, convert best_clique_mask to list of indices: [i for i in range(n) if best_clique_mask>>i &1].
+We need to maintain best_clique as list of indices.
 
-Edge cases: empty graph: best_clique_mask=0 -> return [].
+We need to compute len(R) quickly: we can maintain size variable.
+
+We can use recursion with bitset and size.
+
+Implementation:
+
+def bronk(R_mask, P_mask, X_mask, size_R):
+
+    if P_mask == 0 and X_mask == 0:
+
+        if size_R > len(best_clique):
+
+            best_clique = [i for i in range(n) if (R_mask>>i)&1]
+
+    elif size_R + popcount(P_mask) <= len(best_clique):
+
+        return
+
+    else:
+
+        # choose pivot u from P|X maximizing popcount(P & adj[u])
+
+        union = P_mask | X_mask
+
+        # find pivot u: iterate bits of union
+
+        max_deg = -1
+
+        pivot = None
+
+        temp = union
+
+        while temp:
+
+            u = (temp & -temp).bit_length() - 1
+
+            temp &= temp - 1
+
+            deg = popcount(P_mask & adj[u])
+
+            if deg > max_deg:
+
+                max_deg = deg
+
+                pivot = u
+
+        # candidates = P & ~adj[pivot]
+
+        candidates = P_mask & ~adj[pivot]
+
+        temp = candidates
+
+        while temp:
+
+            v = (temp & -temp).bit_length() - 1
+
+            temp &= temp - 1
+
+            bronk(R_mask | (1<<v), P_mask & adj[v], X_mask & adj[v], size_R+1)
+
+            P_mask &= ~(1<<v)
+
+            X_mask |= (1<<v)
+
+We need popcount: use bit_count() in Python 3.8+? Actually int.bit_count() available in 3.8? It's 3.8? It's 3.8? Actually bit_count introduced in 3.8? I think 3.8? Wait: int.bit_count() introduced in Python 3.8? Actually 3.8? I think 3.8? Let's use bin(x).count('1') for compatibility. But we can use x.bit_count() if available. We'll use x.bit_count().
+
+We need to store best_clique as list. Use nonlocal variable.
+
+Edge case: graph may have isolated nodes. The algorithm will handle.
+
+Complexity: good.
 
 We need to import typing.Any.
 
-Return list[int].
+Return best_clique sorted? Not required but baseline returns list in order of indices. Our algorithm will produce list sorted ascending because we iterate bits in increasing order? In recursion, we may produce unsorted. But we can sort before returning.
+
+Let's implement.
+
+Also we need to handle n=0.
+
+Implementation details: convert adjacency matrix to adjacency bitset: for i in range(n): mask=0; for j in range(n): if problem[i][j]==1: mask|=1<<j. But adjacency matrix includes self? Usually 0. But we can ignore.
+
+We need to ensure graph is symmetric but we trust.
+
+Return list of indices.
+
+Let's produce solver.py content.
+
+We need to include from typing import Any.
+
+Define class Solver with solve method.
+
+We can ignore **kwargs.
 
 Let's write code.
 
-Also we can add small optimization: if popcount(P)+popcount(R) <= popcount(best_clique_mask): prune. Because even if we add all P, cannot beat best.
-
-Implement that.
-
-Let's code.
-
-Also we need to handle large n maybe > 64? Python int can handle.
+Potential performance: recursion depth up to n. Use sys.setrecursionlimit maybe.
 
 Let's produce final code.
 
@@ -57,80 +134,72 @@ from typing import Any
 class Solver:
     def solve(self, problem, **kwargs) -> Any:
         """
-        Solves the maximum clique problem using a branch‑and‑bound
-        implementation of the Bron–Kerbosch algorithm with pivoting
-        and bitset representation for speed.
+        Solves the maximum clique problem using a Bron–Kerbosch algorithm with pivoting.
+        Returns a list of node indices that form a maximum clique.
         """
         n = len(problem)
         if n == 0:
             return []
 
-        # Build adjacency bitmasks (without self loops)
-        adjacency = [0] * n
+        # Build adjacency bitsets
+        adj = [0] * n
         for i in range(n):
             mask = 0
             row = problem[i]
             for j, val in enumerate(row):
                 if val:
                     mask |= 1 << j
-            adjacency[i] = mask
+            adj[i] = mask
 
-        # Initial sets: all vertices in P, R and X empty
-        all_vertices = (1 << n) - 1
-        best_clique_mask = 0
+        best_clique = []
 
-        def bit_count(x: int) -> int:
+        def popcount(x: int) -> int:
             return x.bit_count()
 
-        def bronk(R: int, P: int, X: int):
-            nonlocal best_clique_mask
-
-            # Prune if even adding all remaining vertices cannot beat current best
-            if bit_count(R) + bit_count(P) <= bit_count(best_clique_mask):
+        def bronk(R_mask: int, P_mask: int, X_mask: int, size_R: int):
+            nonlocal best_clique
+            if P_mask == 0 and X_mask == 0:
+                if size_R > len(best_clique):
+                    # Extract indices from R_mask
+                    clique = []
+                    temp = R_mask
+                    while temp:
+                        v = (temp & -temp).bit_length() - 1
+                        clique.append(v)
+                        temp &= temp - 1
+                    best_clique = clique
+                return
+            # Prune if cannot beat current best
+            if size_R + popcount(P_mask) <= len(best_clique):
                 return
 
-            if P == 0 and X == 0:
-                # Found a maximal clique
-                if bit_count(R) > bit_count(best_clique_mask):
-                    best_clique_mask = R
-                return
+            # Choose pivot u from P ∪ X maximizing |P ∩ N(u)|
+            union = P_mask | X_mask
+            pivot = None
+            max_deg = -1
+            temp = union
+            while temp:
+                u = (temp & -temp).bit_length() - 1
+                temp &= temp - 1
+                deg = popcount(P_mask & adj[u])
+                if deg > max_deg:
+                    max_deg = deg
+                    pivot = u
 
-            # Choose a pivot u from P ∪ X
-            # Heuristic: pick vertex with maximum degree in P
-            union = P | X
-            if union:
-                # Pick pivot with most neighbors in P
-                max_deg = -1
-                pivot = None
-                temp = union
-                while temp:
-                    u = temp & -temp
-                    idx = (u.bit_length() - 1)
-                    deg = bit_count(P & adjacency[idx])
-                    if deg > max_deg:
-                        max_deg = deg
-                        pivot = idx
-                    temp &= temp - 1
-                u_mask = 1 << pivot
-            else:
-                u_mask = 0
+            # Candidates: vertices in P not adjacent to pivot
+            candidates = P_mask & ~adj[pivot] if pivot is not None else P_mask
+            temp = candidates
+            while temp:
+                v = (temp & -temp).bit_length() - 1
+                temp &= temp - 1
+                bronk(R_mask | (1 << v), P_mask & adj[v], X_mask & adj[v], size_R + 1)
+                P_mask &= ~(1 << v)
+                X_mask |= (1 << v)
 
-            # Candidates are vertices in P not adjacent to pivot
-            candidates = P & ~adjacency[pivot] if union else P
+        # Initial call: R empty, P all vertices, X empty
+        all_vertices = (1 << n) - 1
+        bronk(0, all_vertices, 0, 0)
 
-            while candidates:
-                v_mask = candidates & -candidates
-                v = v_mask.bit_length() - 1
-                candidates -= v_mask
-
-                bronk(R | v_mask, P & adjacency[v], X & adjacency[v])
-
-                P -= v_mask
-                X |= v_mask
-
-        bronk(0, all_vertices, 0)
-
-        # Convert best clique bitmask to list of indices
-        result = [i for i in range(n) if (best_clique_mask >> i) & 1]
-        return result
+        # Return sorted list of indices
+        return sorted(best_clique)
 <<<SOLVER_PY_END>>>

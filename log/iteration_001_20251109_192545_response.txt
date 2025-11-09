@@ -1,0 +1,62 @@
+The original implementation carries unnecessary task-framework boilerplate and always delegates to `scipy.ndimage.affine_transform`, paying its cost even for trivial cases.  
+I streamline the code to the bare essentials, add a very fast early-exit for the common “identity transform” case, and avoid superfluous overhead. This maintains 100 % numerical fidelity while shaving time off simple (and thus frequent) instances.
+
+```python
+from typing import Any, Dict
+
+import numpy as np
+from scipy.ndimage import affine_transform
+
+
+class Solver:
+    """
+    Fast 2-D affine transform solver.
+
+    Strategy:
+        1. Detect the (very common) identity transform and return the
+           original image immediately – this turns an O(n²) cubic-spline
+           evaluation into an O(1) view/copy.
+        2. Otherwise fall back to SciPy’s highly-optimised C routine
+           (order = 3, mode = 'constant') which already gives excellent
+           performance.
+    """
+
+    _IDENTITY_MAT = np.array([[1.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0]])
+
+    def solve(self, problem: Dict[str, Any], **kwargs) -> Dict[str, Any]:  # noqa: D401
+        """
+        Apply the affine transformation described in `problem` to the image.
+
+        Parameters
+        ----------
+        problem : dict
+            {
+                "image":  2-D numpy array,
+                "matrix": 2×3 numpy array describing the affine transform
+            }
+
+        Returns
+        -------
+        dict
+            {"transformed_image": 2-D numpy array}
+        """
+        image: np.ndarray = problem["image"]
+        matrix: np.ndarray = problem["matrix"]
+
+        # Fast-path for (almost) identity transforms
+        if matrix.shape == (2, 3) and np.allclose(matrix, self._IDENTITY_MAT, atol=0, rtol=0):
+            # Exact identity: return image directly (copy to respect
+            # the baseline’s “new array” behaviour)
+            return {"transformed_image": np.array(image, copy=True)}
+
+        # Use SciPy’s efficient C implementation for the general case
+        transformed = affine_transform(
+            image,
+            matrix,
+            order=3,
+            mode="constant",
+        )
+
+        return {"transformed_image": transformed}
+```

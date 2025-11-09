@@ -1,95 +1,44 @@
 from typing import Any
+from ortools.sat.python import cp_model
 
 class Solver:
     def solve(self, problem, **kwargs) -> Any:
         """
-        Solves the Minimum Dominating Set problem using a branch-and-bound
-        algorithm with bitmask representation. This implementation is
-        deterministic and returns an optimal solution.
+        Solves the minimum dominating set problem using OR-Tools CP-SAT solver.
+        This implementation uses a single search worker and presolve to reduce
+        overhead compared to the baseline, which can lead to faster runtimes
+        while still guaranteeing optimality.
         """
         n = len(problem)
-        if n == 0:
-            return []
+        model = cp_model.CpModel()
 
-        # Precompute cover bitmask for each node: node itself + its neighbors
-        cover = [0] * n
+        # Boolean variable for each vertex: 1 if included in the dominating set
+        nodes = [model.NewBoolVar(f"x_{i}") for i in range(n)]
+
+        # Add domination constraints: each vertex must be dominated
         for i in range(n):
-            mask = 1 << i
-            for j in range(n):
-                if problem[i][j]:
-                    mask |= 1 << j
-            cover[i] = mask
+            # Start with the vertex itself
+            neighbors = [nodes[i]]
+            row = problem[i]
+            for j, val in enumerate(row):
+                if val:
+                    neighbors.append(nodes[j])
+            model.Add(sum(neighbors) >= 1)
 
-        all_ones = (1 << n) - 1
+        # Objective: minimize the number of selected vertices
+        model.Minimize(sum(nodes))
 
-        # Greedy upper bound to initialize best solution
-        def greedy_upper():
-            dominated = 0
-            chosen = 0
-            while dominated != all_ones:
-                # pick node that covers most uncovered nodes
-                best_node = None
-                best_cover = 0
-                for v in range(n):
-                    if (chosen >> v) & 1:
-                        continue
-                    new_cover = cover[v] & ~dominated
-                    cnt = new_cover.bit_count()
-                    if cnt > best_cover:
-                        best_cover = cnt
-                        best_node = v
-                if best_node is None:
-                    break
-                chosen |= 1 << best_node
-                dominated |= cover[best_node]
-            return chosen
+        # Create solver and set parameters for speed
+        solver = cp_model.CpSolver()
+        solver.parameters.num_search_workers = 1  # single worker to reduce overhead
+        solver.parameters.cp_model_presolve = True  # enable presolve
+        # No explicit time limit; solver will run until optimality is proven
 
-        best_mask = greedy_upper()
-        best_size = best_mask.bit_count()
+        status = solver.Solve(model)
 
-        # Precompute max cover size for lower bound
-        max_cover_size = max(c.bit_count() for c in cover)
-
-        # Recursive branch and bound
-        def dfs(dominated_mask: int, chosen_mask: int, depth: int):
-            nonlocal best_mask, best_size
-
-            if dominated_mask == all_ones:
-                if depth < best_size:
-                    best_size = depth
-                    best_mask = chosen_mask
-                return
-
-            # Prune if current depth already >= best
-            if depth >= best_size:
-                return
-
-            # Lower bound estimate
-            remaining = all_ones ^ dominated_mask
-            remaining_bits = remaining.bit_count()
-            lb = (remaining_bits + max_cover_size - 1) // max_cover_size
-            if depth + lb >= best_size:
-                return
-
-            # Choose an uncovered node
-            # Pick the node with smallest degree among uncovered to reduce branching
-            # Find first uncovered node
-            v = (remaining & -remaining).bit_length() - 1
-
-            # Branch: include v
-            dfs(dominated_mask | cover[v], chosen_mask | (1 << v), depth + 1)
-
-            # Branch: include each neighbor of v (excluding v)
-            neigh_mask = cover[v] & ~ (1 << v)
-            # Iterate over set bits in neigh_mask
-            m = neigh_mask
-            while m:
-                u = (m & -m).bit_length() - 1
-                dfs(dominated_mask | cover[u], chosen_mask | (1 << u), depth + 1)
-                m &= m - 1
-
-        dfs(0, 0, 0)
-
-        # Convert best_mask to list of indices
-        result = [i for i in range(n) if (best_mask >> i) & 1]
-        return result
+        if status == cp_model.OPTIMAL:
+            # Extract selected vertices
+            return [i for i in range(n) if solver.Value(nodes[i]) == 1]
+        else:
+            # In case of no solution (should not happen for valid graphs)
+            return []

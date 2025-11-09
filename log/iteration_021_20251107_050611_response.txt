@@ -1,0 +1,82 @@
+The main bottleneck in the current version is the use of the high-level `AESGCM.encrypt`, which performs extra allocations and validation per call. Switching to the lower-level `Cipher/Encryptor` API lets us eliminate copies via `update_into` and cache the key schedule, yielding faster execution while keeping identical results.
+
+```python
+from functools import lru_cache
+from typing import Any, Dict, Final
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+# --------------------------------------------------------------------------- #
+# Constants & cached singletons
+# --------------------------------------------------------------------------- #
+_VALID_KEY_SIZES: Final = (16, 24, 32)   # AES-128 / 192 / 256
+_GCM_TAG_LEN:     Final = 16             # Authentication-tag length (bytes)
+_BACKEND                          = default_backend()      # Re-use global backend
+
+
+@lru_cache(maxsize=256)
+def _cached_algorithm(key: bytes) -> algorithms.AES:
+    """
+    Return (and cache) an algorithms.AES object for *key*.
+    Caching avoids rebuilding the key schedule when the same key reappears.
+    """
+    if len(key) not in _VALID_KEY_SIZES:
+        raise ValueError(f"Invalid AES key length {len(key)} – expected 16/24/32.")
+    return algorithms.AES(key)
+
+
+class Solver:
+    """
+    High-throughput AES-GCM encryption solver.
+
+    Required problem keys:
+        key             : bytes   (16/24/32)
+        nonce           : bytes   (12 recommended)
+        plaintext       : bytes
+        associated_data : bytes | None
+
+    Returns:
+        {'ciphertext': bytes, 'tag': bytes}
+    """
+
+    __slots__ = ()  # no per-instance dict
+
+    # ------------------------------------------------------------------ #
+    # Core API called by evaluation harness
+    # ------------------------------------------------------------------ #
+    def solve(self, problem: Dict[str, Any], **__) -> Dict[str, bytes]:
+        key: bytes        = problem["key"]
+        nonce: bytes      = problem["nonce"]
+        plaintext: bytes  = problem["plaintext"]
+        aad: bytes | None = problem.get("associated_data")
+
+        # Fetch cached AES algorithm (contains key schedule)
+        algorithm = _cached_algorithm(key)
+
+        # Build encryptor with unique nonce for this call
+        encryptor = Cipher(algorithm, modes.GCM(nonce), backend=_BACKEND).encryptor()
+
+        if aad:                                   # Skip empty / None AAD
+            encryptor.authenticate_additional_data(aad)
+
+        pt_len = len(plaintext)
+
+        # For large payloads use zero-copy path; for small ones avoid extra buffer
+        if pt_len == 0:
+            encryptor.finalize()
+            ciphertext = b""
+        elif pt_len < 4096:                       # heuristic threshold
+            ciphertext = encryptor.update(plaintext)
+            ciphertext += encryptor.finalize()    # usually empty, included for clarity
+        else:
+            buf = bytearray(pt_len)
+            written = encryptor.update_into(plaintext, buf)
+            encryptor.finalize()
+            # `update_into` must handle entire input for GCM
+            ciphertext = bytes(buf) if written == pt_len else (
+                encryptor.update(plaintext) + encryptor.finalize()
+            )
+
+        return {"ciphertext": ciphertext, "tag": encryptor.tag}
+```
