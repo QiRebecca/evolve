@@ -1,7 +1,6 @@
 #!/bin/bash
-# Test batch evaluation script for specific tasks
-# This script runs in background and can continue after logout
-# Usage: nohup bash scripts/test_batch_eval.sh > logs/test_batch_eval.log 2>&1 &
+# Batch evaluation script for SLOW tasks with extended timeout
+# Usage: nohup bash scripts/run_slow_tasks_batch.sh > logs/run_slow_tasks_$(date +%Y%m%d_%H%M%S).log 2>&1 &
 
 # Don't exit on error - continue with next task
 set +e
@@ -15,19 +14,20 @@ RESULTS_DIR="AlgoTune/results"
 GENERATION_FILE="reports/generation.json"
 SUMMARY_FILE="results/eval_gptoss20b.json"
 NUM_RUNS=10
-TIMEOUT=600
+TIMEOUT=3600  # Extended timeout: 1 hour (3600s) instead of 10 minutes
 
 cd /data/zq/evolve
 
 echo "=========================================="
-echo "Testing batch evaluation for specific tasks"
+echo "Starting batch evaluation for SLOW tasks"
 echo "=========================================="
 echo "Model: $MODEL"
-echo "Tasks: communicability max_common_subgraph max_clique_cpsat"
 echo "Summary file: $SUMMARY_FILE"
+echo "Timeout per task: ${TIMEOUT}s (1 hour)"
+echo "Start time: $(date)"
 echo "=========================================="
 
-# Run batch evaluation with specific tasks
+# Run batch evaluation for slow tasks only
 python scripts/batch_eval_solvers.py \
     --model "$MODEL" \
     --results-dir "$RESULTS_DIR" \
@@ -35,10 +35,10 @@ python scripts/batch_eval_solvers.py \
     --summary-file "$SUMMARY_FILE" \
     --num-runs "$NUM_RUNS" \
     --timeout "$TIMEOUT" \
-    --no-skip-existing \
-    --tasks communicability max_common_subgraph max_clique_cpsat
+    --tasks convex_hull convolve_1d correlate_1d dijkstra_from_indices discrete_log vertex_cover
 
 echo "=========================================="
 echo "Batch evaluation completed"
+echo "End time: $(date)"
 echo "=========================================="
 
