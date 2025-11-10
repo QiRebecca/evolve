@@ -296,7 +296,9 @@ def _fork_run_worker(
     
     # Fix for pysat threading issues in multiprocessing workers
     worker_logger = logging.getLogger("isolated_worker")
-    worker_logger.debug(f"Set NUMBA_THREADING_LAYER=workqueue for fork safety in worker {os.getpid()}")
+    worker_logger.setLevel(logging.INFO)  # Ensure INFO level logs are shown
+    worker_logger.info(f"[WORKER_START] Worker process {os.getpid()} started for task {task_name}")
+    worker_logger.info(f"[WORKER_START] Set NUMBA_THREADING_LAYER=workqueue for fork safety")
 
     # ------------------------------------------------------------------
     # Memory safety: cap RLIMIT_AS inside every isolated benchmark worker
@@ -418,11 +420,14 @@ def _fork_run_worker(
         for _var in ("NUMBA_DEBUG", "NUMBA_DUMP_IR", "NUMBA_DUMP_CFG", "NUMBA_DUMP_OPT_STATS"):
             os.environ.pop(_var, None)
 
+        # CRITICAL: Convert code_dir to absolute path BEFORE changing working directory
+        # Otherwise, relative paths won't resolve correctly after os.chdir(tmp_dir)
+        code_dir_path = Path(code_dir).resolve()
+        worker_logger.info(f"[DEBUG] _fork_run_worker: Converted code_dir to absolute path: {code_dir_path}")
+
         # Make the tmp_dir the current working directory so that any ad-hoc
         # writes (e.g. plots, temporary files) vanish afterwards.
         os.chdir(tmp_dir)
-
-        code_dir_path = Path(code_dir)
 
         # ------------------------------------------------------------------
         # 2) Import solver module and obtain *fresh* solve callable
@@ -431,7 +436,10 @@ def _fork_run_worker(
         from AlgoTuner.utils.solver_loader import load_solver_module, get_fresh_solve_callable
 
         # --- FIX: Robust solver path detection and loading ---
-        code_dir_path = Path(code_dir)
+        # Use the absolute path that was resolved BEFORE changing directory
+        worker_logger.info(f"[WORKER_STEP] Worker {os.getpid()}: Starting solver loading")
+        worker_logger.info(f"[WORKER_STEP] code_dir={code_dir}, code_dir_path={code_dir_path}, task_name={task_name}")
+        worker_logger.info(f"[WORKER_STEP] CODE_DIR env={os.environ.get('CODE_DIR')}, AGENT_MODE env={os.environ.get('AGENT_MODE')}")
 
         # 1) Direct detection: test CamelCase, snake_case, or solver.py in code_dir_path
         solver_file = code_dir_path / f"{task_name}.py"
@@ -442,8 +450,14 @@ def _fork_run_worker(
                 solver_file = snake_file
             else:
                 solver_file = code_dir_path / "solver.py"
+        worker_logger.info(f"[WORKER_STEP] Detected solver_file={solver_file}, exists={solver_file.is_file()}")
         if solver_file.is_file():
+            worker_logger.info(f"[WORKER_STEP] About to load solver from {solver_file.resolve()}")
+            import time as time_module
+            load_start = time_module.time()
             solver_module = load_solver_module(solver_file.parent, solver_filename=solver_file.name)
+            load_elapsed = time_module.time() - load_start
+            worker_logger.info(f"[WORKER_STEP] Loaded solver module in {load_elapsed:.2f}s: {solver_module.__file__ if hasattr(solver_module, '__file__') else 'N/A'}")
         else:
             # 2) Fallback: scan known roots for task directory
             # Include actual AlgoTuneTasks location for baseline evaluation
@@ -563,7 +577,9 @@ def _fork_run_worker(
                     )
         else:
             # Normal case - get solve callable from Solver class
+            worker_logger.info(f"[DEBUG] _fork_run_worker: Getting solve callable from Solver class")
             solve = get_fresh_solve_callable(solver_module)
+            worker_logger.info(f"[DEBUG] _fork_run_worker: Got solve callable: {solve}, type={type(solve)}")
 
         # ------------------------------------------------------------------
         # 3) Deserialize problems
@@ -698,12 +714,13 @@ def _fork_run_worker(
         warmup_result = None
         
         # Standard: 1 warmup per process
+        worker_logger.info(f"[WORKER_STEP] About to run warmup")
         t_w0 = time.perf_counter_ns()
         warmup_result = solve(warmup_problem)
         warmup_result = deep_materialize_fast(warmup_result)  # Force materialization
         single_warmup_ns = time.perf_counter_ns() - t_w0
         total_warmup_ns += single_warmup_ns
-        logging.debug(f"[isolated_bm child] Warmup completed: {single_warmup_ns/1e6:.3f}ms")
+        worker_logger.info(f"[WORKER_STEP] Warmup completed: {single_warmup_ns/1e6:.3f}ms")
         
         # Check if warmup returned None
         if warmup_result is None:
@@ -830,11 +847,13 @@ def _fork_run_worker(
         # Capture stdout during timed execution
         captured_stdout = StringIO()
         
+        worker_logger.info(f"[WORKER_STEP] About to run timed call")
         t0 = time.perf_counter_ns()
         with redirect_stdout(captured_stdout):
             timed_result = solve(timed_problem)
         timed_result = deep_materialize_fast(timed_result)  # Force materialization
         timed_ns = time.perf_counter_ns() - t0
+        worker_logger.info(f"[WORKER_STEP] Timed call completed: {timed_ns/1e6:.3f}ms")
         
         # Get captured stdout
         stdout_content = captured_stdout.getvalue()
@@ -848,10 +867,12 @@ def _fork_run_worker(
         # ------------------------------------------------------------------
         # 7) Marshal timing results back to parent (no validation field)
         # ------------------------------------------------------------------
+        worker_logger.info(f"[WORKER_STEP] About to write results to ret_dict")
         ret_dict["success"] = True
         ret_dict["warmup_ns"] = int(warmup_ns)
         ret_dict["timed_ns"] = int(timed_ns)
         ret_dict["stdout"] = stdout_content  # Captured stdout
+        worker_logger.info(f"[WORKER_STEP] Results written, worker {os.getpid()} finishing")
         
         # Pickle the result for validation - we already have it, no need to run again!
         try:
@@ -1100,8 +1121,12 @@ def run_isolated_benchmark(
                         daemon=False,
                     )
                     proc.start()
+                    logger.info(f"[TIMEOUT_DEBUG_ISO] Started subprocess PID={proc.pid} for run {idx+1}/{num_runs}")
                     logger.info(f"[TIMEOUT_DEBUG_ISO] Waiting for subprocess with timeout={timeout_seconds:.3f}s")
+                    start_wait = time.time()
                     proc.join(timeout_seconds)
+                    wait_elapsed = time.time() - start_wait
+                    logger.info(f"[TIMEOUT_DEBUG_ISO] proc.join() returned after {wait_elapsed:.2f}s, is_alive={proc.is_alive()}, exitcode={proc.exitcode}")
                     
                     # Check for abnormal termination
                     exit_error = _check_process_exit_code(proc, idx+1, num_runs, logger)
@@ -1666,10 +1691,15 @@ def _fork_run_worker_with_fetch(
         os.environ["PYTHONPYCACHEPREFIX"] = tmp_dir
         for _var in ("NUMBA_DEBUG", "NUMBA_DUMP_IR", "NUMBA_DUMP_CFG", "NUMBA_DUMP_OPT_STATS"):
             os.environ.pop(_var, None)
+        
+        # CRITICAL: Convert code_dir to absolute path BEFORE changing working directory
+        # Otherwise, relative paths won't resolve correctly after os.chdir(tmp_dir)
+        code_dir_path = Path(code_dir).resolve()
+        worker_logger.info(f"[DEBUG] _fork_run_worker_with_fetch: Converted code_dir to absolute path: {code_dir_path}")
+        
         os.chdir(tmp_dir)
 
         # Load solver (same logic as original worker)
-        code_dir_path = Path(code_dir)
         from AlgoTuner.utils.solver_loader import load_solver_module, get_fresh_solve_callable
 
         alt_filename = f"{task_name}.py"

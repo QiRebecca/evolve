@@ -21,6 +21,7 @@ llm:
 
 # Evolution settings
 diff_based_evolution: false  # Use full code rewrites instead of diffs (better for o3 model)
+checkpoint_interval: 10  # Save checkpoints every 10 iterations (for easier resume)
 
 # Database settings
 database:

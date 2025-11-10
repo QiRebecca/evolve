@@ -113,6 +113,7 @@ def evaluate_solver_on_test(
     os.environ.setdefault("ALGO_TUNE_DATA_DIR", str(data_dir))
     os.environ.setdefault("CURRENT_TASK_NAME", task_name)
     os.environ.setdefault("ISOLATED_EVAL", "1")  # Use isolated execution to match baseline method
+    os.environ.setdefault("AGENT_MODE", "1")  # Use agent mode to load solver file instead of baseline
     
     discover_and_import_tasks()
     
@@ -155,6 +156,13 @@ def evaluate_solver_on_test(
     # Ensure solver file exists and is accessible
     if not solver_path_obj.exists():
         raise FileNotFoundError(f"Solver file not found: {solver_path}")
+    
+    # Set CODE_DIR environment variable to ensure run_isolated_benchmark uses the correct solver directory
+    # This is critical: without this, worker processes might fallback to task directory's oracle implementation
+    os.environ["CODE_DIR"] = code_dir  # Force set (don't use setdefault) to ensure correct solver is loaded
+    logging.info(f"[DEBUG] Set CODE_DIR={code_dir} to ensure correct solver loading")
+    logging.info(f"[DEBUG] AGENT_MODE={os.environ.get('AGENT_MODE')}, CODE_DIR={os.environ.get('CODE_DIR')}")
+    logging.info(f"[DEBUG] Solver path: {solver_path_obj.resolve()}, exists: {solver_path_obj.exists()}")
     
     # If solver filename is not standard (solver.py or {task_name}.py),
     # create a symlink or copy to ensure run_isolated_benchmark can find it

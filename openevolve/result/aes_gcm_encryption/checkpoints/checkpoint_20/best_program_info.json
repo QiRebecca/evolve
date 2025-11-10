@@ -2,8 +2,7 @@
   "id": "2f2dceec-ea27-4a7d-8656-0f494ff5df1c",
   "generation": 3,
   "iteration": 14,
-  "timestamp": 1762764044.83619,
-  "parent_id": "2b0acb67-46c4-499a-b926-48677c80d13d",
+  "current_iteration": 20,
   "metrics": {
     "combined_score": 1.1671088362890076,
     "mean_speedup": 1.1671088362890076,
@@ -12,5 +11,6 @@
     "accuracy": 1.0
   },
   "language": "python",
-  "saved_at": 1762765539.1180642
+  "timestamp": 1762764044.83619,
+  "saved_at": 1762765539.0686991
 }

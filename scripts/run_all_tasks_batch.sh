@@ -1,7 +1,7 @@
 #!/bin/bash
-# Batch evaluation script for all solvers
+# Batch evaluation script for ALL tasks
 # This script runs in background and can continue after logout
-# Usage: nohup bash run_batch_eval_solvers.sh > logs/batch_eval_stdout.log 2>&1 &
+# Usage: nohup bash scripts/run_all_tasks_batch.sh > logs/run_all_tasks_$(date +%Y%m%d_%H%M%S).log 2>&1 &
 
 # Don't exit on error - continue with next task
 set +e
@@ -17,18 +17,19 @@ SUMMARY_FILE="results/eval_gptoss20b.json"
 NUM_RUNS=10
 TIMEOUT=600
 
+cd /data/zq/evolve
+
 echo "=========================================="
-echo "🚀 Batch Solver Evaluation"
+echo "Starting batch evaluation for ALL tasks"
 echo "=========================================="
 echo "Model: $MODEL"
-echo "Results dir: $RESULTS_DIR"
 echo "Summary file: $SUMMARY_FILE"
-echo "Timeout: ${TIMEOUT}s per task"
-echo "Python: $(which python)"
+echo "Timeout per task: ${TIMEOUT}s"
+echo "Start time: $(date)"
 echo "=========================================="
-echo ""
 
-poetry run python scripts/batch_eval_solvers.py \
+# Run batch evaluation for all tasks
+python scripts/batch_eval_solvers.py \
     --model "$MODEL" \
     --results-dir "$RESULTS_DIR" \
     --generation-file "$GENERATION_FILE" \
@@ -37,21 +38,8 @@ poetry run python scripts/batch_eval_solvers.py \
     --timeout "$TIMEOUT" \
     --no-skip-existing
 
-EXIT_CODE=$?
+echo "=========================================="
+echo "Batch evaluation completed"
+echo "End time: $(date)"
+echo "=========================================="
 
-echo ""
-echo "=========================================="
-if [ $EXIT_CODE -eq 0 ]; then
-    echo "✓ Batch Evaluation Complete!"
-else
-    echo "⚠ Batch Evaluation Finished (some tasks may have failed)"
-fi
-echo "=========================================="
-echo ""
-echo "Check results:"
-echo "  cat $SUMMARY_FILE | python -m json.tool"
-echo "  cat logs/batch_eval_${MODEL}.log"
-echo ""
-echo "To check progress while running:"
-echo "  tail -f logs/batch_eval_${MODEL}.log"
-echo "  tail -f logs/batch_eval_stdout.log"
