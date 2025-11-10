@@ -1,0 +1,114 @@
+{
+    "aes_gcm_encryption": {
+        "openevolve-best": {
+            "speedup": "1.0109",
+            "accuracy": "1.0000",
+            "baseline_avg_min_ms": "100.2649",
+            "solver_avg_min_ms": "99.2014",
+            "solver_std_min_ms": "1.3669",
+            "mean_per_problem_speedup": "1.0109",
+            "median_per_problem_speedup": "1.0125",
+            "num_valid": 10,
+            "num_evaluated": 10,
+            "num_success": 10,
+            "num_failed": 0,
+            "num_errors": 0,
+            "num_timeouts": 0,
+            "improvement_pct": "1.09",
+            "eval_date": "2025-11-10",
+            "eval_timestamp": "2025-11-10T00:13:40.709490",
+            "problem_results": [
+                {
+                    "problem_id": "52",
+                    "baseline_time_ms": "101.4380",
+                    "solver_time_ms": "100.2483",
+                    "speedup": "1.0119",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "53",
+                    "baseline_time_ms": "99.8573",
+                    "solver_time_ms": "100.0434",
+                    "speedup": "0.9981",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "54",
+                    "baseline_time_ms": "100.6028",
+                    "solver_time_ms": "100.1669",
+                    "speedup": "1.0044",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "55",
+                    "baseline_time_ms": "99.8251",
+                    "solver_time_ms": "101.0708",
+                    "speedup": "0.9877",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "56",
+                    "baseline_time_ms": "99.8533",
+                    "solver_time_ms": "100.6464",
+                    "speedup": "0.9921",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "57",
+                    "baseline_time_ms": "99.7785",
+                    "solver_time_ms": "98.4767",
+                    "speedup": "1.0132",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "58",
+                    "baseline_time_ms": "100.1515",
+                    "solver_time_ms": "97.4205",
+                    "speedup": "1.0280",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "59",
+                    "baseline_time_ms": "100.1658",
+                    "solver_time_ms": "97.5155",
+                    "speedup": "1.0272",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "60",
+                    "baseline_time_ms": "100.2457",
+                    "solver_time_ms": "98.2341",
+                    "speedup": "1.0205",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "61",
+                    "baseline_time_ms": "100.7308",
+                    "solver_time_ms": "98.1910",
+                    "speedup": "1.0259",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                }
+            ]
+        }
+    }
+}

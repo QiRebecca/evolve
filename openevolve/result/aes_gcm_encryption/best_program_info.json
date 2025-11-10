@@ -1,24 +1,16 @@
 {
-  "id": "8a8d625e-e03a-4592-81ed-010f3aaa7cda",
-  "generation": 2,
-  "iteration": 6,
-  "timestamp": 1762459922.2732382,
-  "parent_id": "04c5ba4d-15fb-4cdf-b85a-c81397928c81",
+  "id": "64bd2f41-b0d8-4e4d-90c4-eaf092dabd88",
+  "generation": 1,
+  "iteration": 3,
+  "timestamp": 1762703902.4186401,
+  "parent_id": "f28661d1-89ea-4748-a65a-9f04f1e04a9e",
   "metrics": {
-    "score": 1.3802663613352726,
-    "combined_score": 1.3802663613352726,
-    "mean_speedup": 1.3802663613352726,
-    "median_speedup": 1.4108103165924226,
-    "accuracy": 1.0,
-    "success_rate": 1.0,
-    "num_evaluated": 10.0,
+    "combined_score": 1.1296667521947836,
+    "mean_speedup": 1.1296667521947836,
     "num_valid": 10.0,
-    "num_errors": 0.0,
-    "num_timeouts": 0.0,
-    "avg_solver_time_ms": 100.4651923,
-    "avg_baseline_time_ms": 138.6510399,
-    "baseline_to_solver_ratio": 1.3800903250747074
+    "success_rate": 1.0,
+    "accuracy": 1.0
   },
   "language": "python",
-  "saved_at": 1762463710.6600218
+  "saved_at": 1762704451.336521
 }

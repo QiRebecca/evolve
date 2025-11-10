@@ -114,7 +114,7 @@ python openevolve/openevolve-run.py \
   --config openevolve/configs/algotune_prompt.yaml \
   --primary-model o3 \
   --iterations 5 \
-  --output results/aes_gcm_encryption
+  --output openevolve/result/aes_gcm_encryption
 
 
 openevolve evaluate:
@@ -126,7 +126,7 @@ DACE_cache_dir=/data/zq/evolve/.dace_cache \
 poetry run python scripts/save_eval_to_summary.py \
   --task aes_gcm_encryption \
   --model "openevolve-best" \
-  --solver results/aes_gcm_encryption/best/best_program.py \
+  --solver openevolve/result/aes_gcm_encryption/best/best_program.py \
   --summary-file results/eval_summary.json \
   --generation-file reports/generation.json \
   --data-dir AlgoTune/data \

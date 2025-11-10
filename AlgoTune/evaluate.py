@@ -41,8 +41,6 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from AlgoTuneTasks.base import TASK_REGISTRY, Task  # type: ignore  # noqa: E402
-from AlgoTuner.utils.evaluator.baseline_manager import BaselineManager  # type: ignore  # noqa: E402
-from AlgoTuner.utils.evaluator.main import evaluate_code_on_dataset  # type: ignore  # noqa: E402
 
 # Configure a module-level logger
 LOGGER = logging.getLogger("algotune.evaluate")
@@ -393,126 +391,322 @@ def _summarize_results(results: Any, aggregate_metrics: Dict[str, Any]) -> Dict[
     return summary
 
 
+def _load_train_baselines(generation_file: Optional[Path], task_name: str) -> List[float]:
+    """
+    Load per-problem baseline times from train_baseline.json.
+    
+    Args:
+        generation_file: Path to generation.json (used to locate train_baseline.json)
+        task_name: Name of the task
+        
+    Returns:
+        List of baseline times (ms) for each problem
+    """
+    if generation_file:
+        baseline_file = generation_file.parent / 'train_baseline.json'
+    else:
+        baseline_file = Path("/data/zq/evolve/reports/train_baseline.json")
+    
+    if not baseline_file.exists():
+        raise FileNotFoundError(
+            f"train_baseline.json not found at {baseline_file}\n"
+            f"Please generate train baseline first."
+        )
+    
+    LOGGER.info(f"Loading per-problem TRAIN baselines from {baseline_file}")
+    
+    with open(baseline_file, 'r') as f:
+        data = json.load(f)
+    
+    if task_name not in data:
+        raise ValueError(f"Task '{task_name}' not found in {baseline_file}")
+    
+    task_data = data[task_name]
+    
+    if 'problem_min_times' not in task_data:
+        raise ValueError(f"'problem_min_times' not found in train_baseline.json for task '{task_name}'")
+    
+    per_problem_baselines = task_data['problem_min_times']
+    
+    LOGGER.info(f"Loaded {len(per_problem_baselines)} per-problem baselines")
+    
+    return per_problem_baselines
+
+
 def evaluate(program_path: str, config: Optional[Dict[str, Any]] = None) -> EvaluationResult:
-    """Evaluate a solver implementation against the AlgoTune dataset."""
+    """
+    Evaluate a solver implementation against the AlgoTune TRAIN dataset.
+    
+    Evaluation methodology (matches save_eval_to_summary.py):
+    - Each problem: warmup once (using different problem), run 10 times in isolated subprocesses
+    - Each subprocess: warmup + timed call, then exit
+    - Result: min time across all 10 runs for each problem
+    - Speedup calculation:
+      1. For each problem i: problem_speedup_i = train_baseline_min_time_i / solver_min_time_i
+      2. Task speedup = mean([problem_speedup_1, problem_speedup_2, ..., problem_speedup_N])
+    - This speedup is used as combined_score for OpenEvolve ranking
+    """
 
     resolved_config = _resolve_config(config)
     task_name = resolved_config["task_name"]
     data_dir: Path = resolved_config["data_dir"]
-    split: str = resolved_config["split"]
+    split: str = resolved_config.get("split", "train")  # Force train for OpenEvolve
     max_samples: Optional[int] = resolved_config.get("max_samples")
     generation_file: Optional[Path] = resolved_config.get("generation_file")
+    num_runs: int = resolved_config.get("num_runs", 10)
 
-    # Set up environment for AlgoTune helpers
+    # Set up environment for isolated execution (matches save_eval_to_summary.py)
     os.environ.setdefault("DATA_DIR", str(data_dir))
     os.environ.setdefault("ALGO_TUNE_DATA_DIR", str(data_dir))
     os.environ.setdefault("CURRENT_TASK_NAME", task_name)
-    os.environ.setdefault("AGENT_MODE", "0")  # Ensure in-process execution
-    os.environ.setdefault("ISOLATED_EVAL", "0")
+    os.environ.setdefault("ISOLATED_EVAL", "1")  # Use isolated execution
     os.environ.setdefault("SKIP_DATASET_GEN", "1")
 
-    LOGGER.info("Evaluating solver at %s for task %s", program_path, task_name)
+    LOGGER.info("Evaluating solver at %s for task %s (TRAIN dataset)", program_path, task_name)
 
-    task_class = _load_task_class(task_name)
+    # Load per-problem baselines from train_baseline.json
+    per_problem_baselines = _load_train_baselines(generation_file, task_name)
 
-    # Prepare baseline task (unmodified) for baseline timings
-    baseline_task = task_class(data_dir=str(data_dir))
-    baseline_task.task_name = task_name  # Ensure task_name is set for dataset loading
-    dataset_list = _prepare_dataset(baseline_task, split=split, max_samples=max_samples)
+    # Import required modules
+    from AlgoTuneTasks.factory import TaskFactory
+    from AlgoTuner.utils.discover_and_list_tasks import discover_and_import_tasks
+    from AlgoTuner.utils.serialization import dataset_decoder
+    from AlgoTuner.utils.isolated_benchmark import run_isolated_benchmark
+    import glob
+    import shutil
+    import statistics
 
-    baseline_manager = BaselineManager(baseline_task)
-
-    # Prepare candidate task with patched solve method
-    candidate_task = task_class(data_dir=str(data_dir))
-    candidate_task.task_name = task_name  # Ensure task_name is set for dataset loading
-    solver_callable = _load_solver_callable(program_path, task_class, candidate_task)
-    candidate_task.solve = solver_callable  # type: ignore[attr-defined]
-    candidate_task.oracle = solver_callable  # type: ignore[attr-defined]
-
-    eval_kwargs = {
-        "task_obj": candidate_task,
-        "dataset_iterable": dataset_list,
-        "baseline_manager": baseline_manager,
-        "data_subset": split,
-        "test_mode": resolved_config.get("test_mode", False),
-    }
-
-    # Optional overrides propagated to evaluate_code_on_dataset
-    if resolved_config.get("timeout_multiplier") is not None:
-        eval_kwargs["timeout_multiplier"] = resolved_config["timeout_multiplier"]
-    if resolved_config.get("min_timeout_seconds") is not None:
-        eval_kwargs["min_timeout_seconds"] = resolved_config["min_timeout_seconds"]
-    if resolved_config.get("max_timeout_seconds") is not None:
-        eval_kwargs["max_timeout_seconds"] = resolved_config["max_timeout_seconds"]
-    if resolved_config.get("num_runs") is not None:
-        eval_kwargs["default_num_eval_runs"] = resolved_config["num_runs"]
-    if resolved_config.get("warmup_runs") is not None:
-        eval_kwargs["default_num_warmup_runs"] = resolved_config["warmup_runs"]
-
-    try:
-        results = evaluate_code_on_dataset(**eval_kwargs)
-    except Exception as exc:
-        LOGGER.error("Evaluation failed: %s", exc)
-        metrics = {
-            "combined_score": 0.0,  # OpenEvolve uses this for ranking
-            "mean_speedup": 0.0,
-            "num_valid": 0.0,
-            "success_rate": 0.0,
-            "accuracy": 0.0,
-        }
-        artifacts = {
-            "error": str(exc),
-            "config": _safe_json(resolved_config),
-        }
-        return EvaluationResult(metrics=metrics, artifacts=artifacts)
-
-    if isinstance(results, dict):
-        LOGGER.warning("Evaluation returned error structure: %s", results.get("error"))
-        metrics = {
-            "combined_score": 0.0,  # OpenEvolve uses this for ranking
-            "mean_speedup": 0.0,
-            "num_valid": 0.0,
-            "success_rate": 0.0,
-            "accuracy": 0.0,
-        }
-        artifacts = {
-            "error": _safe_json(results),
-            "config": _safe_json(resolved_config),
-        }
-        return EvaluationResult(metrics=metrics, artifacts=artifacts)
-
-    aggregate_metrics = _extract_aggregate_metrics(results)
+    discover_and_import_tasks()
     
-    # Debug: Log extracted aggregate metrics
-    LOGGER.info(f"DEBUG_METRICS: Extracted aggregate_metrics keys: {list(aggregate_metrics.keys())}")
-    LOGGER.info(f"DEBUG_METRICS: mean_speedup={aggregate_metrics.get('mean_speedup')}, median_speedup={aggregate_metrics.get('median_speedup')}")
-    LOGGER.info(f"DEBUG_METRICS: avg_solver_time_ms={aggregate_metrics.get('avg_solver_time_ms')}, avg_oracle_time_ms={aggregate_metrics.get('avg_oracle_time_ms')}")
-
-    mean_speedup = _normalize_metric(aggregate_metrics.get("mean_speedup"))
-    accuracy = _normalize_metric(aggregate_metrics.get("accuracy"))
-    success_rate = _normalize_metric(aggregate_metrics.get("success_rate"))
-    num_valid = _normalize_metric(aggregate_metrics.get("num_valid"))
+    task_instance = TaskFactory(task_name, data_dir=str(data_dir))
+    task_instance.task_name = task_name
     
-    # combined_score is mean_speedup (used by OpenEvolve for ranking)
-    combined_score = mean_speedup
-
-    # Only return essential metrics aligned with AlgoTuner
+    LOGGER.info(f"Loading TRAIN dataset for {task_name}")
+    LOGGER.info(f"Using isolated execution (subprocess) to match baseline methodology")
+    
+    # Load TRAIN dataset
+    data_files = glob.glob(str(data_dir / "**" / f"{task_name}*_train.jsonl"), recursive=True)
+    if not data_files:
+        data_files = glob.glob(str(data_dir / f"{task_name}" / f"*_train.jsonl"))
+    
+    if not data_files:
+        raise FileNotFoundError(f"No train JSONL file found for {task_name} in {data_dir}")
+    
+    train_file = data_files[0]
+    LOGGER.info(f"Loading TRAIN data from: {train_file}")
+    
+    train_base_dir = os.path.dirname(train_file)
+    
+    # Load dataset with full structure
+    train_dataset_items = []
+    with open(train_file, 'r') as f:
+        for line in f:
+            if line.strip():
+                raw_data = json.loads(line)
+                decoded_data = dataset_decoder(raw_data, base_dir=train_base_dir)
+                train_dataset_items.append(decoded_data)
+    
+    LOGGER.info(f"Loaded {len(train_dataset_items)} train problems from file")
+    
+    if len(train_dataset_items) != len(per_problem_baselines):
+        raise ValueError(
+            f"Mismatch: {len(per_problem_baselines)} baselines but {len(train_dataset_items)} train problems"
+        )
+    
+    # Get solver code directory
+    solver_path_obj = Path(program_path)
+    code_dir = str(solver_path_obj.parent)
+    solver_filename = solver_path_obj.name
+    
+    if not solver_path_obj.exists():
+        raise FileNotFoundError(f"Solver file not found: {program_path}")
+    
+    # Ensure solver.py exists in code_dir (for isolated benchmark)
+    code_dir_path = Path(code_dir)
+    standard_names = [f"{task_name}.py", "solver.py"]
+    if solver_filename not in standard_names:
+        standard_solver_path = code_dir_path / "solver.py"
+        if not standard_solver_path.exists():
+            shutil.copy2(solver_path_obj, standard_solver_path)
+            LOGGER.info(f"Created solver.py copy from {solver_filename} for isolated benchmark")
+    
+    LOGGER.info(f"Solver code directory: {code_dir}")
+    
+    # Evaluate each problem
+    solver_results = []
+    problem_count = len(train_dataset_items)
+    
+    for idx, item in enumerate(train_dataset_items):
+        # Extract problem data and ID
+        if isinstance(item, dict):
+            problem_id = item.get("id", item.get("seed", item.get("k", None)))
+            if problem_id is None:
+                problem_id = f"problem_{idx+1}"
+            problem_id = str(problem_id)
+            problem_data = item.get('problem', item)
+        else:
+            problem_id = f"problem_{idx+1}"
+            problem_data = item
+        
+        LOGGER.debug(f"Evaluating problem {idx+1}/{problem_count} (ID: {problem_id})")
+        
+        # Get warmup problem (use next problem in dataset, wrapping around)
+        warmup_idx = (idx + 1) % problem_count
+        warmup_item = train_dataset_items[warmup_idx]
+        warmup_problem_data = warmup_item.get('problem', warmup_item) if isinstance(warmup_item, dict) else warmup_item
+        
+        # Calculate timeout
+        timeout_seconds = 60.0
+        if hasattr(task_instance, 'target_time_ms') and task_instance.target_time_ms:
+            target_time_s = task_instance.target_time_ms / 1000.0
+            timeout_seconds = max(60.0, target_time_s * 10.0)
+        
+        try:
+            # Use isolated benchmark (matches baseline generation methodology)
+            benchmark_result = run_isolated_benchmark(
+                task_name=task_name,
+                code_dir=code_dir,
+                warmup_problem=warmup_problem_data,
+                timed_problem=problem_data,
+                num_runs=num_runs,
+                timeout_seconds=timeout_seconds,
+            )
+            
+            if benchmark_result.get('success'):
+                min_time_ms = benchmark_result.get('min_time_ms', 0)
+                
+                if min_time_ms > 0:
+                    # Validate solution
+                    result = benchmark_result.get('result')
+                    is_valid = task_instance.is_solution(problem_data, result) if result is not None else False
+                    
+                    solver_results.append({
+                        'problem_id': problem_id,
+                        'min_time_ms': min_time_ms,
+                        'is_valid': is_valid,
+                        'status': 'success',
+                        'error': None
+                    })
+                else:
+                    solver_results.append({
+                        'problem_id': problem_id,
+                        'min_time_ms': None,
+                        'is_valid': False,
+                        'status': 'failed',
+                        'error': 'No valid timing result'
+                    })
+            else:
+                error_msg = benchmark_result.get('error', 'Unknown error')
+                LOGGER.warning(f"Problem {problem_id} FAILED: {error_msg}")
+                solver_results.append({
+                    'problem_id': problem_id,
+                    'min_time_ms': None,
+                    'is_valid': False,
+                    'status': 'failed',
+                    'error': error_msg
+                })
+        
+        except Exception as e:
+            error_msg = f"{type(e).__name__}: {str(e)}"
+            LOGGER.warning(f"Problem {problem_id} FAILED: {error_msg}")
+            solver_results.append({
+                'problem_id': problem_id,
+                'min_time_ms': None,
+                'is_valid': False,
+                'status': 'failed',
+                'error': error_msg
+            })
+    
+    # Calculate metrics using AlgoTune official methodology
+    num_problems = len(solver_results)
+    num_valid = sum(1 for r in solver_results if r['is_valid'])
+    num_failed = sum(1 for r in solver_results if r['status'] == 'failed')
+    
+    # Calculate per-problem speedups
+    per_problem_speedups = []
+    problem_details = []
+    
+    for i in range(num_problems):
+        baseline_i = per_problem_baselines[i]
+        result = solver_results[i]
+        
+        if result['status'] == 'success' and result['min_time_ms'] is not None and result['min_time_ms'] > 0:
+            speedup_i = baseline_i / result['min_time_ms']
+            per_problem_speedups.append(speedup_i)
+            problem_details.append({
+                'problem_id': result['problem_id'],
+                'baseline_time_ms': baseline_i,
+                'solver_time_ms': result['min_time_ms'],
+                'speedup': speedup_i,
+                'is_valid': result['is_valid']
+            })
+        else:
+            # Failed problems: speedup = 0.0
+            problem_details.append({
+                'problem_id': result['problem_id'],
+                'baseline_time_ms': baseline_i,
+                'solver_time_ms': result['min_time_ms'],
+                'speedup': 0.0,
+                'is_valid': False,
+                'error': result['error']
+            })
+    
+    # Calculate final speedup: mean of per-problem speedups
+    if per_problem_speedups:
+        final_speedup = statistics.mean(per_problem_speedups)
+    else:
+        final_speedup = 0.0
+    
+    # If accuracy is 0, speedup must be 0
+    accuracy = num_valid / num_problems if num_problems > 0 else 0.0
+    if accuracy == 0.0:
+        final_speedup = 0.0
+    
+    # Calculate other metrics
+    baseline_avg_min_ms = statistics.mean(per_problem_baselines)
+    successful_solver_times = [r['min_time_ms'] for r in solver_results if r['status'] == 'success' and r['min_time_ms'] is not None]
+    if successful_solver_times:
+        solver_avg_min_ms = statistics.mean(successful_solver_times)
+    else:
+        solver_avg_min_ms = 0.0
+    
+    LOGGER.info("=" * 70)
+    LOGGER.info("METRICS (AlgoTune Official Methodology - TRAIN dataset):")
+    LOGGER.info(f"  Final Speedup:       {final_speedup:.4f}x ⭐")
+    LOGGER.info(f"    = mean([problem_speedup_i]) where problem_speedup_i = baseline_min_i / solver_min_i")
+    LOGGER.info(f"    Each problem: warmup once, run {num_runs} times, take min time")
+    LOGGER.info(f"  Baseline avg:        {baseline_avg_min_ms:.4f}ms (reference)")
+    LOGGER.info(f"  Solver avg:          {solver_avg_min_ms:.4f}ms")
+    LOGGER.info(f"  Problems:            {num_problems} total")
+    LOGGER.info(f"    ✓ Valid:           {num_valid}")
+    LOGGER.info(f"    ✗ Failed:          {num_failed}")
+    LOGGER.info("=" * 70)
+    
+    # Return metrics compatible with OpenEvolve
     metrics = {
-        "combined_score": combined_score,  # OpenEvolve uses this for ranking (equals mean_speedup)
-        "mean_speedup": mean_speedup,
-        "num_valid": num_valid,
-        "success_rate": success_rate,
+        "combined_score": final_speedup,  # Used by OpenEvolve for ranking (mean of per-problem speedups)
+        "mean_speedup": final_speedup,
+        "num_valid": float(num_valid),
+        "success_rate": float(num_valid) / float(num_problems) if num_problems > 0 else 0.0,
         "accuracy": accuracy,
     }
-
-    summary = _summarize_results(results, aggregate_metrics)
-    summary["config"] = resolved_config
-    summary["generation_avg_baseline_ms"] = _load_generation_baseline(task_name, generation_file)
-
+    
+    summary = {
+        "speedup": final_speedup,
+        "baseline_avg_min_ms": baseline_avg_min_ms,
+        "solver_avg_min_ms": solver_avg_min_ms,
+        "num_problems": num_problems,
+        "num_valid": num_valid,
+        "num_failed": num_failed,
+        "accuracy": accuracy,
+        "problem_results": problem_details,
+        "config": resolved_config,
+    }
+    
     artifacts = {
         "summary.json": _safe_json(summary),
     }
-
+    
     return EvaluationResult(metrics=metrics, artifacts=artifacts)
 
 
