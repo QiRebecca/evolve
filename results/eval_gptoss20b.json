@@ -15009,13 +15009,13 @@
     },
     "minimum_volume_ellipsoid": {
         "chatgptoss-20b": {
-            "speedup": "0.0066",
+            "speedup": "0.0000",
             "accuracy": "0.0000",
             "baseline_avg_min_ms": "75.1090",
             "solver_avg_min_ms": "11648.4853",
             "solver_std_min_ms": "1689.2523",
-            "mean_per_problem_speedup": "0.0066",
-            "median_per_problem_speedup": "0.0066",
+            "mean_per_problem_speedup": "0.0000",
+            "median_per_problem_speedup": "0.0000",
             "num_valid": 0,
             "num_evaluated": 10,
             "num_success": 10,
@@ -15113,6 +15113,678 @@
                     "solver_time_ms": "10696.3820",
                     "speedup": "0.0070",
                     "is_valid": false,
+                    "status": "success",
+                    "error": null
+                }
+            ]
+        }
+    },
+    "convex_hull": {
+        "chatgptoss-20b": {
+            "speedup": "0.0219",
+            "accuracy": "1.0000",
+            "baseline_avg_min_ms": "105.5275",
+            "solver_avg_min_ms": "4819.9735",
+            "solver_std_min_ms": "11.1447",
+            "mean_per_problem_speedup": "0.0219",
+            "median_per_problem_speedup": "0.0219",
+            "num_valid": 10,
+            "num_evaluated": 10,
+            "num_success": 10,
+            "num_failed": 0,
+            "num_errors": 0,
+            "num_timeouts": 0,
+            "improvement_pct": "-97.81",
+            "eval_date": "2025-11-10",
+            "eval_timestamp": "2025-11-10T21:24:18.176128",
+            "problem_results": [
+                {
+                    "problem_id": "52",
+                    "baseline_time_ms": "104.4485",
+                    "solver_time_ms": "4800.0613",
+                    "speedup": "0.0218",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "53",
+                    "baseline_time_ms": "107.3529",
+                    "solver_time_ms": "4820.2730",
+                    "speedup": "0.0223",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "54",
+                    "baseline_time_ms": "107.1458",
+                    "solver_time_ms": "4816.5039",
+                    "speedup": "0.0222",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "55",
+                    "baseline_time_ms": "108.4802",
+                    "solver_time_ms": "4806.0012",
+                    "speedup": "0.0226",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "56",
+                    "baseline_time_ms": "103.9983",
+                    "solver_time_ms": "4820.6543",
+                    "speedup": "0.0216",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "57",
+                    "baseline_time_ms": "107.1336",
+                    "solver_time_ms": "4835.5096",
+                    "speedup": "0.0222",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "58",
+                    "baseline_time_ms": "105.4638",
+                    "solver_time_ms": "4818.7827",
+                    "speedup": "0.0219",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "59",
+                    "baseline_time_ms": "100.8658",
+                    "solver_time_ms": "4820.2629",
+                    "speedup": "0.0209",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "60",
+                    "baseline_time_ms": "104.1571",
+                    "solver_time_ms": "4834.9875",
+                    "speedup": "0.0215",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "61",
+                    "baseline_time_ms": "106.2294",
+                    "solver_time_ms": "4826.6988",
+                    "speedup": "0.0220",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                }
+            ]
+        }
+    },
+    "correlate_1d": {
+        "chatgptoss-20b": {
+            "speedup": "0.0101",
+            "accuracy": "1.0000",
+            "baseline_avg_min_ms": "118.7978",
+            "solver_avg_min_ms": "11771.7654",
+            "solver_std_min_ms": "817.3558",
+            "mean_per_problem_speedup": "0.0101",
+            "median_per_problem_speedup": "0.0101",
+            "num_valid": 10,
+            "num_evaluated": 10,
+            "num_success": 10,
+            "num_failed": 0,
+            "num_errors": 0,
+            "num_timeouts": 0,
+            "improvement_pct": "-98.99",
+            "eval_date": "2025-11-10",
+            "eval_timestamp": "2025-11-10T23:12:12.366920",
+            "problem_results": [
+                {
+                    "problem_id": "52",
+                    "baseline_time_ms": "118.2922",
+                    "solver_time_ms": "12680.7417",
+                    "speedup": "0.0093",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "53",
+                    "baseline_time_ms": "119.0323",
+                    "solver_time_ms": "10870.4283",
+                    "speedup": "0.0110",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "54",
+                    "baseline_time_ms": "118.3834",
+                    "solver_time_ms": "12012.4756",
+                    "speedup": "0.0099",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "55",
+                    "baseline_time_ms": "118.5056",
+                    "solver_time_ms": "12921.0154",
+                    "speedup": "0.0092",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "56",
+                    "baseline_time_ms": "119.0510",
+                    "solver_time_ms": "12590.3310",
+                    "speedup": "0.0095",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "57",
+                    "baseline_time_ms": "118.7459",
+                    "solver_time_ms": "10527.3174",
+                    "speedup": "0.0113",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "58",
+                    "baseline_time_ms": "119.5489",
+                    "solver_time_ms": "10977.3950",
+                    "speedup": "0.0109",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "59",
+                    "baseline_time_ms": "118.3353",
+                    "solver_time_ms": "11570.4065",
+                    "speedup": "0.0102",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "60",
+                    "baseline_time_ms": "119.4724",
+                    "solver_time_ms": "11554.9571",
+                    "speedup": "0.0103",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "61",
+                    "baseline_time_ms": "118.6105",
+                    "solver_time_ms": "12012.5856",
+                    "speedup": "0.0099",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                }
+            ]
+        }
+    },
+    "dijkstra_from_indices": {
+        "chatgptoss-20b": {
+            "speedup": "0.0052",
+            "accuracy": "1.0000",
+            "baseline_avg_min_ms": "35.2431",
+            "solver_avg_min_ms": "6791.1314",
+            "solver_std_min_ms": "50.6806",
+            "mean_per_problem_speedup": "0.0052",
+            "median_per_problem_speedup": "0.0052",
+            "num_valid": 10,
+            "num_evaluated": 10,
+            "num_success": 10,
+            "num_failed": 0,
+            "num_errors": 0,
+            "num_timeouts": 0,
+            "improvement_pct": "-99.48",
+            "eval_date": "2025-11-10",
+            "eval_timestamp": "2025-11-10T23:54:35.594897",
+            "problem_results": [
+                {
+                    "problem_id": "52",
+                    "baseline_time_ms": "36.2420",
+                    "solver_time_ms": "6755.9830",
+                    "speedup": "0.0054",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "53",
+                    "baseline_time_ms": "35.1444",
+                    "solver_time_ms": "6777.0828",
+                    "speedup": "0.0052",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "54",
+                    "baseline_time_ms": "35.0135",
+                    "solver_time_ms": "6929.3260",
+                    "speedup": "0.0051",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "55",
+                    "baseline_time_ms": "35.1080",
+                    "solver_time_ms": "6761.6098",
+                    "speedup": "0.0052",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "56",
+                    "baseline_time_ms": "35.2410",
+                    "solver_time_ms": "6795.5985",
+                    "speedup": "0.0052",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "57",
+                    "baseline_time_ms": "35.0757",
+                    "solver_time_ms": "6763.6094",
+                    "speedup": "0.0052",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "58",
+                    "baseline_time_ms": "34.8970",
+                    "solver_time_ms": "6778.0495",
+                    "speedup": "0.0051",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "59",
+                    "baseline_time_ms": "35.1216",
+                    "solver_time_ms": "6769.5976",
+                    "speedup": "0.0052",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "60",
+                    "baseline_time_ms": "35.3024",
+                    "solver_time_ms": "6802.4924",
+                    "speedup": "0.0052",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "61",
+                    "baseline_time_ms": "35.2855",
+                    "solver_time_ms": "6777.9648",
+                    "speedup": "0.0052",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                }
+            ]
+        }
+    },
+    "discrete_log": {
+        "chatgptoss-20b": {
+            "speedup": "0.0029",
+            "accuracy": "1.0000",
+            "baseline_avg_min_ms": "11.2441",
+            "solver_avg_min_ms": "4232.1197",
+            "solver_std_min_ms": "980.1761",
+            "mean_per_problem_speedup": "0.0029",
+            "median_per_problem_speedup": "0.0008",
+            "num_valid": 10,
+            "num_evaluated": 10,
+            "num_success": 10,
+            "num_failed": 0,
+            "num_errors": 0,
+            "num_timeouts": 0,
+            "improvement_pct": "-99.71",
+            "eval_date": "2025-11-11",
+            "eval_timestamp": "2025-11-11T00:12:47.526047",
+            "problem_results": [
+                {
+                    "problem_id": "52",
+                    "baseline_time_ms": "0.7416",
+                    "solver_time_ms": "3729.7907",
+                    "speedup": "0.0002",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "53",
+                    "baseline_time_ms": "31.5276",
+                    "solver_time_ms": "3867.3873",
+                    "speedup": "0.0082",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "54",
+                    "baseline_time_ms": "2.0213",
+                    "solver_time_ms": "6379.7958",
+                    "speedup": "0.0003",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "55",
+                    "baseline_time_ms": "43.6894",
+                    "solver_time_ms": "3610.9922",
+                    "speedup": "0.0121",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "56",
+                    "baseline_time_ms": "7.9546",
+                    "solver_time_ms": "3240.2176",
+                    "speedup": "0.0025",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "57",
+                    "baseline_time_ms": "1.8707",
+                    "solver_time_ms": "4440.1423",
+                    "speedup": "0.0004",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "58",
+                    "baseline_time_ms": "2.3993",
+                    "solver_time_ms": "4445.5663",
+                    "speedup": "0.0005",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "59",
+                    "baseline_time_ms": "3.1134",
+                    "solver_time_ms": "3600.2374",
+                    "speedup": "0.0009",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "60",
+                    "baseline_time_ms": "2.5745",
+                    "solver_time_ms": "3596.9683",
+                    "speedup": "0.0007",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "61",
+                    "baseline_time_ms": "16.5491",
+                    "solver_time_ms": "5410.0993",
+                    "speedup": "0.0031",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                }
+            ]
+        }
+    },
+    "vertex_cover": {
+        "chatgptoss-20b": {
+            "speedup": "0.0173",
+            "accuracy": "1.0000",
+            "baseline_avg_min_ms": "91.0656",
+            "solver_avg_min_ms": "5581.2557",
+            "solver_std_min_ms": "722.8759",
+            "mean_per_problem_speedup": "0.0173",
+            "median_per_problem_speedup": "0.0119",
+            "num_valid": 10,
+            "num_evaluated": 10,
+            "num_success": 10,
+            "num_failed": 0,
+            "num_errors": 0,
+            "num_timeouts": 0,
+            "improvement_pct": "-98.27",
+            "eval_date": "2025-11-11",
+            "eval_timestamp": "2025-11-11T00:33:53.897107",
+            "problem_results": [
+                {
+                    "problem_id": "52",
+                    "baseline_time_ms": "153.2374",
+                    "solver_time_ms": "4668.1865",
+                    "speedup": "0.0328",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "53",
+                    "baseline_time_ms": "60.8880",
+                    "solver_time_ms": "5840.3186",
+                    "speedup": "0.0104",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "54",
+                    "baseline_time_ms": "81.5297",
+                    "solver_time_ms": "5540.5021",
+                    "speedup": "0.0147",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "55",
+                    "baseline_time_ms": "60.4170",
+                    "solver_time_ms": "5937.0449",
+                    "speedup": "0.0102",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "56",
+                    "baseline_time_ms": "129.9101",
+                    "solver_time_ms": "4162.9989",
+                    "speedup": "0.0312",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "57",
+                    "baseline_time_ms": "65.4306",
+                    "solver_time_ms": "5895.3015",
+                    "speedup": "0.0111",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "58",
+                    "baseline_time_ms": "70.1052",
+                    "solver_time_ms": "5508.5640",
+                    "speedup": "0.0127",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "59",
+                    "baseline_time_ms": "158.4203",
+                    "solver_time_ms": "5364.1282",
+                    "speedup": "0.0295",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "60",
+                    "baseline_time_ms": "67.1214",
+                    "solver_time_ms": "6517.5366",
+                    "speedup": "0.0103",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "61",
+                    "baseline_time_ms": "63.5960",
+                    "solver_time_ms": "6377.9760",
+                    "speedup": "0.0100",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                }
+            ]
+        }
+    },
+    "convolve_1d": {
+        "chatgptoss-20b": {
+            "speedup": "0.0040",
+            "accuracy": "1.0000",
+            "baseline_avg_min_ms": "109.1794",
+            "solver_avg_min_ms": "37837.3510",
+            "solver_std_min_ms": "27748.9668",
+            "mean_per_problem_speedup": "0.0040",
+            "median_per_problem_speedup": "0.0053",
+            "num_valid": 10,
+            "num_evaluated": 10,
+            "num_success": 10,
+            "num_failed": 0,
+            "num_errors": 0,
+            "num_timeouts": 0,
+            "improvement_pct": "-99.60",
+            "eval_date": "2025-11-06",
+            "eval_timestamp": "2025-11-06T17:46:46.870171",
+            "problem_results": [
+                {
+                    "problem_id": "problem_1",
+                    "baseline_time_ms": "109.9175",
+                    "solver_time_ms": "20386.1094",
+                    "speedup": "0.0054",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "problem_2",
+                    "baseline_time_ms": "109.8216",
+                    "solver_time_ms": "20017.9470",
+                    "speedup": "0.0055",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "problem_3",
+                    "baseline_time_ms": "109.0547",
+                    "solver_time_ms": "21058.7842",
+                    "speedup": "0.0052",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "problem_4",
+                    "baseline_time_ms": "109.4800",
+                    "solver_time_ms": "20269.4597",
+                    "speedup": "0.0054",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "problem_5",
+                    "baseline_time_ms": "108.9578",
+                    "solver_time_ms": "20106.3103",
+                    "speedup": "0.0054",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "problem_6",
+                    "baseline_time_ms": "109.0508",
+                    "solver_time_ms": "19734.3715",
+                    "speedup": "0.0055",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "problem_7",
+                    "baseline_time_ms": "110.0216",
+                    "solver_time_ms": "100806.4605",
+                    "speedup": "0.0011",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "problem_8",
+                    "baseline_time_ms": "109.3828",
+                    "solver_time_ms": "62595.1589",
+                    "speedup": "0.0017",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "problem_9",
+                    "baseline_time_ms": "106.7013",
+                    "solver_time_ms": "59748.9585",
+                    "speedup": "0.0018",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "problem_10",
+                    "baseline_time_ms": "109.4060",
+                    "solver_time_ms": "33649.9494",
+                    "speedup": "0.0033",
+                    "is_valid": true,
                     "status": "success",
                     "error": null
                 }
