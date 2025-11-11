@@ -109,6 +109,116 @@
                     "error": null
                 }
             ]
+        },
+        "openevolve-o3": {
+            "speedup": "1.0585",
+            "accuracy": "1.0000",
+            "baseline_avg_min_ms": "100.2649",
+            "solver_avg_min_ms": "94.7252",
+            "solver_std_min_ms": "0.3759",
+            "mean_per_problem_speedup": "1.0585",
+            "median_per_problem_speedup": "1.0563",
+            "num_valid": 10,
+            "num_evaluated": 10,
+            "num_success": 10,
+            "num_failed": 0,
+            "num_errors": 0,
+            "num_timeouts": 0,
+            "improvement_pct": "5.85",
+            "eval_date": "2025-11-11",
+            "eval_timestamp": "2025-11-11T23:36:44.082780",
+            "problem_results": [
+                {
+                    "problem_id": "52",
+                    "baseline_time_ms": "101.4380",
+                    "solver_time_ms": "94.8439",
+                    "speedup": "1.0695",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "53",
+                    "baseline_time_ms": "99.8573",
+                    "solver_time_ms": "94.5678",
+                    "speedup": "1.0559",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "54",
+                    "baseline_time_ms": "100.6028",
+                    "solver_time_ms": "94.7129",
+                    "speedup": "1.0622",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "55",
+                    "baseline_time_ms": "99.8251",
+                    "solver_time_ms": "94.9024",
+                    "speedup": "1.0519",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "56",
+                    "baseline_time_ms": "99.8533",
+                    "solver_time_ms": "94.5443",
+                    "speedup": "1.0562",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "57",
+                    "baseline_time_ms": "99.7785",
+                    "solver_time_ms": "95.4143",
+                    "speedup": "1.0457",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "58",
+                    "baseline_time_ms": "100.1515",
+                    "solver_time_ms": "94.5841",
+                    "speedup": "1.0589",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "59",
+                    "baseline_time_ms": "100.1658",
+                    "solver_time_ms": "94.8085",
+                    "speedup": "1.0565",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "60",
+                    "baseline_time_ms": "100.2457",
+                    "solver_time_ms": "94.9373",
+                    "speedup": "1.0559",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                },
+                {
+                    "problem_id": "61",
+                    "baseline_time_ms": "100.7308",
+                    "solver_time_ms": "93.9364",
+                    "speedup": "1.0723",
+                    "is_valid": true,
+                    "status": "success",
+                    "error": null
+                }
+            ]
         }
     }
 }
